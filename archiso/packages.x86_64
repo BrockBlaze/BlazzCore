@@ -1,0 +1,87 @@
+# ============================================
+# BlazzCore Package List — Arch ISO Profile
+# ============================================
+
+# --- Base System ---
+base
+base-devel
+linux
+linux-firmware
+linux-headers
+mkinitcpio
+grub
+efibootmgr
+dosfstools
+e2fsprogs
+btrfs-progs
+networkmanager
+iwd
+sudo
+nano
+vim
+git
+man-db
+man-pages
+less
+which
+wget
+curl
+
+# --- Wayland / Display ---
+sway
+swaybg
+swayidle
+swaylock
+waybar
+wl-clipboard
+xdg-desktop-portal
+xdg-desktop-portal-wlr
+xdg-utils
+xorg-xwayland
+foot
+wofi
+grim
+slurp
+mako
+
+# --- Seat Management ---
+seatd
+polkit
+
+# --- GPU / Hardware Acceleration ---
+mesa
+vulkan-icd-loader
+libva
+libva-mesa-driver
+libva-utils
+libvdpau
+mesa-vdpau
+vulkan-radeon
+vulkan-intel
+
+# --- Audio (PipeWire) ---
+pipewire
+pipewire-alsa
+pipewire-pulse
+pipewire-jack
+wireplumber
+
+# --- Fonts ---
+noto-fonts
+noto-fonts-cjk
+noto-fonts-emoji
+ttf-liberation
+ttf-dejavu
+fontconfig
+freetype2
+harfbuzz
+
+# --- Browser ---
+chromium
+
+# --- Utilities ---
+htop
+brightnessctl
+upower
+pacman-contrib
+bash-completion

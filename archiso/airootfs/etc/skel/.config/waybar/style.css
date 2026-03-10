@@ -1,0 +1,50 @@
+/* BlazzCore — Waybar Theme */
+
+* {
+    border: none;
+    border-radius: 0;
+    font-family: "Noto Sans", "DejaVu Sans", monospace;
+    font-size: 13px;
+    min-height: 0;
+}
+
+window#waybar {
+    background-color: rgba(10, 10, 10, 0.92);
+    color: #e0e0e0;
+}
+
+#workspaces button {
+    padding: 0 8px;
+    color: #888888;
+    background: transparent;
+}
+
+#workspaces button.focused {
+    color: #ffffff;
+    background: #285577;
+}
+
+#workspaces button.urgent {
+    color: #e74c3c;
+}
+
+#clock, #cpu, #memory, #battery, #network, #pulseaudio, #tray {
+    padding: 0 10px;
+    color: #e0e0e0;
+}
+
+#battery.warning {
+    color: #f1c40f;
+}
+
+#battery.critical {
+    color: #e74c3c;
+}
+
+#network.disconnected {
+    color: #e74c3c;
+}
+
+#pulseaudio.muted {
+    color: #888888;
+}

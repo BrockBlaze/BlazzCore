@@ -1,0 +1,141 @@
+#!/usr/bin/env bash
+# ============================================
+# BlazzCore — First-Boot / Install Helper
+# ============================================
+# Run this script to install BlazzCore to disk.
+# Usage: sudo blazzcore-setup
+
+set -euo pipefail
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+CYAN='\033[0;36m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+log()  { echo -e "${CYAN}[BlazzCore Setup]${NC} $1"; }
+ok()   { echo -e "${GREEN}[✓]${NC} $1"; }
+warn() { echo -e "${YELLOW}[!]${NC} $1"; }
+err()  { echo -e "${RED}[✗]${NC} $1" >&2; }
+
+if [[ $EUID -ne 0 ]]; then
+    err "Run this script as root: sudo blazzcore-setup"
+    exit 1
+fi
+
+echo -e "${CYAN}"
+echo "  ____  _               ____               "
+echo " | __ )| | __ _ _______/ ___|___  _ __ ___ "
+echo " |  _ \| |/ _\` |_  /_  / |   / _ \| '__/ _ \\"
+echo " | |_) | | (_| |/ / / /| |__| (_) | | |  __/"
+echo " |____/|_|\__,_/___/___|\\____\\___/|_|  \\___|"
+echo -e "${NC}"
+echo ""
+log "Welcome to BlazzCore Installer"
+echo ""
+
+# --- Disk Selection ---
+log "Available disks:"
+lsblk -d -o NAME,SIZE,MODEL | grep -v "loop\|sr\|rom"
+echo ""
+read -rp "Enter target disk (e.g., sda, nvme0n1): " TARGET_DISK
+TARGET="/dev/$TARGET_DISK"
+
+if [[ ! -b "$TARGET" ]]; then
+    err "Disk $TARGET not found."
+    exit 1
+fi
+
+warn "ALL DATA ON $TARGET WILL BE ERASED!"
+read -rp "Type 'yes' to continue: " CONFIRM
+if [[ "$CONFIRM" != "yes" ]]; then
+    log "Aborted."
+    exit 0
+fi
+
+# --- Partitioning (GPT + EFI) ---
+log "Partitioning $TARGET (GPT)..."
+parted -s "$TARGET" mklabel gpt
+parted -s "$TARGET" mkpart ESP fat32 1MiB 512MiB
+parted -s "$TARGET" set 1 esp on
+parted -s "$TARGET" mkpart primary ext4 512MiB 100%
+
+# Determine partition naming
+if [[ "$TARGET_DISK" == nvme* ]]; then
+    PART1="${TARGET}p1"
+    PART2="${TARGET}p2"
+else
+    PART1="${TARGET}1"
+    PART2="${TARGET}2"
+fi
+
+# --- Formatting ---
+log "Formatting partitions..."
+mkfs.fat -F32 "$PART1"
+mkfs.ext4 -F "$PART2"
+
+# --- Mounting ---
+log "Mounting filesystems..."
+mount "$PART2" /mnt
+mkdir -p /mnt/boot/efi
+mount "$PART1" /mnt/boot/efi
+
+# --- Install Base System ---
+log "Installing BlazzCore packages (this may take a while)..."
+pacstrap -K /mnt $(cat /usr/share/blazzcore/packages.x86_64 | grep -v '^#' | grep -v '^$')
+
+# --- Generate fstab ---
+log "Generating fstab..."
+genfstab -U /mnt >> /mnt/etc/fstab
+
+# --- Chroot Configuration ---
+log "Configuring system..."
+arch-chroot /mnt /bin/bash <<'CHROOT'
+set -euo pipefail
+
+# Timezone (user can change later)
+ln -sf /usr/share/zoneinfo/UTC /etc/localtime
+hwclock --systohc
+
+# Locale
+echo "en_US.UTF-8 UTF-8" > /etc/locale.gen
+locale-gen
+echo "LANG=en_US.UTF-8" > /etc/locale.conf
+
+# Hostname
+echo "blazzcore" > /etc/hostname
+cat > /etc/hosts <<EOF
+127.0.0.1   localhost
+::1         localhost
+127.0.1.1   blazzcore.localdomain blazzcore
+EOF
+
+# Initramfs
+mkinitcpio -P
+
+# Bootloader (GRUB EFI)
+grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=BlazzCore
+grub-mkconfig -o /boot/grub/grub.cfg
+
+# Enable services
+systemctl enable NetworkManager
+systemctl enable seatd
+systemctl enable pipewire pipewire-pulse wireplumber || true
+
+# Create user
+useradd -m -G wheel,seat,video,audio -s /bin/bash blazzcore
+echo "blazzcore:blazzcore" | chpasswd
+echo "%wheel ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/wheel
+
+# Copy skeleton configs
+cp -r /etc/skel/.config /home/blazzcore/
+chown -R blazzcore:blazzcore /home/blazzcore/
+
+CHROOT
+
+# --- Done ---
+umount -R /mnt
+ok "Installation complete!"
+log "Remove the install media and reboot."
+log "Default user: blazzcore / password: blazzcore"
+log "Change your password after first login with: passwd"

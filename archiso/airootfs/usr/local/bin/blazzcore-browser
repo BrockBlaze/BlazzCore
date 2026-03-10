@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# ============================================
+# BlazzCore — Chromium Launch Wrapper
+# ============================================
+# Launches Chromium with hardware acceleration
+# and Wayland-native rendering enabled.
+
+exec chromium \
+    --ozone-platform=wayland \
+    --enable-features=VaapiVideoDecoder,VaapiVideoEncoder,VaapiIgnoreDriverChecks,Vulkan,DefaultANGLEVulkan,VulkanFromANGLE \
+    --use-gl=angle \
+    --use-angle=vulkan \
+    --enable-gpu-rasterization \
+    --enable-zero-copy \
+    --ignore-gpu-blocklist \
+    --enable-accelerated-video-decode \
+    --disable-gpu-driver-bug-workarounds \
+    --enable-wayland-ime \
+    "$@"

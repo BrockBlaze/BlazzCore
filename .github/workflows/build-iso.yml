@@ -1,0 +1,40 @@
+name: Build BlazzCore ISO
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build ISO
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
+      options: --privileged
+
+    steps:
+      - name: Install dependencies
+        run: |
+          pacman -Syu --noconfirm
+          pacman -S --noconfirm archiso git dosfstools e2fsprogs squashfs-tools erofs-utils
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build ISO
+        run: |
+          chmod +x scripts/build.sh
+          # mkarchiso needs /run to exist properly
+          mkdir -p /run/archiso
+          mkarchiso -v -w /tmp/blazzcore-build -o /tmp/blazzcore-out archiso/
+
+      - name: Upload ISO artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: blazzcore-iso
+          path: /tmp/blazzcore-out/*.iso
+          retention-days: 14
+          compression-level: 0
