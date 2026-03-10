@@ -1,0 +1,6 @@
+root:x:0:root
+wheel:x:10:blazzcore
+video:x:12:blazzcore
+audio:x:14:blazzcore
+seat:x:98:blazzcore
+blazzcore:x:1000:
