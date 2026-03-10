@@ -11,6 +11,7 @@ linux-headers
 mkinitcpio
 grub
 efibootmgr
+syslinux
 dosfstools
 e2fsprogs
 btrfs-progs
