@@ -24,10 +24,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Restore pacman package cache
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/pacman/pkg
+          key: pacman-pkgs-${{ hashFiles('archiso/packages.x86_64') }}
+          restore-keys: pacman-pkgs-
+
       - name: Build ISO
         run: |
           chmod +x scripts/build.sh
-          # mkarchiso needs /run to exist properly
           mkdir -p /run/archiso
           mkarchiso -v -w /tmp/blazzcore-build -o /tmp/blazzcore-out archiso/
 
