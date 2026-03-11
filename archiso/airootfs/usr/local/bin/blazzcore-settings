@@ -1,16 +1,33 @@
 #!/usr/bin/env bash
-# BlazzCore Settings Launcher
+# BlazzCore Settings — proper zenity window
 
-choice=$(printf \
-    "󰍛  Display & Monitors\n  Appearance & Themes\n  Wallpaper\n  Sound\n  Network\n  Packages" \
-    | wofi --dmenu --prompt "Settings" --width 280 --height 320 2>/dev/null \
-    | sed 's/^[[:space:]]*//' | awk '{$1=""; print $0}' | xargs)
+CHOICE=$(zenity --list \
+    --title="BlazzCore Settings" \
+    --text="What would you like to configure?" \
+    --column="Setting" --column="Description" \
+    "Display & Monitors"  "Resolution, arrangement, refresh rate" \
+    "Appearance & Themes" "GTK theme, icons, cursor, fonts" \
+    "Wallpaper"           "Set desktop background image" \
+    "Sound"               "Volume mixer and audio devices" \
+    "Network"             "Wi-Fi and network connections" \
+    "Date & Time"         "Timezone and clock settings" \
+    "Update System"       "Install available package updates" \
+    --width=560 --height=420 \
+    --print-column=1 2>/dev/null)
 
-case "$choice" in
-    "Display & Monitors") wdisplays ;;
+case "$CHOICE" in
+    "Display & Monitors")  wdisplays ;;
     "Appearance & Themes") nwg-look ;;
-    "Wallpaper") blazzcore-wallpaper ;;
-    "Sound") foot -e pulsemixer ;;
-    "Network") foot -e nmtui ;;
-    "Packages") foot -e sudo pacman -Syu ;;
+    "Wallpaper")           blazzcore-wallpaper ;;
+    "Sound")               foot --title="Sound Mixer" -e pulsemixer ;;
+    "Network")             foot --title="Network" -e nmtui ;;
+    "Date & Time")
+        TZ=$(timedatectl list-timezones | head -200 | zenity --list \
+            --title="Select Timezone" --text="Choose your timezone:" \
+            --column="Timezone" --width=500 --height=500 \
+            --print-column=1 2>/dev/null)
+        [[ -n "$TZ" ]] && sudo timedatectl set-timezone "$TZ"
+        ;;
+    "Update System")
+        foot --title="System Update" -e sudo pacman -Syu ;;
 esac

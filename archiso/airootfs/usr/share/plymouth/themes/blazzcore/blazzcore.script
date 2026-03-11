@@ -3,25 +3,30 @@
 screen_width  = Window.GetWidth();
 screen_height = Window.GetHeight();
 
-// Black background
-background_image = Image("background.png");
-bg = Sprite(background_image);
-bg.SetX(0);
-bg.SetY(0);
-bg.SetZ(-100);
+// Solid black background
+Window.SetBackgroundTopColor(0, 0, 0);
+Window.SetBackgroundBottomColor(0, 0, 0);
 
-// Center the logo
+// Load and scale logo to 30% of screen width
 logo_image = Image("logo.png");
-logo_width  = logo_image.GetWidth();
-logo_height = logo_image.GetHeight();
 
-logo = Sprite(logo_image);
-logo.SetX((screen_width  - logo_width)  / 2);
-logo.SetY((screen_height - logo_height) / 2);
+scale = Math.Min(
+    screen_width  * 0.30 / logo_image.GetWidth(),
+    screen_height * 0.15 / logo_image.GetHeight()
+);
+scaled = logo_image.Scale(
+    Math.Int(logo_image.GetWidth()  * scale),
+    Math.Int(logo_image.GetHeight() * scale)
+);
+
+logo = Sprite(scaled);
+logo.SetX(Math.Int((screen_width  - scaled.GetWidth())  / 2));
+logo.SetY(Math.Int((screen_height - scaled.GetHeight()) / 2));
 logo.SetZ(1);
+logo.SetOpacity(0);
 
-// Subtle fade-in
+// Fade in
 fun refresh_callback() {
-    logo.SetOpacity(Math.Min(logo.GetOpacity() + 0.03, 1.0));
+    logo.SetOpacity(Math.Min(logo.GetOpacity() + 0.04, 1.0));
 }
 Plymouth.SetRefreshFunction(refresh_callback);

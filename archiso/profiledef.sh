@@ -27,4 +27,5 @@ file_permissions=(
   ["/etc/profile.d/blazzcore-sway-autostart.sh"]="0:0:755"
   ["/etc/skel/.config/sway/desktop-menu.sh"]="0:0:755"
   ["/usr/local/bin/tictactoe"]="0:0:755"
+  ["/usr/local/bin/blazzcore-firstboot"]="0:0:755"
 )

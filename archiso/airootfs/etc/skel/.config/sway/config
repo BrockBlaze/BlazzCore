@@ -13,7 +13,7 @@ set $menu wofi --show drun --allow-images
 set $browser blazzcore-browser
 
 # --- Output / Wallpaper ---
-output * bg /usr/share/backgrounds/blazzcore/default.png fill
+output * bg #0d0d0d solid_color
 
 # --- Input ---
 input type:touchpad {
@@ -39,6 +39,8 @@ for_window [app_id="thunar"] floating enable, resize set 1000 640
 for_window [app_id="nwg-look"] floating enable
 for_window [app_id="wdisplays"] floating enable
 for_window [app_id="blazzcore-settings"] floating enable
+# Position wofi/context menus at cursor
+for_window [app_id="wofi"] floating enable, move position cursor
 
 # Window decorations for floating
 default_border normal 1

@@ -1,0 +1,17 @@
+[Unit]
+Description=BlazzCore First Boot Setup Wizard
+After=graphical-session.target
+ConditionPathExists=!/etc/.blazzcore-setup-done
+
+[Service]
+Type=oneshot
+User=blazzcore
+Environment=DISPLAY=:0
+Environment=WAYLAND_DISPLAY=wayland-1
+Environment=XDG_RUNTIME_DIR=/run/user/1000
+ExecStart=/usr/local/bin/blazzcore-firstboot
+ExecStartPost=/usr/bin/touch /etc/.blazzcore-setup-done
+RemainAfterExit=yes
+
+[Install]
+WantedBy=graphical-session.target

@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+# BlazzCore First Boot Setup Wizard
+
+export WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-wayland-1}"
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+
+# --- Welcome ---
+zenity --info \
+    --title="Welcome to BlazzCore" \
+    --text="<big><b>Welcome to BlazzCore</b></big>\n\nLet's set up your system.\nThis will only take a moment." \
+    --width=400 --ok-label="Get Started" 2>/dev/null || exit 0
+
+# --- Timezone ---
+TIMEZONES=$(timedatectl list-timezones | head -200)
+TZ=$(echo "$TIMEZONES" | zenity --list \
+    --title="Select Timezone" \
+    --text="Choose your timezone:" \
+    --column="Timezone" \
+    --width=500 --height=500 \
+    --print-column=1 2>/dev/null)
+
+if [[ -n "$TZ" ]]; then
+    sudo timedatectl set-timezone "$TZ"
+fi
+
+# --- Locale ---
+LOCALE=$(zenity --list \
+    --title="Select Language" \
+    --text="Choose your language:" \
+    --column="Locale" \
+    "en_US.UTF-8" "en_GB.UTF-8" "de_DE.UTF-8" "fr_FR.UTF-8" \
+    "es_ES.UTF-8" "it_IT.UTF-8" "pt_BR.UTF-8" "ja_JP.UTF-8" \
+    "zh_CN.UTF-8" "ko_KR.UTF-8" "ru_RU.UTF-8" "pl_PL.UTF-8" \
+    --width=400 --height=400 2>/dev/null)
+
+if [[ -n "$LOCALE" ]]; then
+    echo "LANG=$LOCALE" | sudo tee /etc/locale.conf > /dev/null
+    echo "$LOCALE UTF-8" | sudo tee /etc/locale.gen > /dev/null
+    sudo locale-gen
+fi
+
+# --- Keyboard Layout ---
+KEYMAP=$(zenity --list \
+    --title="Keyboard Layout" \
+    --text="Choose your keyboard layout:" \
+    --column="Layout" \
+    "us" "gb" "de" "fr" "es" "it" "pt" "ru" "pl" "jp" "dvorak" \
+    --width=400 --height=400 2>/dev/null)
+
+if [[ -n "$KEYMAP" ]]; then
+    sudo localectl set-keymap "$KEYMAP"
+fi
+
+# --- Network ---
+WIFI=$(zenity --question \
+    --title="Network Setup" \
+    --text="Would you like to connect to Wi-Fi now?" \
+    --ok-label="Yes, connect" --cancel-label="Skip" \
+    --width=400 2>/dev/null && echo "yes" || echo "no")
+
+if [[ "$WIFI" == "yes" ]]; then
+    foot -e nmtui &
+fi
+
+# --- Done ---
+zenity --info \
+    --title="Setup Complete" \
+    --text="<big><b>You're all set!</b></big>\n\nBlazzCore is ready to use.\n\n<b>Useful shortcuts:</b>\n• Super+Enter  — Terminal\n• Super+B  — Browser\n• Super+D  — App launcher\n• Right-click  — Desktop menu" \
+    --width=450 2>/dev/null
