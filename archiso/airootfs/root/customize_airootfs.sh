@@ -28,6 +28,10 @@ echo "root:" | chpasswd -e
 # Add blazzcore to sudoers
 echo "%wheel ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/wheel
 
+# Generate default wallpapers
+mkdir -p /usr/share/backgrounds/blazzcore
+python3 /usr/local/bin/blazzcore-gen-wallpapers
+
 # Update desktop database so app icons resolve in dock/launcher
 update-desktop-database /usr/share/applications/ || true
 

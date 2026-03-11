@@ -1,0 +1,81 @@
+#!/usr/bin/env python3
+"""
+BlazzCore — Generate default wallpapers at build time.
+Creates 3 minimal dark wallpapers as PNG files.
+"""
+import struct, zlib, math, os
+
+W, H = 1920, 1080
+
+def write_png(path, pixels):
+    """Write raw RGB pixel list (W*H tuples) to PNG."""
+    def chunk(tag, data):
+        c = struct.pack('>I', len(data)) + tag + data
+        return c + struct.pack('>I', zlib.crc32(tag + data) & 0xffffffff)
+    ihdr = struct.pack('>IIBBBBB', W, H, 8, 2, 0, 0, 0)
+    raw  = b''
+    for y in range(H):
+        row = b'\x00'
+        for x in range(W):
+            r, g, b = pixels[y * W + x]
+            row += bytes([r, g, b])
+        raw += row
+    idat = zlib.compress(raw, 6)
+    with open(path, 'wb') as f:
+        f.write(b'\x89PNG\r\n\x1a\n')
+        f.write(chunk(b'IHDR', ihdr))
+        f.write(chunk(b'IDAT', idat))
+        f.write(chunk(b'IEND', b''))
+
+OUT = '/usr/share/backgrounds/blazzcore'
+
+# --- 1. Deep space gradient (default) ---
+print('Generating: deep-space.png')
+pixels = []
+for y in range(H):
+    for x in range(W):
+        t  = y / H
+        r  = int(8  + t * 4)
+        g  = int(8  + t * 6)
+        b  = int(18 + t * 20)
+        # subtle vignette
+        dx = (x / W - 0.5) * 2
+        dy = (y / H - 0.5) * 2
+        v  = max(0.0, 1.0 - (dx*dx + dy*dy) * 0.35)
+        pixels.append((int(r*v), int(g*v), int(b*v)))
+write_png(f'{OUT}/deep-space.png', pixels)
+
+# --- 2. Dark aurora (teal-purple gradient) ---
+print('Generating: aurora.png')
+pixels = []
+for y in range(H):
+    for x in range(W):
+        nx = x / W
+        ny = y / H
+        wave = math.sin(nx * 6 + ny * 4) * 0.5 + 0.5
+        r = int((0.04 + wave * 0.06) * 255)
+        g = int((0.08 + wave * 0.10) * 255)
+        b = int((0.14 + wave * 0.18) * 255)
+        dx = (nx - 0.5) * 2
+        dy = (ny - 0.5) * 2
+        v  = max(0.0, 1.0 - (dx*dx + dy*dy) * 0.4)
+        pixels.append((int(r*v), int(g*v), int(b*v)))
+write_png(f'{OUT}/aurora.png', pixels)
+
+# --- 3. Charcoal (ultra-minimal near-black) ---
+print('Generating: charcoal.png')
+pixels = []
+for y in range(H):
+    for x in range(W):
+        t = (x / W + y / H) / 2
+        v = int(12 + t * 8)
+        pixels.append((v, v, v + 2))
+write_png(f'{OUT}/charcoal.png', pixels)
+
+# Symlink default
+default = f'{OUT}/default.png'
+if os.path.exists(default):
+    os.remove(default)
+os.symlink(f'{OUT}/deep-space.png', default)
+
+print('Wallpapers generated.')

@@ -13,7 +13,7 @@ set $menu wofi --show drun --allow-images
 set $browser blazzcore-browser
 
 # --- Output / Wallpaper ---
-output * bg #0d0d0d solid_color
+output * bg /usr/share/backgrounds/blazzcore/default.png fill
 
 # --- Input ---
 input type:touchpad {
