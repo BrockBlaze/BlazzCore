@@ -1,0 +1,131 @@
+#!/usr/bin/env bash
+# BlazzCore Driver Manager
+# Detects hardware and installs appropriate drivers from official repos
+
+set -euo pipefail
+
+pkg_installed() { pacman -Q "$1" &>/dev/null; }
+
+# ── GPU detection ────────────────────────────────────────────────────────────
+GPU_INFO=$(lspci 2>/dev/null | grep -iE 'vga|3d controller|display controller')
+
+if echo "$GPU_INFO" | grep -qi nvidia; then
+    GPU=nvidia
+elif echo "$GPU_INFO" | grep -qi "amd\|radeon\|amdgpu"; then
+    GPU=amd
+elif echo "$GPU_INFO" | grep -qi intel; then
+    GPU=intel
+else
+    GPU=unknown
+fi
+
+# ── WiFi detection ───────────────────────────────────────────────────────────
+NET_INFO=$(lspci 2>/dev/null | grep -iE 'network|wireless')
+NET_INFO+=" $(lsusb 2>/dev/null)"
+
+if echo "$NET_INFO" | grep -qi "broadcom\|BCM4"; then
+    WIFI=broadcom
+else
+    WIFI=standard
+fi
+
+# ── Build install list + status lines ────────────────────────────────────────
+PKGS=()
+LINES=()
+REBOOT_NEEDED=false
+
+case "$GPU" in
+    nvidia)
+        if pkg_installed nvidia && pkg_installed nvidia-utils; then
+            LINES+=("✓  NVIDIA GPU — driver already installed")
+        else
+            MISSING=()
+            pkg_installed nvidia       || MISSING+=(nvidia)
+            pkg_installed nvidia-utils || MISSING+=(nvidia-utils)
+            PKGS+=("${MISSING[@]}")
+            LINES+=("⚡  NVIDIA GPU — will install: ${MISSING[*]}")
+            REBOOT_NEEDED=true
+        fi
+        ;;
+    amd)
+        MISSING=()
+        pkg_installed mesa                || MISSING+=(mesa)
+        pkg_installed vulkan-radeon       || MISSING+=(vulkan-radeon)
+        pkg_installed libva-mesa-driver   || MISSING+=(libva-mesa-driver)
+        pkg_installed mesa-vdpau          || MISSING+=(mesa-vdpau)
+        if [[ ${#MISSING[@]} -eq 0 ]]; then
+            LINES+=("✓  AMD GPU — drivers already installed")
+        else
+            PKGS+=("${MISSING[@]}")
+            LINES+=("⚡  AMD GPU — will install: ${MISSING[*]}")
+        fi
+        ;;
+    intel)
+        MISSING=()
+        pkg_installed mesa               || MISSING+=(mesa)
+        pkg_installed vulkan-intel       || MISSING+=(vulkan-intel)
+        pkg_installed intel-media-driver || MISSING+=(intel-media-driver)
+        if [[ ${#MISSING[@]} -eq 0 ]]; then
+            LINES+=("✓  Intel GPU — drivers already installed")
+        else
+            PKGS+=("${MISSING[@]}")
+            LINES+=("⚡  Intel GPU — will install: ${MISSING[*]}")
+        fi
+        ;;
+    *)
+        LINES+=("?  GPU — unrecognized hardware, no changes")
+        ;;
+esac
+
+case "$WIFI" in
+    broadcom)
+        if pkg_installed broadcom-wl; then
+            LINES+=("✓  Broadcom WiFi — driver already installed")
+        else
+            PKGS+=(broadcom-wl)
+            LINES+=("⚡  Broadcom WiFi — will install: broadcom-wl")
+        fi
+        ;;
+    *)
+        if pkg_installed linux-firmware; then
+            LINES+=("✓  WiFi / Bluetooth firmware already installed")
+        else
+            PKGS+=(linux-firmware)
+            LINES+=("⚡  WiFi / Bluetooth — will install: linux-firmware")
+        fi
+        ;;
+esac
+
+if ! pkg_installed cups; then
+    LINES+=("ℹ  Printing — CUPS not installed (install via Software Center)")
+fi
+
+STATUS=$(printf '%s\n' "${LINES[@]}")
+
+# ── Nothing to do ────────────────────────────────────────────────────────────
+if [[ ${#PKGS[@]} -eq 0 ]]; then
+    zenity --info \
+        --title="Driver Manager" \
+        --text="<b>Hardware Status</b>\n\n$STATUS\n\nAll drivers are up to date." \
+        --width=500 2>/dev/null
+    exit 0
+fi
+
+# ── Confirmation dialog ───────────────────────────────────────────────────────
+REBOOT_NOTE=""
+$REBOOT_NEEDED && REBOOT_NOTE="\n\n<b>⚠ A reboot will be required after installation.</b>"
+
+zenity --question \
+    --title="Driver Manager" \
+    --text="<b>Hardware Status</b>\n\n$STATUS$REBOOT_NOTE\n\nInstall missing drivers now?" \
+    --width=500 --ok-label="Install" --cancel-label="Cancel" 2>/dev/null || exit 0
+
+# ── Install ───────────────────────────────────────────────────────────────────
+foot --title="Driver Installation" -e bash -c \
+    "sudo pacman -S --needed ${PKGS[*]}; echo; echo 'Done. Press Enter to close...'; read"
+
+$REBOOT_NEEDED && zenity --question \
+    --title="Reboot Required" \
+    --text="Driver installation complete.\n\nA reboot is required to activate the new driver.\n\nReboot now?" \
+    --width=380 --ok-label="Reboot Now" --cancel-label="Later" 2>/dev/null \
+    && systemctl reboot

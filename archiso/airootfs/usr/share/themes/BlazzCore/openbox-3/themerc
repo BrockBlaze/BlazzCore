@@ -29,24 +29,24 @@ window.active.button.close.bg:             flat solid
 window.active.button.close.bg.color:       #c0392b
 window.active.button.close.image.color:    #ffffff
 window.inactive.button.close.bg:           flat solid
-window.inactive.button.close.bg.color:     #3a2222
-window.inactive.button.close.image.color:  #666666
+window.inactive.button.close.bg.color:     #5c2a2a
+window.inactive.button.close.image.color:  #888888
 
 # --- Maximize button (green) ---
 window.active.button.max.bg:               flat solid
 window.active.button.max.bg.color:         #27ae60
 window.active.button.max.image.color:      #ffffff
 window.inactive.button.max.bg:             flat solid
-window.inactive.button.max.bg.color:       #1a3322
-window.inactive.button.max.image.color:    #666666
+window.inactive.button.max.bg.color:       #1e4d30
+window.inactive.button.max.image.color:    #888888
 
 # --- Minimize button (yellow) ---
 window.active.button.iconify.bg:           flat solid
 window.active.button.iconify.bg.color:     #d4ac0d
 window.active.button.iconify.image.color:  #ffffff
 window.inactive.button.iconify.bg:         flat solid
-window.inactive.button.iconify.bg.color:   #332e10
-window.inactive.button.iconify.image.color: #666666
+window.inactive.button.iconify.bg.color:   #4a3f12
+window.inactive.button.iconify.image.color: #888888
 
 # --- Window icon ---
 window.active.button.desk.bg:             flat solid
@@ -58,3 +58,25 @@ window.inactive.button.desk.bg.color:     #111118
 padding.width:                      6
 padding.height:                     5
 border.width:                       1
+
+# --- Menu ---
+menu.border.color:                  #2a2a45
+menu.border.width:                  1
+menu.items.bg:                      flat solid
+menu.items.bg.color:                #0d0d1c
+menu.items.text.color:              #c0c0e0
+menu.items.disabled.text.color:     #44445a
+menu.items.active.bg:               flat solid
+menu.items.active.bg.color:         #25254a
+menu.items.active.text.color:       #ffffff
+menu.title.bg:                      flat solid
+menu.title.bg.color:                #15152e
+menu.title.text.color:              #7878c0
+menu.title.text.justify:            Left
+menu.separator.color:               #2a2a45
+menu.separator.padding.width:       8
+menu.separator.padding.height:      3
+menu.items.padding.x:               14
+menu.items.padding.y:               6
+menu.overlap.x:                     2
+menu.overlap.y:                     0

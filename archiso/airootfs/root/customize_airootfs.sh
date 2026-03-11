@@ -13,24 +13,33 @@ locale-gen
 # Pre-fill machine-id so systemd-firstboot is satisfied
 systemd-machine-id-setup
 
-# Set Plymouth theme
-plymouth-set-default-theme -R blazzcore
+# Set Plymouth theme (only if the theme was installed successfully)
+if plymouth-set-default-theme blazzcore 2>/dev/null; then
+    plymouth-set-default-theme -R blazzcore
+else
+    echo "WARNING: BlazzCore Plymouth theme not found, skipping theme set" >&2
+fi
 
 # Enable services
 systemctl enable NetworkManager
 systemctl enable seatd
 systemctl enable blazzcore-firstboot.service
 
-# Set up user password (empty password for live session)
-echo "blazzcore:" | chpasswd -e
-echo "root:" | chpasswd -e
+# Set empty passwords for live session (passwd -d is safe and explicit)
+passwd -d blazzcore
+passwd -d root
 
 # Add blazzcore to sudoers
 echo "%wheel ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/wheel
 
 # Generate default wallpapers
 mkdir -p /usr/share/backgrounds/blazzcore
-python3 /usr/local/bin/blazzcore-gen-wallpapers
+if ! python3 /usr/local/bin/blazzcore-gen-wallpapers; then
+    echo "WARNING: Wallpaper generation failed" >&2
+fi
+
+# Write version file for blazzcore-about
+echo "1.0 ($(date +%Y.%m.%d))" > /etc/blazzcore-version
 
 # Update desktop database so app icons resolve in dock/launcher
 update-desktop-database /usr/share/applications/ || true

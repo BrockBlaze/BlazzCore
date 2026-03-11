@@ -5,4 +5,5 @@ Exec=wofi --show drun --allow-images
 Icon=view-app-grid
 Type=Application
 Categories=Utility;
+Keywords=launcher;app;menu;run;search;wofi;
 StartupNotify=false

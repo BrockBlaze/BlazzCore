@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# BlazzCore — About This System
+
+# Gather system info
+KERNEL=$(uname -r)
+ARCH=$(uname -m)
+HOSTNAME=$(hostname)
+UPTIME=$(uptime -p 2>/dev/null | sed 's/^up //')
+
+# CPU
+CPU=$(grep -m1 'model name' /proc/cpuinfo 2>/dev/null | cut -d: -f2 | sed 's/^ *//' || echo "Unknown")
+
+# RAM
+RAM_KB=$(grep MemTotal /proc/meminfo 2>/dev/null | awk '{print $2}')
+RAM_GB=$(awk "BEGIN {printf \"%.1f\", $RAM_KB/1048576}")
+RAM_USED_KB=$(( RAM_KB - $(grep MemAvailable /proc/meminfo | awk '{print $2}') ))
+RAM_USED_GB=$(awk "BEGIN {printf \"%.1f\", $RAM_USED_KB/1048576}")
+
+# Disk
+DISK_INFO=$(df -h / 2>/dev/null | awk 'NR==2 {print $3 " used / " $2 " total (" $5 " full)"}')
+
+# GPU
+GPU=$(lspci 2>/dev/null | grep -i 'vga\|3d\|display' | head -1 | sed 's/.*: //' | sed 's/ (.*)//' || echo "Unknown")
+
+# BlazzCore version (date of build)
+VERSION=$(cat /etc/blazzcore-version 2>/dev/null || date -r /usr/local/bin/blazzcore-install '+%Y.%m.%d' 2>/dev/null || echo "1.0")
+
+zenity --info \
+    --title="About BlazzCore" \
+    --width=500 \
+    --text="<big><b>BlazzCore</b></big>
+<i>A minimal, fast Wayland desktop — built on Arch Linux</i>
+
+<b>Version:</b>     $VERSION
+<b>Kernel:</b>      $KERNEL ($ARCH)
+<b>Hostname:</b>    $HOSTNAME
+<b>Uptime:</b>      $UPTIME
+
+<b>CPU:</b>
+$CPU
+
+<b>Memory:</b>      $RAM_USED_GB GB used / $RAM_GB GB total
+<b>Disk:</b>        $DISK_INFO
+<b>GPU:</b>
+$GPU
+
+<b>Compositor:</b>  labwc
+<b>Shell:</b>       bash + starship
+<b>Display:</b>     Wayland" \
+    2>/dev/null

@@ -2,10 +2,46 @@
 """
 BlazzCore — Generate default wallpapers at build time.
 Creates 3 minimal dark wallpapers as PNG files.
-"""
-import struct, zlib, math, os
 
-W, H = 1920, 1080
+Resolution priority:
+  1. WxH argument   e.g. blazzcore-gen-wallpapers 2560x1440
+  2. $WALLPAPER_RES environment variable
+  3. wlr-randr/wdisplays detection
+  4. Fallback: 1920x1080
+"""
+import struct, zlib, math, os, subprocess, sys
+
+def detect_resolution():
+    """Try to detect the primary display resolution from the running compositor."""
+    # Try wlr-randr (labwc/wlroots)
+    try:
+        out = subprocess.check_output(['wlr-randr'], stderr=subprocess.DEVNULL, text=True)
+        for line in out.splitlines():
+            if 'current' in line.lower():
+                parts = line.split()
+                for p in parts:
+                    if 'x' in p and p.replace('x', '').replace('0123456789', '').strip() == '':
+                        w, h = p.split('x')
+                        return int(w), int(h)
+    except Exception:
+        pass
+    return 1920, 1080
+
+# Resolution from CLI arg, env var, or detection
+if len(sys.argv) > 1 and 'x' in sys.argv[1]:
+    try:
+        W, H = map(int, sys.argv[1].lower().split('x'))
+    except ValueError:
+        W, H = detect_resolution()
+elif 'WALLPAPER_RES' in os.environ and 'x' in os.environ['WALLPAPER_RES']:
+    try:
+        W, H = map(int, os.environ['WALLPAPER_RES'].lower().split('x'))
+    except ValueError:
+        W, H = detect_resolution()
+else:
+    W, H = detect_resolution()
+
+print(f'Generating wallpapers at {W}x{H}')
 
 def write_png(path, pixels):
     """Write raw RGB pixel list (W*H tuples) to PNG."""
@@ -28,6 +64,14 @@ def write_png(path, pixels):
         f.write(chunk(b'IEND', b''))
 
 OUT = '/usr/share/backgrounds/blazzcore'
+os.makedirs(OUT, exist_ok=True)
+
+# Cache check — skip generation if all wallpapers exist at the right resolution
+CACHE_STAMP = f'{OUT}/.res_{W}x{H}'
+WALLPAPERS = ['deep-space.png', 'aurora.png', 'charcoal.png']
+if os.path.exists(CACHE_STAMP) and all(os.path.exists(f'{OUT}/{w}') for w in WALLPAPERS):
+    print(f'Wallpapers already generated at {W}x{H}, skipping.')
+    sys.exit(0)
 
 # --- 1. Deep space gradient (default) ---
 print('Generating: deep-space.png')
@@ -74,8 +118,11 @@ write_png(f'{OUT}/charcoal.png', pixels)
 
 # Symlink default
 default = f'{OUT}/default.png'
-if os.path.exists(default):
+if os.path.lexists(default):
     os.remove(default)
 os.symlink(f'{OUT}/deep-space.png', default)
 
-print('Wallpapers generated.')
+# Write cache stamp so we skip regeneration next run at same resolution
+open(CACHE_STAMP, 'w').close()
+
+print(f'Wallpapers generated at {W}x{H}.')

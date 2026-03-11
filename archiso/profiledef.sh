@@ -2,7 +2,7 @@
 # BlazzCore ISO Profile Definition
 
 iso_name="blazzcore"
-iso_label="BLAZZCORE_$(date +%Y%m)"
+iso_label="BLAZZCORE_$(date +%Y%m%d)"
 iso_publisher="Blazzard <https://github.com/blazzard>"
 iso_application="BlazzCore Live/Install ISO"
 iso_version="$(date +%Y.%m.%d)"
@@ -15,7 +15,7 @@ bootmodes=(
 arch="x86_64"
 pacman_conf="pacman.conf"
 airootfs_image_type="squashfs"
-airootfs_image_tool_options=('-comp' 'zstd' '-Xcompression-level' '19' '-b' '1M')
+airootfs_image_tool_options=('-comp' 'zstd' '-Xcompression-level' '15' '-b' '1M')
 file_permissions=(
   ["/etc/shadow"]="0:0:400"
   ["/etc/gshadow"]="0:0:400"
@@ -39,6 +39,10 @@ file_permissions=(
   ["/usr/local/bin/blazzcore-nightlight"]="0:0:755"
   ["/usr/local/bin/blazzcore-dock"]="0:0:755"
   ["/usr/local/bin/blazzcore-install"]="0:0:755"
-  ["/usr/share/blazzcore/install-tui.sh"]="0:0:755"
+  ["/usr/local/bin/blazzcore-about"]="0:0:755"
+  ["/usr/local/bin/blazzcore-store"]="0:0:755"
+  ["/usr/local/bin/blazzcore-taskmanager"]="0:0:755"
+  ["/usr/local/bin/blazzcore-startmenu"]="0:0:755"
   ["/usr/share/blazzcore/postinstall.sh"]="0:0:755"
+  ["/usr/local/bin/blazzcore-drivers"]="0:0:755"
 )

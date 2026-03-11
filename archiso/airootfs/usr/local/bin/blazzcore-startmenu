@@ -1,0 +1,534 @@
+#!/usr/bin/env python3
+# ============================================
+# BlazzCore Start Menu
+# Left: all apps (alphabetical, searchable)
+# Right: Quick Access shortcuts (user-configurable)
+# Right-click any app → Pin to Quick Access / Pin to Taskbar
+# Right-click a pinned shortcut → Remove / Unpin from Taskbar
+# ============================================
+
+import gi
+gi.require_version('Gtk', '3.0')
+gi.require_version('GtkLayerShell', '0.1')
+from gi.repository import Gtk, Gdk, Gio, GtkLayerShell, GLib
+import json, os, subprocess
+
+# ---- Paths -------------------------------------------------
+CFG_DIR        = os.path.expanduser("~/.config/blazzcore")
+PINNED_QA_FILE = os.path.join(CFG_DIR, "startmenu-pinned.json")
+DOCK_PINNED    = os.path.expanduser("~/.config/nwg-dock/pinned")
+DOCK_CMD       = "nwg-dock -p bottom -a center -i 38 -mb 0 -f"
+
+# ---- Built-in shortcuts (always in Quick Access) -----------
+BUILTIN = [
+    ("Files",           "system-file-manager",      "thunar",              True),
+    ("Terminal",        "utilities-terminal",        "foot",                True),
+    ("Settings",        "preferences-system",        "blazzcore-settings",  True),
+    ("Browser",         "web-browser",               "blazzcore-browser",   True),
+    ("Downloads",       "folder-download",           "thunar ~/Downloads",  True),
+    ("Documents",       "folder-documents",          "thunar ~/Documents",  True),
+]
+
+# ---- Stylesheet --------------------------------------------
+CSS = b"""
+* { box-sizing: border-box; }
+
+window {
+    background-color: rgba(10, 10, 22, 0.97);
+    border: 1px solid rgba(80, 80, 160, 0.35);
+    border-bottom: none;
+    border-radius: 14px 14px 0 0;
+}
+
+/* Search */
+#search-row { padding: 18px 16px 10px 16px; }
+#search-entry {
+    background-color: rgba(28, 28, 52, 0.9);
+    color: #e0e0f0;
+    border: 1px solid rgba(90, 90, 160, 0.5);
+    border-radius: 8px;
+    padding: 9px 16px;
+    font-size: 14px;
+    caret-color: #8080c8;
+}
+#search-entry:focus {
+    border-color: rgba(128, 128, 200, 0.85);
+    box-shadow: 0 0 0 2px rgba(128, 128, 200, 0.18);
+}
+
+/* Column headers */
+.col-header {
+    color: rgba(120, 120, 180, 0.8);
+    font-size: 10px;
+    font-weight: bold;
+    padding: 4px 12px 8px 12px;
+    letter-spacing: 1px;
+}
+
+/* Left: apps */
+#apps-panel { background: transparent; min-width: 350px; padding: 0 0 8px 0; }
+#apps-list row {
+    background: transparent;
+    border-radius: 7px;
+    margin: 1px 8px;
+}
+#apps-list row:hover    { background-color: rgba(255,255,255,0.055); }
+#apps-list row:selected { background-color: rgba(90,90,195,0.32); }
+.app-box  { padding: 6px 10px; }
+.app-label { color: #c8c8e8; font-size: 13px; padding-left: 10px; }
+#apps-list row:selected .app-label { color: #ffffff; font-weight: bold; }
+
+/* Divider */
+#col-sep { background-color: rgba(70,70,130,0.25); min-width: 1px; margin: 8px 0; }
+
+/* Right: shortcuts */
+#shortcuts-panel {
+    background-color: rgba(7,7,17,0.55);
+    min-width: 210px;
+    padding: 0 0 8px 0;
+    border-radius: 0 14px 0 0;
+}
+.sc-header-box { padding: 4px 12px 2px 12px; }
+
+/* Shortcut button */
+.shortcut-btn {
+    background: transparent;
+    border: none;
+    border-radius: 7px;
+    padding: 7px 12px;
+    margin: 1px 8px;
+}
+.shortcut-btn:hover  { background-color: rgba(255,255,255,0.07); }
+.shortcut-btn:active { background-color: rgba(90,90,195,0.3); }
+.shortcut-label { color: #c0c0e2; font-size: 13px; padding-left: 10px; }
+
+/* User-pinned indicator */
+.pinned-dot { color: rgba(128,128,200,0.6); font-size: 8px; padding-left: 4px; }
+
+/* Power button */
+.power-btn {
+    background: transparent; border: none;
+    border-radius: 7px; padding: 7px 12px; margin: 4px 8px 8px 8px;
+}
+.power-btn:hover { background-color: rgba(160,30,30,0.25); }
+.power-btn .shortcut-label { color: #cc6666; }
+
+/* Context menus */
+menu, menuitem {
+    background-color: #0e0e1e;
+    color: #c8c8e8;
+    border: 1px solid rgba(80,80,160,0.4);
+    border-radius: 6px;
+}
+menuitem:hover { background-color: rgba(90,90,195,0.3); color: #ffffff; }
+menuitem label { padding: 4px 12px; }
+
+/* Scrollbar */
+scrollbar { background: transparent; min-width: 6px; }
+scrollbar slider {
+    background-color: rgba(90,90,150,0.35);
+    border-radius: 3px; min-width: 6px; min-height: 30px;
+}
+scrollbar slider:hover { background-color: rgba(110,110,180,0.55); }
+"""
+
+# ---- Pinned Quick Access helpers ---------------------------
+def _load_user_pinned():
+    if os.path.exists(PINNED_QA_FILE):
+        try:
+            return json.load(open(PINNED_QA_FILE))
+        except Exception:
+            pass
+    return []
+
+def _save_user_pinned(items):
+    os.makedirs(CFG_DIR, exist_ok=True)
+    json.dump(items, open(PINNED_QA_FILE, "w"), indent=2)
+
+def _add_to_qa(name, exec_cmd, icon):
+    items = _load_user_pinned()
+    for i in items:
+        if i["exec"] == exec_cmd:
+            return False  # already pinned
+    items.append({"name": name, "exec": exec_cmd, "icon": icon})
+    _save_user_pinned(items)
+    return True
+
+def _remove_from_qa(exec_cmd):
+    items = [i for i in _load_user_pinned() if i["exec"] != exec_cmd]
+    _save_user_pinned(items)
+
+# ---- Dock pinning helpers ----------------------------------
+def _dock_pinned():
+    if not os.path.exists(DOCK_PINNED):
+        return []
+    return [l.strip() for l in open(DOCK_PINNED) if l.strip()]
+
+def _dock_add(desktop_name):
+    pinned = _dock_pinned()
+    if desktop_name in pinned:
+        return False
+    pinned.append(desktop_name)
+    os.makedirs(os.path.dirname(DOCK_PINNED), exist_ok=True)
+    open(DOCK_PINNED, "w").write("\n".join(pinned) + "\n")
+    subprocess.Popen(f"pkill nwg-dock; sleep 0.4; {DOCK_CMD} &", shell=True)
+    return True
+
+def _dock_remove(desktop_name):
+    pinned = [p for p in _dock_pinned() if p != desktop_name]
+    open(DOCK_PINNED, "w").write("\n".join(pinned) + "\n")
+    subprocess.Popen(f"pkill nwg-dock; sleep 0.4; {DOCK_CMD} &", shell=True)
+
+def _is_dock_pinned(desktop_name):
+    return desktop_name in _dock_pinned()
+
+
+# ---- Main window -------------------------------------------
+class StartMenu(Gtk.Window):
+    def __init__(self):
+        super().__init__()
+
+        GtkLayerShell.init_for_window(self)
+        GtkLayerShell.set_layer(self, GtkLayerShell.Layer.TOP)
+        GtkLayerShell.set_anchor(self, GtkLayerShell.Edge.BOTTOM, True)
+        GtkLayerShell.set_margin(self, GtkLayerShell.Edge.BOTTOM, 0)
+        GtkLayerShell.set_keyboard_mode(self, GtkLayerShell.KeyboardMode.ON_DEMAND)
+        GtkLayerShell.set_exclusive_zone(self, 0)
+
+        self.set_default_size(580, 560)
+        self._load_css()
+        self._build_ui()
+        self._load_apps()
+        self.connect("key-press-event", self._on_key)
+        self.connect("focus-out-event", lambda *_: self.destroy())
+
+    # ---- CSS ------------------------------------------------
+    def _load_css(self):
+        p = Gtk.CssProvider()
+        p.load_from_data(CSS)
+        Gtk.StyleContext.add_provider_for_screen(
+            Gdk.Screen.get_default(), p,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+
+    # ---- UI -------------------------------------------------
+    def _build_ui(self):
+        root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.add(root)
+
+        # Search
+        sr = Gtk.Box(); sr.set_name("search-row")
+        self.search = Gtk.SearchEntry()
+        self.search.set_name("search-entry")
+        self.search.set_placeholder_text("Search apps and settings...")
+        self.search.connect("changed", self._on_search)
+        self.search.connect("activate", self._on_enter)
+        sr.pack_start(self.search, True, True, 0)
+        root.pack_start(sr, False, False, 0)
+
+        # Two columns
+        cols = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        root.pack_start(cols, True, True, 0)
+
+        # -- Left: All Apps --
+        left = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        left.set_name("apps-panel")
+        hdr = Gtk.Label(label="ALL APPS")
+        hdr.get_style_context().add_class("col-header")
+        hdr.set_halign(Gtk.Align.START)
+        left.pack_start(hdr, False, False, 0)
+        scroll = Gtk.ScrolledWindow()
+        scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        self.apps_list = Gtk.ListBox()
+        self.apps_list.set_name("apps-list")
+        self.apps_list.set_selection_mode(Gtk.SelectionMode.BROWSE)
+        self.apps_list.connect("row-activated", self._launch_row)
+        scroll.add(self.apps_list)
+        left.pack_start(scroll, True, True, 0)
+        cols.pack_start(left, True, True, 0)
+
+        # -- Divider --
+        div = Gtk.Box(); div.set_name("col-sep")
+        cols.pack_start(div, False, False, 0)
+
+        # -- Right: Quick Access --
+        self.right = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.right.set_name("shortcuts-panel")
+
+        # Header row with "Add Folder" button
+        sc_hdr_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        sc_hdr_box.get_style_context().add_class("sc-header-box")
+        sc_hdr = Gtk.Label(label="QUICK ACCESS")
+        sc_hdr.get_style_context().add_class("col-header")
+        sc_hdr.set_halign(Gtk.Align.START)
+        sc_hdr_box.pack_start(sc_hdr, True, True, 0)
+        add_folder_btn = Gtk.Button(label="+ Folder")
+        add_folder_btn.set_relief(Gtk.ReliefStyle.NONE)
+        add_folder_btn.get_style_context().add_class("col-header")
+        add_folder_btn.connect("clicked", self._add_folder_shortcut)
+        sc_hdr_box.pack_start(add_folder_btn, False, False, 0)
+        self.right.pack_start(sc_hdr_box, False, False, 0)
+
+        self._shortcuts_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.right.pack_start(self._shortcuts_box, False, False, 0)
+
+        self.right.pack_start(Gtk.Box(), True, True, 0)  # spacer
+
+        sep = Gtk.Separator()
+        sep.set_margin_start(8); sep.set_margin_end(8)
+        self.right.pack_start(sep, False, False, 4)
+
+        power = self._make_sc_btn("Power", "system-shutdown", "blazzcore-power",
+                                   style="power-btn", builtin=True)
+        self.right.pack_start(power, False, False, 0)
+
+        cols.pack_start(self.right, False, False, 0)
+        self._rebuild_shortcuts()
+
+    # ---- Shortcuts panel ------------------------------------
+    def _rebuild_shortcuts(self):
+        for w in self._shortcuts_box.get_children():
+            self._shortcuts_box.remove(w)
+
+        # Builtins
+        for name, icon, cmd, _ in BUILTIN:
+            btn = self._make_sc_btn(name, icon, cmd, builtin=True)
+            self._shortcuts_box.pack_start(btn, False, False, 0)
+
+        # User-pinned
+        user = _load_user_pinned()
+        if user:
+            sep = Gtk.Separator()
+            sep.set_margin_start(8); sep.set_margin_end(8); sep.set_margin_top(4)
+            self._shortcuts_box.pack_start(sep, False, False, 0)
+            for item in user:
+                btn = self._make_sc_btn(item["name"], item.get("icon", "folder"),
+                                        item["exec"], builtin=False,
+                                        desktop=item.get("desktop"))
+                self._shortcuts_box.pack_start(btn, False, False, 0)
+
+        self._shortcuts_box.show_all()
+
+    def _make_sc_btn(self, name, icon_name, cmd, style="shortcut-btn",
+                     builtin=True, desktop=None):
+        btn = Gtk.Button()
+        btn.get_style_context().add_class(style)
+        btn.set_relief(Gtk.ReliefStyle.NONE)
+        btn._cmd = cmd
+        btn._builtin = builtin
+        btn._desktop = desktop
+        btn._name = name
+        btn._icon = icon_name
+
+        box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        img = Gtk.Image.new_from_icon_name(icon_name, Gtk.IconSize.SMALL_TOOLBAR)
+        lbl = Gtk.Label(label=name)
+        lbl.get_style_context().add_class("shortcut-label")
+        lbl.set_halign(Gtk.Align.START)
+        box.pack_start(img, False, False, 0)
+        box.pack_start(lbl, True, True, 0)
+        if not builtin:
+            dot = Gtk.Label(label="●")
+            dot.get_style_context().add_class("pinned-dot")
+            box.pack_end(dot, False, False, 0)
+        btn.add(box)
+
+        btn.connect("clicked", lambda b, *_: self._launch_cmd(b._cmd))
+        btn.connect("button-press-event", self._on_sc_button_press)
+        return btn
+
+    # ---- App list loading -----------------------------------
+    def _load_apps(self):
+        apps, seen = [], set()
+        for d in ["/usr/share/applications",
+                  os.path.expanduser("~/.local/share/applications")]:
+            if not os.path.isdir(d):
+                continue
+            for fname in sorted(os.listdir(d)):
+                if not fname.endswith(".desktop"):
+                    continue
+                try:
+                    info = Gio.DesktopAppInfo.new_from_filename(
+                        os.path.join(d, fname))
+                    if info and info.should_show():
+                        name = info.get_display_name() or info.get_name()
+                        if name and name not in seen:
+                            seen.add(name)
+                            apps.append((name, info, fname))
+                except Exception:
+                    pass
+        self._all_apps = sorted(apps, key=lambda x: x[0].lower())
+        self._populate(self._all_apps)
+        GLib.idle_add(self.search.grab_focus)
+
+    def _populate(self, apps):
+        for r in self.apps_list.get_children():
+            self.apps_list.remove(r)
+        theme = Gtk.IconTheme.get_default()
+        for name, info, fname in apps:
+            row = Gtk.ListBoxRow()
+            row._info   = info
+            row._name   = name
+            row._fname  = fname               # e.g. "chromium.desktop"
+            row._cmd    = info.get_commandline() or ""
+            row._icon   = "application-x-executable"
+            gicon = info.get_icon()
+            if gicon:
+                row._icon = gicon.to_string()
+
+            box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+            box.get_style_context().add_class("app-box")
+            img = None
+            if gicon:
+                try:
+                    pb = theme.load_icon(gicon.to_string(), 22,
+                                         Gtk.IconLookupFlags.FORCE_SIZE)
+                    img = Gtk.Image.new_from_pixbuf(pb)
+                except Exception:
+                    pass
+            if img is None:
+                img = Gtk.Image.new_from_icon_name(
+                    "application-x-executable", Gtk.IconSize.SMALL_TOOLBAR)
+            lbl = Gtk.Label(label=name)
+            lbl.get_style_context().add_class("app-label")
+            lbl.set_halign(Gtk.Align.START)
+            lbl.set_ellipsize(3)
+            box.pack_start(img, False, False, 0)
+            box.pack_start(lbl, True, True, 0)
+            row.add(box)
+
+            # Right-click for context menu
+            row.add_events(Gdk.EventMask.BUTTON_PRESS_MASK)
+            row.connect("button-press-event", self._on_app_click, row)
+            self.apps_list.add(row)
+        self.apps_list.show_all()
+
+    # ---- Event handlers -------------------------------------
+    def _on_search(self, e):
+        q = e.get_text().strip().lower()
+        self._populate(self._all_apps if not q else
+                       [(n, a, f) for n, a, f in self._all_apps if q in n.lower()])
+
+    def _on_enter(self, _):
+        rows = self.apps_list.get_children()
+        if rows:
+            self.apps_list.emit("row-activated", rows[0])
+
+    def _on_key(self, _w, event):
+        if event.keyval == Gdk.KEY_Escape:
+            self.destroy()
+        elif event.keyval not in (Gdk.KEY_Up, Gdk.KEY_Down,
+                                   Gdk.KEY_Return, Gdk.KEY_Tab):
+            self.search.grab_focus()
+            self.search.event(event)
+
+    def _launch_row(self, _lb, row):
+        if hasattr(row, "_info"):
+            row._info.launch([], None)
+            self.destroy()
+
+    def _launch_cmd(self, cmd):
+        subprocess.Popen(cmd, shell=True)
+        self.destroy()
+
+    # ---- App right-click context menu -----------------------
+    def _on_app_click(self, row, event, _row):
+        if event.button != 3:
+            return False
+        self._show_app_menu(row, event)
+        return True
+
+    def _show_app_menu(self, row, event):
+        menu = Gtk.Menu()
+        menu.get_style_context().add_class("context-menu")
+
+        # Open
+        mi = Gtk.MenuItem(label=f"Open  {row._name}")
+        mi.connect("activate", lambda *_: (row._info.launch([], None), self.destroy()))
+        menu.append(mi)
+        menu.append(Gtk.SeparatorMenuItem())
+
+        # Pin to Quick Access
+        already_qa = any(i["exec"] == (row._info.get_commandline() or row._name)
+                         for i in _load_user_pinned())
+        if already_qa:
+            mi2 = Gtk.MenuItem(label="Remove from Quick Access")
+            mi2.connect("activate", lambda *_: (
+                _remove_from_qa(row._info.get_commandline() or row._name),
+                self._rebuild_shortcuts()))
+        else:
+            mi2 = Gtk.MenuItem(label="Pin to Quick Access")
+            mi2.connect("activate", lambda *_: (
+                _add_to_qa(row._name,
+                           row._info.get_commandline() or row._name,
+                           row._icon),
+                self._rebuild_shortcuts()))
+        menu.append(mi2)
+
+        # Pin to Taskbar
+        already_dock = _is_dock_pinned(row._fname)
+        if already_dock:
+            mi3 = Gtk.MenuItem(label="Unpin from Taskbar")
+            mi3.connect("activate", lambda *_: _dock_remove(row._fname))
+        else:
+            mi3 = Gtk.MenuItem(label="Pin to Taskbar")
+            mi3.connect("activate", lambda *_: _dock_add(row._fname))
+        menu.append(mi3)
+
+        menu.show_all()
+        menu.popup_at_pointer(event)
+
+    # ---- Shortcut right-click context menu ------------------
+    def _on_sc_button_press(self, btn, event):
+        if event.button != 3:
+            return False
+        menu = Gtk.Menu()
+
+        if not btn._builtin:
+            mi = Gtk.MenuItem(label="Remove from Quick Access")
+            mi.connect("activate", lambda *_: (
+                _remove_from_qa(btn._cmd),
+                self._rebuild_shortcuts()))
+            menu.append(mi)
+
+        if btn._desktop:
+            already = _is_dock_pinned(btn._desktop)
+            if already:
+                mi2 = Gtk.MenuItem(label="Unpin from Taskbar")
+                mi2.connect("activate", lambda *_: _dock_remove(btn._desktop))
+            else:
+                mi2 = Gtk.MenuItem(label="Pin to Taskbar")
+                mi2.connect("activate", lambda *_: _dock_add(btn._desktop))
+            menu.append(mi2)
+
+        if not menu.get_children():
+            return False
+
+        menu.show_all()
+        menu.popup_at_pointer(event)
+        return True
+
+    # ---- Add folder shortcut --------------------------------
+    def _add_folder_shortcut(self, _btn):
+        dialog = Gtk.FileChooserDialog(
+            title="Choose a folder to pin",
+            parent=self,
+            action=Gtk.FileChooserAction.SELECT_FOLDER,
+        )
+        dialog.add_buttons(
+            "_Cancel", Gtk.ResponseType.CANCEL,
+            "_Pin Folder", Gtk.ResponseType.OK,
+        )
+        resp = dialog.run()
+        if resp == Gtk.ResponseType.OK:
+            path = dialog.get_filename()
+            name = os.path.basename(path) or path
+            _add_to_qa(name, f"thunar '{path}'", "folder")
+            self._rebuild_shortcuts()
+        dialog.destroy()
+
+
+if __name__ == "__main__":
+    win = StartMenu()
+    win.connect("destroy", Gtk.main_quit)
+    win.show_all()
+    Gtk.main()

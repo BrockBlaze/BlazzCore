@@ -1,11 +1,16 @@
 #!/usr/bin/env bash
 # BlazzCore brightness control + OSD
 
+WOB_PIPE=/tmp/wob.pipe
+
 case "$1" in
     up)   brightnessctl set +5% ;;
     down) brightnessctl set 5%- ;;
 esac
 
-# Get current brightness as percentage
+# Show OSD — recreate pipe if it was lost (e.g. after crash/reboot)
+[ -p "$WOB_PIPE" ] || mkfifo "$WOB_PIPE" 2>/dev/null || exit 0
+
+# Get current brightness as percentage (fallback 50 for VMs without backlight)
 BRIGHT=$(brightnessctl -m 2>/dev/null | cut -d, -f4 | tr -d '%')
-echo "${BRIGHT:-50}" > /tmp/wob.pipe 2>/dev/null || true
+echo "${BRIGHT:-50}" > "$WOB_PIPE" 2>/dev/null || true

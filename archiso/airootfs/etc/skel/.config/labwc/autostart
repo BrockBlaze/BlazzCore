@@ -8,8 +8,14 @@ dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP
 export XCURSOR_THEME=Adwaita
 export XCURSOR_SIZE=24
 
-# Wallpaper
-swaybg -i /usr/share/backgrounds/blazzcore/default.png -m fill &
+# Wallpaper (fall back to solid color if image is missing)
+# blazzcore-wallpaper updates the WALLPAPER= line below to persist changes
+WALLPAPER=/usr/share/backgrounds/blazzcore/default.png
+if [[ -f "$WALLPAPER" ]]; then
+    swaybg -i "$WALLPAPER" -m fill &
+else
+    swaybg -c "#0d0d1a" &
+fi
 
 # Status bar
 waybar &
@@ -17,17 +23,22 @@ waybar &
 # Desktop icons
 pcmanfm --desktop &
 
-# Notifications
-mako &
+# Polkit authentication agent (allows GUI apps to request elevated privileges)
+/usr/lib/xfce-polkit/xfce-polkit &
 
-# Bluetooth tray applet
+# Notification center (replaces mako — handles notifications + shows history panel)
+swaync &
+
+# System tray: network, bluetooth
+nm-applet &
 blueman-applet &
 
 # Clipboard history daemon
 wl-paste --watch cliphist store &
 
 # Volume/brightness OSD pipe
-[ -p /tmp/wob.pipe ] || mkfifo /tmp/wob.pipe
+WOB_PIPE=/tmp/wob.pipe
+[ -p "$WOB_PIPE" ] || mkfifo "$WOB_PIPE" || { echo "autostart: failed to create wob pipe" >&2; }
 wob \
     --background-color "#0e0e1add" \
     --border-color "#4a4a8aff" \
@@ -36,15 +47,19 @@ wob \
     --overflow-bar-color "#c0392bff" \
     --overflow-border-color "#c0392bff" \
     --height 28 --offset-y 60 \
-    < /tmp/wob.pipe &
+    < "$WOB_PIPE" &
 
-# Dock
-nwg-dock -p bottom -a center -i 52 -mb 6 &
+# Dock — full-width taskbar style
+nwg-dock -p bottom -a center -i 38 -mb 0 -f &
 
-# Idle: lock after 5min, display off after 10min
+# Idle timeouts — edit these values to customize (seconds)
+# IDLE_LOCK=300  → lock after 5 min
+# IDLE_DPMS=600  → display off after 10 min
+IDLE_LOCK=300
+IDLE_DPMS=600
 swayidle -w \
-    timeout 300 'blazzcore-lock' \
-    timeout 600 'wlopm --off "*"' \
+    timeout "$IDLE_LOCK" 'blazzcore-lock' \
+    timeout "$IDLE_DPMS" 'wlopm --off "*"' \
     resume 'wlopm --on "*"' \
     before-sleep 'blazzcore-lock' &
 

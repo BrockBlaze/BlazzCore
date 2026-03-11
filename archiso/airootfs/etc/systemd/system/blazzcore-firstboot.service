@@ -9,8 +9,9 @@ User=blazzcore
 Environment=DISPLAY=:0
 Environment=WAYLAND_DISPLAY=wayland-1
 Environment=XDG_RUNTIME_DIR=/run/user/1000
+Environment=XDG_SESSION_TYPE=wayland
 ExecStart=/usr/local/bin/blazzcore-firstboot
-ExecStartPost=/usr/bin/touch /etc/.blazzcore-setup-done
+ExecStartPost=/usr/bin/sudo /usr/bin/touch /etc/.blazzcore-setup-done
 RemainAfterExit=yes
 
 [Install]

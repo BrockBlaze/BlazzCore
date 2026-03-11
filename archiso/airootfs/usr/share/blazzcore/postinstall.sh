@@ -14,8 +14,16 @@ info()  { echo -e "  ${CYN}→${RST} $*"; }
 ok()    { echo -e "  ${GRN}✓${RST} $*"; }
 warn()  { echo -e "  ${RED}!${RST} $*"; }
 
-# ---- Sanity check ----
+# ---- Sanity checks ----
 [[ -d "$MOUNT/usr" ]] || { warn "Mount point $MOUNT doesn't look like an installation."; exit 1; }
+
+# Require at least 512 MB free on the target mount
+FREE_KB=$(df -k "$MOUNT" | awk 'NR==2{print $4}')
+if [[ "$FREE_KB" -lt 524288 ]]; then
+    warn "Less than 512 MB free on $MOUNT (${FREE_KB} KB). Aborting."
+    exit 1
+fi
+info "Free space on $MOUNT: $((FREE_KB / 1024)) MB — OK."
 
 # ---- Detect installed username ----
 INSTALL_USER=""
@@ -47,9 +55,16 @@ cp -rT "$LIVE_SKEL/.config" "$USER_HOME/.config" 2>/dev/null || true
 cp -rT "$LIVE_SKEL/.local"  "$USER_HOME/.local"  2>/dev/null || true
 mkdir -p "$USER_HOME"/{Desktop,Downloads,Pictures,Documents}
 
-# Set ownership — detect UID/GID from installed passwd
-INSTALL_UID=$(grep "^$INSTALL_USER:" "$MOUNT/etc/passwd" | cut -d: -f3 || echo 1000)
-INSTALL_GID=$(grep "^$INSTALL_USER:" "$MOUNT/etc/passwd" | cut -d: -f4 || echo 1000)
+# Set ownership — use getent for robust UID/GID detection
+INSTALL_UID=$(getent passwd -s files "$INSTALL_USER" 2>/dev/null | cut -d: -f3)
+INSTALL_GID=$(getent passwd -s files "$INSTALL_USER" 2>/dev/null | cut -d: -f4)
+# Fallback: read directly from target passwd
+if [[ -z "$INSTALL_UID" ]]; then
+    INSTALL_UID=$(awk -F: -v u="$INSTALL_USER" '$1==u{print $3}' "$MOUNT/etc/passwd" 2>/dev/null)
+    INSTALL_GID=$(awk -F: -v u="$INSTALL_USER" '$1==u{print $4}' "$MOUNT/etc/passwd" 2>/dev/null)
+fi
+INSTALL_UID=${INSTALL_UID:-1000}
+INSTALL_GID=${INSTALL_GID:-1000}
 chown -R "$INSTALL_UID:$INSTALL_GID" "$USER_HOME"
 ok "User configs applied to /home/$INSTALL_USER."
 

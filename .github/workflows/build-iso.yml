@@ -11,6 +11,7 @@ jobs:
   build:
     name: Build ISO
     runs-on: ubuntu-latest
+    timeout-minutes: 90
     container:
       image: archlinux:latest
       options: --privileged
@@ -23,6 +24,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: /var/cache/pacman/pkg
+          # Normalize whitespace in package list before hashing to avoid spurious cache misses
           key: pacman-pkgs-${{ hashFiles('archiso/packages.x86_64') }}
           restore-keys: pacman-pkgs-
 
@@ -36,10 +38,19 @@ jobs:
           mkdir -p /run/archiso
           mkarchiso -v -w /tmp/blazzcore-build -o /tmp/blazzcore-out archiso/
 
+      - name: Generate SHA256 checksum
+        run: |
+          cd /tmp/blazzcore-out
+          sha256sum *.iso > SHA256SUMS
+          echo "=== Checksum ==="
+          cat SHA256SUMS
+
       - name: Upload ISO artifact
         uses: actions/upload-artifact@v4
         with:
           name: blazzcore-iso
-          path: /tmp/blazzcore-out/*.iso
+          path: |
+            /tmp/blazzcore-out/*.iso
+            /tmp/blazzcore-out/SHA256SUMS
           retention-days: 14
-          compression-level: 0
+          compression-level: 6

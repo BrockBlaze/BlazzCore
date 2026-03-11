@@ -1,0 +1,63 @@
+/* ============================================
+   BlazzCore Dock — Windows 11 Taskbar Style
+   ============================================ */
+
+* {
+    all: unset;
+    box-sizing: border-box;
+}
+
+window {
+    background-color: rgba(11, 11, 22, 0.93);
+    border-top: 1px solid rgba(80, 80, 150, 0.22);
+}
+
+#box {
+    padding: 0 6px;
+    background: transparent;
+}
+
+/* ---- Each app button ---- */
+button {
+    border-radius: 5px 5px 3px 3px;
+    padding: 5px 10px;
+    margin: 5px 2px;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    min-width: 46px;
+    min-height: 38px;
+    transition: all 120ms ease;
+}
+
+button:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    border-bottom: 3px solid rgba(128, 128, 200, 0.4);
+}
+
+/* Active (running + focused) */
+button.active {
+    background-color: rgba(128, 128, 200, 0.15);
+    border-bottom: 3px solid #8080c8;
+    border-radius: 5px 5px 2px 2px;
+}
+
+button.active:hover {
+    background-color: rgba(128, 128, 200, 0.24);
+}
+
+/* Running but not focused — subtle dot indicator */
+button.open {
+    border-bottom: 3px solid rgba(128, 128, 200, 0.5);
+}
+
+image {
+    padding: 0 2px;
+}
+
+/* Separator between pinned and running sections */
+separator {
+    background-color: rgba(80, 80, 150, 0.2);
+    min-width: 1px;
+    margin: 10px 6px;
+}

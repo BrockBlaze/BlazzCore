@@ -4,16 +4,40 @@
 # ============================================
 # Launches Chromium with hardware acceleration
 # and Wayland-native rendering enabled.
+#
+# GPU log: ~/.local/share/blazzcore/chromium-gpu.log
+
+if ! command -v chromium &>/dev/null; then
+    notify-send "Browser Error" "Chromium is not installed. Run: sudo pacman -S chromium" -u critical
+    exit 1
+fi
+
+LOG_DIR="$HOME/.local/share/blazzcore"
+mkdir -p "$LOG_DIR"
+
+# Detect GPU vendor to choose optimal acceleration path
+GPU_VENDOR=$(lspci 2>/dev/null | grep -i 'vga\|3d\|display' | head -1 | tr '[:upper:]' '[:lower:]')
+
+FEATURES="VaapiVideoDecoder,VaapiVideoEncoder,VaapiIgnoreDriverChecks"
+
+if echo "$GPU_VENDOR" | grep -qE 'intel|amd|radeon'; then
+    # Intel/AMD: VAAPI + Vulkan/ANGLE is well-supported
+    FEATURES="$FEATURES,Vulkan,DefaultANGLEVulkan,VulkanFromANGLE"
+    ANGLE_ARGS=(--use-gl=angle --use-angle=vulkan)
+else
+    # Unknown/VM GPU: use EGL to avoid crashes, skip Vulkan
+    ANGLE_ARGS=(--use-gl=egl)
+fi
 
 exec chromium \
     --ozone-platform=wayland \
-    --enable-features=VaapiVideoDecoder,VaapiVideoEncoder,VaapiIgnoreDriverChecks,Vulkan,DefaultANGLEVulkan,VulkanFromANGLE \
-    --use-gl=angle \
-    --use-angle=vulkan \
+    --enable-features="$FEATURES" \
+    "${ANGLE_ARGS[@]}" \
     --enable-gpu-rasterization \
     --enable-zero-copy \
     --ignore-gpu-blocklist \
     --enable-accelerated-video-decode \
     --disable-gpu-driver-bug-workarounds \
     --enable-wayland-ime \
-    "$@"
+    "$@" \
+    2>>"$LOG_DIR/chromium-gpu.log"

@@ -4,13 +4,14 @@
     "height": 36,
     "spacing": 0,
     "modules-left": ["custom/menu", "wlr/taskbar"],
-    "modules-center": ["clock"],
-    "modules-right": ["tray", "network", "pulseaudio", "backlight", "battery", "custom/nightlight", "custom/power"],
+    "modules-center": ["mpris", "clock"],
+    "modules-right": ["tray", "custom/notifications", "custom/updates", "cpu", "memory", "keyboard-state", "network", "pulseaudio", "backlight", "battery", "custom/nightlight", "custom/power"],
 
     "custom/menu": {
-        "format": "  BlazzCore",
-        "on-click": "wofi --show drun --allow-images",
-        "tooltip": false
+        "format": "⊞",
+        "on-click": "blazzcore-startmenu",
+        "tooltip-format": "Start Menu  (Super+Space)",
+        "tooltip": true
     },
 
     "wlr/taskbar": {
@@ -30,22 +31,66 @@
         "interval": 1
     },
 
+    "mpris": {
+        "format": "{player_icon} {dynamic}",
+        "format-paused": "{player_icon} {dynamic}",
+        "player-icons": {
+            "default": "▶",
+            "mpv": "🎥"
+        },
+        "status-icons": {
+            "paused": "⏸"
+        },
+        "dynamic-len": 30,
+        "dynamic-importance-order": ["title", "artist", "album"],
+        "on-click": "playerctl play-pause",
+        "on-scroll-up": "playerctl next",
+        "on-scroll-down": "playerctl previous",
+        "tooltip-format": "{title}\n{artist}\n{album}"
+    },
+
     "network": {
-        "format-wifi": " {essid}",
-        "format-ethernet": " {ipaddr}",
-        "format-disconnected": "󰖪 No Network",
+        "format-wifi": "󰤨 {essid}",
+        "format-ethernet": "󰈀 {ipaddr}",
+        "format-disconnected": "󰤭 No Network",
         "tooltip-format-wifi": "{essid} — {signalStrength}%\n{ipaddr}",
         "tooltip-format-ethernet": "{ifname}: {ipaddr}",
         "on-click": "foot -e nmtui"
+    },
+
+    "cpu": {
+        "format": " {usage}%",
+        "interval": 5,
+        "tooltip-format": "CPU: {usage}%  Load: {load}",
+        "on-click": "foot -e btop"
+    },
+
+    "memory": {
+        "format": " {percentage}%",
+        "interval": 10,
+        "tooltip-format": "RAM: {used:0.1f}G / {total:0.1f}G",
+        "on-click": "foot -e btop"
+    },
+
+    "keyboard-state": {
+        "numlock": false,
+        "capslock": true,
+        "format": "{name} {icon}",
+        "format-icons": {
+            "locked": "󰌆",
+            "unlocked": ""
+        }
     },
 
     "pulseaudio": {
         "format": "{icon} {volume}%",
         "format-muted": "󰝟 Muted",
         "format-icons": {
-            "default": ["󰕿", "󰖀", "󰕾"]
+            "default": ["󰕿", "󰕾", "󰕾"],
+            "headphone": "󰋋",
+            "headset": "󰋎"
         },
-        "on-click": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle && blazzcore-volume-osd",
+        "on-click": "blazzcore-volume mute",
         "on-scroll-up": "blazzcore-volume up",
         "on-scroll-down": "blazzcore-volume down",
         "tooltip-format": "{desc}: {volume}%"
@@ -72,8 +117,35 @@
         "spacing": 6
     },
 
+    "custom/updates": {
+        "exec": "COUNT=$(checkupdates 2>/dev/null | wc -l); [ \"$COUNT\" -gt 0 ] && echo \"↑ $COUNT\" || echo ''",
+        "interval": 3600,
+        "on-click": "foot --title='System Update' -e bash -c 'sudo pacman -Syu; echo; echo \"Press Enter to close...\"; read'",
+        "tooltip-format": "Updates available — click to upgrade",
+        "return-type": ""
+    },
+
+    "custom/notifications": {
+        "exec": "swaync-client -swb",
+        "exec-if": "which swaync-client",
+        "return-type": "json",
+        "format": "{icon}",
+        "format-icons": {
+            "notification": "󰂚",
+            "none": "󰂜",
+            "dnd-notification": "󰂛",
+            "dnd-none": "󰂛",
+            "inhibited-notification": "󰂚",
+            "inhibited-none": "󰂜"
+        },
+        "on-click": "swaync-client -t -sw",
+        "on-click-right": "swaync-client -d -sw",
+        "tooltip-format": "Notifications — right-click to toggle Do Not Disturb",
+        "escape": true
+    },
+
     "custom/nightlight": {
-        "exec": "pgrep -x wlsunset >/dev/null && echo '󰛨' || echo '󰛨'",
+        "exec": "pgrep -x wlsunset >/dev/null && echo '󰛨 On' || echo ' Off'",
         "interval": 3,
         "on-click": "blazzcore-nightlight",
         "tooltip-format": "Toggle Night Light (Super+N)"

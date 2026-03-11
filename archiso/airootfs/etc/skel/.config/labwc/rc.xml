@@ -59,7 +59,10 @@
       <action name="Execute"><command>blazzcore-browser</command></action>
     </keybind>
     <keybind key="Super+d">
-      <action name="Execute"><command>wofi --show drun --allow-images</command></action>
+      <action name="Execute"><command>blazzcore-startmenu</command></action>
+    </keybind>
+    <keybind key="Super+space">
+      <action name="Execute"><command>blazzcore-startmenu</command></action>
     </keybind>
     <keybind key="Super+e">
       <action name="Execute"><command>thunar</command></action>
@@ -150,6 +153,9 @@
     </keybind>
     <keybind key="Super+shift+p">
       <action name="Execute"><command>blazzcore-power</command></action>
+    </keybind>
+    <keybind key="Control+Shift+Escape">
+      <action name="Execute"><command>blazzcore-taskmanager</command></action>
     </keybind>
 
     <!-- Media keys with OSD -->

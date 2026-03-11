@@ -1,12 +1,25 @@
 #!/usr/bin/env bash
 # BlazzCore night light toggle (wlsunset)
 # Reduces blue light with warm color temperature
+#
+# Customize warmth in ~/.config/blazzcore/nightlight.conf:
+#   NIGHT_TEMP=3500   # warm temp (K) — lower = warmer/more orange
+#   DAY_TEMP=6500     # day temp (K)  — higher = cooler/more blue
+
+CONF="$HOME/.config/blazzcore/nightlight.conf"
+NIGHT_TEMP=3500
+DAY_TEMP=6500
+
+# Load user config if present
+if [[ -f "$CONF" ]]; then
+    # shellcheck disable=SC1090
+    source "$CONF"
+fi
 
 if pgrep -x wlsunset > /dev/null; then
     pkill -x wlsunset
     notify-send "Night Light" "Disabled" -i weather-clear
 else
-    # 4000K warm tone; latitude auto-detection falls back to manual temp
-    wlsunset -t 3500 -T 6500 &
-    notify-send "Night Light" "Enabled — warm color temperature" -i weather-clear-night
+    wlsunset -t "$NIGHT_TEMP" -T "$DAY_TEMP" &
+    notify-send "Night Light" "Enabled (${NIGHT_TEMP}K warm)" -i weather-clear-night
 fi

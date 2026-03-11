@@ -1,0 +1,17 @@
+width=480
+height=560
+location=bottom
+xoffset=0
+yoffset=0
+show=drun
+allow_images=true
+image_size=28
+columns=1
+orientation=vertical
+insensitive=true
+prompt=Search apps and settings...
+no_actions=true
+hide_scroll=true
+line_wrap=word
+allow_markup=true
+matching=fuzzy

@@ -52,11 +52,11 @@ foot
 wofi
 grim
 slurp
-mako
 
 # --- Seat Management ---
 seatd
 polkit
+xfce-polkit
 
 # --- GPU / Hardware Acceleration ---
 mesa
@@ -84,6 +84,7 @@ noto-fonts-cjk
 noto-fonts-emoji
 ttf-liberation
 ttf-dejavu
+ttf-hack-nerd
 fontconfig
 freetype2
 harfbuzz
@@ -97,16 +98,19 @@ plymouth
 # --- Desktop Shell ---
 nwg-look
 nwg-dock
-nwg-menu
 wdisplays
 pcmanfm
 gvfs
 thunar
 thunar-volman
+thunar-archive-plugin
 gvfs-mtp
 xdg-user-dirs
 papirus-icon-theme
 adwaita-icon-theme
+network-manager-applet
+swaync
+playerctl
 
 # --- Apps ---
 mousepad
@@ -131,6 +135,13 @@ wlsunset
 # --- Performance (compressed RAM swap) ---
 zram-generator
 
+# --- Shell ---
+starship
+
+# --- Start menu dependencies ---
+gtk-layer-shell
+python-gobject
+
 # --- Utilities ---
 htop
 brightnessctl
@@ -140,3 +151,10 @@ bash-completion
 zenity
 pulsemixer
 wob
+fastfetch
+bat
+fzf
+ripgrep
+jq
+unzip
+p7zip

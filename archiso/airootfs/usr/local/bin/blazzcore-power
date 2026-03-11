@@ -17,12 +17,22 @@ CHOICE=$(zenity --list \
 case "$CHOICE" in
     "Shutdown") systemctl poweroff ;;
     "Restart")  systemctl reboot ;;
-    "Suspend")  blazzcore-lock & sleep 1 && systemctl suspend ;;
-    "Lock")     blazzcore-lock ;;
+    "Suspend")
+        # Lock first, wait until swaylock is running, then suspend
+        blazzcore-lock &
+        for _ in {1..30}; do
+            pgrep -x swaylock > /dev/null && break
+            sleep 0.1
+        done
+        systemctl suspend
+        ;;
+    "Lock") blazzcore-lock ;;
     "Log Out")
         zenity --question --title="Log Out" \
             --text="Exit BlazzCore?" \
             --ok-label="Log Out" --cancel-label="Cancel" \
-            --width=300 2>/dev/null && labwc --exit
+            --width=300 2>/dev/null || exit 0
+        # Try graceful exit first, fall back to SIGTERM
+        labwc --exit 2>/dev/null || pkill -TERM -x labwc
         ;;
 esac

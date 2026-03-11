@@ -1,41 +1,549 @@
-#!/usr/bin/env bash
-# BlazzCore Settings
+#!/usr/bin/env python3
+"""BlazzCore Settings — GTK3 sidebar settings app"""
 
-CHOICE=$(zenity --list \
-    --title="BlazzCore Settings" \
-    --text="Double-click a setting to open it:" \
-    --column="Setting" --column="Description" \
-    "Display & Monitors"  "Resolution, arrangement, refresh rate" \
-    "Accent Color"        "Window border and title bar color" \
-    "Appearance & Themes" "GTK theme, icons, cursor, fonts" \
-    "Wallpaper"           "Set desktop background image" \
-    "Dock Position"       "Move dock to bottom, left, right, or top" \
-    "Sound"               "Volume mixer and audio devices" \
-    "Bluetooth"           "Bluetooth devices and connections" \
-    "Network"             "Wi-Fi and network connections" \
-    "Night Light"         "Warm color temperature to reduce eye strain" \
-    "Date & Time"         "Timezone and clock settings" \
-    "Update System"       "Install available package updates" \
-    --width=600 --height=560 \
-    --print-column=1 2>/dev/null)
+import gi
+gi.require_version('Gtk', '3.0')
+from gi.repository import Gtk, Gdk
+import subprocess, os, re
 
-case "$CHOICE" in
-    "Display & Monitors")  wdisplays ;;
-    "Accent Color")        blazzcore-accent ;;
-    "Appearance & Themes") nwg-look ;;
-    "Wallpaper")           blazzcore-wallpaper ;;
-    "Dock Position")       blazzcore-dock ;;
-    "Sound")               pavucontrol ;;
-    "Bluetooth")           blueman-manager ;;
-    "Network")             foot --title="Network" -e nmtui ;;
-    "Night Light")         blazzcore-nightlight ;;
-    "Date & Time")
-        TZ=$(timedatectl list-timezones | zenity --list \
-            --title="Select Timezone" --text="Choose your timezone:" \
-            --column="Timezone" --width=500 --height=500 \
-            --print-column=1 2>/dev/null)
-        [[ -n "$TZ" ]] && sudo timedatectl set-timezone "$TZ"
-        ;;
-    "Update System")
-        foot --title="System Update" -e sudo pacman -Syu ;;
-esac
+HOME      = os.path.expanduser('~')
+AUTOSTART = f'{HOME}/.config/labwc/autostart'
+NL_CONF   = f'{HOME}/.config/blazzcore/nightlight.conf'
+
+# ── CSS ───────────────────────────────────────────────────────────────────────
+CSS = b"""
+window { background-color: #12121e; color: #e0e0f0; }
+
+stacksidebar {
+    background-color: #0d0d1a;
+    min-width: 180px;
+    border-right: 1px solid #222232;
+}
+stacksidebar list { background: transparent; }
+stacksidebar list row {
+    padding: 10px 20px;
+    color: #9090b8;
+    border-radius: 0;
+    border-left: 3px solid transparent;
+}
+stacksidebar list row:hover:not(:selected) {
+    background: #16162a;
+    color: #c0c0e0;
+}
+stacksidebar list row:selected {
+    background: #1c1c30;
+    color: #ffffff;
+    border-left: 3px solid #6060b8;
+}
+
+.page-title {
+    font-size: 19px;
+    font-weight: bold;
+    color: #e8e8ff;
+    margin-bottom: 2px;
+}
+.subtitle { color: #6868a0; font-size: 12px; }
+.dim      { color: #6868a0; font-size: 12px; }
+
+.card {
+    background-color: #181828;
+    border: 1px solid #252540;
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 12px;
+}
+
+button {
+    background: #222236;
+    color: #d0d0f0;
+    border: 1px solid #303050;
+    border-radius: 6px;
+    padding: 5px 14px;
+    min-height: 28px;
+}
+button:hover  { background: #2c2c46; }
+button.action { background: #46468a; color: #fff; border-color: #5555a8; }
+button.action:hover { background: #5252a0; }
+
+entry {
+    background: #181828;
+    color: #e0e0f0;
+    border: 1px solid #303050;
+    border-radius: 5px;
+    padding: 4px 8px;
+}
+entry:focus { border-color: #6060b8; }
+
+spinbutton { background: #181828; color: #e0e0f0; border: 1px solid #303050; border-radius: 5px; }
+
+scale trough    { background: #252540; min-height: 4px; }
+scale highlight { background: #50509a; }
+
+switch slider      { background: #444460; border-radius: 50%; }
+switch             { background: #252540; border-radius: 14px; min-width: 46px; min-height: 26px; }
+switch:checked     { background: #46468a; }
+
+listbox             { background: transparent; }
+listbox row         { background: #181828; border-bottom: 1px solid #1e1e38; padding: 7px 12px; }
+listbox row:hover   { background: #20203a; }
+listbox row:selected { background: #26264a; }
+
+searchentry {
+    background: #181828;
+    color: #e0e0f0;
+    border: 1px solid #303050;
+    border-radius: 6px;
+    padding: 5px 10px;
+}
+
+separator { background-color: #222238; min-height: 1px; }
+label { color: #e0e0f0; }
+"""
+
+# ── Helpers ───────────────────────────────────────────────────────────────────
+def run_bg(cmd):
+    subprocess.Popen(cmd, shell=isinstance(cmd, str))
+
+def run_term(title, cmd):
+    run_bg(f"foot --title='{title}' -e bash -c '{cmd}; echo; echo \"Press Enter to close...\"; read'")
+
+def conf_get(path, key, default=''):
+    try:
+        for line in open(path):
+            m = re.match(rf'^{key}=(.+)', line.strip())
+            if m:
+                return m.group(1).strip('"\'')
+    except FileNotFoundError:
+        pass
+    return default
+
+def conf_set(path, key, value):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    try:
+        lines = open(path).readlines()
+    except FileNotFoundError:
+        lines = []
+    found = False
+    for i, l in enumerate(lines):
+        if l.startswith(f'{key}='):
+            lines[i] = f'{key}={value}\n'; found = True; break
+    if not found:
+        lines.append(f'{key}={value}\n')
+    open(path, 'w').writelines(lines)
+
+def _shell(cmd):
+    try:
+        return subprocess.check_output(cmd, text=True,
+               stderr=subprocess.DEVNULL, shell=isinstance(cmd, str)).strip()
+    except Exception:
+        return ''
+
+# ── Page building primitives ──────────────────────────────────────────────────
+def page_box():
+    scroll = Gtk.ScrolledWindow()
+    scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+    vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+    vbox.set_border_width(30)
+    scroll.add(vbox)
+    return scroll, vbox
+
+def page_title(text, sub=None):
+    box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=3)
+    t = Gtk.Label(label=text, xalign=0)
+    t.get_style_context().add_class('page-title')
+    box.pack_start(t, False, False, 0)
+    if sub:
+        s = Gtk.Label(label=sub, xalign=0)
+        s.get_style_context().add_class('subtitle')
+        box.pack_start(s, False, False, 0)
+    sep = Gtk.Separator()
+    sep.set_margin_top(12); sep.set_margin_bottom(16)
+    box.pack_start(sep, False, False, 0)
+    return box
+
+def card():
+    b = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+    b.get_style_context().add_class('card')
+    return b
+
+def row(label, desc=None, widget=None):
+    hb = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+    hb.set_margin_top(2); hb.set_margin_bottom(2)
+    vb = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=1)
+    vb.pack_start(Gtk.Label(label=label, xalign=0), False, False, 0)
+    if desc:
+        d = Gtk.Label(label=desc, xalign=0)
+        d.get_style_context().add_class('dim')
+        vb.pack_start(d, False, False, 0)
+    hb.pack_start(vb, True, True, 0)
+    if widget:
+        widget.set_valign(Gtk.Align.CENTER)
+        hb.pack_end(widget, False, False, 0)
+    return hb
+
+def btn(label, cb, css='action'):
+    b = Gtk.Button(label=label)
+    if css:
+        b.get_style_context().add_class(css)
+    b.connect('clicked', lambda _: cb())
+    return b
+
+def hsep():
+    s = Gtk.Separator()
+    s.set_margin_top(2); s.set_margin_bottom(2)
+    return s
+
+def status_label(text=''):
+    l = Gtk.Label(label=text, xalign=0)
+    l.get_style_context().add_class('dim')
+    l.set_margin_top(6)
+    return l
+
+def searchable_list(items, on_activate):
+    vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+    search = Gtk.SearchEntry()
+    search.set_placeholder_text('Search...')
+
+    scroll = Gtk.ScrolledWindow()
+    scroll.set_size_request(-1, 290)
+    scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+
+    lb = Gtk.ListBox()
+    lb.set_selection_mode(Gtk.SelectionMode.SINGLE)
+    for item in items:
+        r = Gtk.ListBoxRow()
+        l = Gtk.Label(label=item, xalign=0)
+        l.set_margin_start(8); l.set_margin_top(3); l.set_margin_bottom(3)
+        r.add(l)
+        lb.add(r)
+
+    def _filter(row, _=None):
+        q = search.get_text().lower()
+        return not q or q in row.get_child().get_text().lower()
+
+    lb.set_filter_func(_filter)
+    search.connect('search-changed', lambda _: lb.invalidate_filter())
+    lb.connect('row-activated', lambda lb, r: on_activate(r.get_child().get_text()))
+
+    scroll.add(lb)
+    vbox.pack_start(search, False, False, 0)
+    vbox.pack_start(scroll, True, True, 0)
+    return vbox
+
+# ── Pages ─────────────────────────────────────────────────────────────────────
+def page_display():
+    s, b = page_box()
+    b.pack_start(page_title('Display & Monitors',
+        'Configure resolution, refresh rate, and monitor layout'), False, False, 0)
+    c = card()
+    c.pack_start(row('Display Configuration',
+        'Arrange monitors, set resolution and refresh rate',
+        btn('Open', lambda: run_bg('wdisplays'))), False, False, 0)
+    b.pack_start(c, False, False, 0)
+    return s
+
+def page_appearance():
+    s, b = page_box()
+    b.pack_start(page_title('Appearance', 'Colors, wallpaper, theme, icons, and fonts'), False, False, 0)
+    c1 = card()
+    c1.pack_start(row('Accent Color', 'Window border and highlight color',
+        btn('Change', lambda: run_bg('blazzcore-accent'))), False, False, 0)
+    c1.pack_start(hsep(), False, False, 0)
+    c1.pack_start(row('Wallpaper', 'Set the desktop background image',
+        btn('Choose', lambda: run_bg('blazzcore-wallpaper'))), False, False, 0)
+    b.pack_start(c1, False, False, 0)
+    c2 = card()
+    c2.pack_start(row('GTK Theme & Icons', 'Application theme, icon pack, cursor, and fonts',
+        btn('Open', lambda: run_bg('nwg-look'))), False, False, 0)
+    b.pack_start(c2, False, False, 0)
+    return s
+
+def page_dock():
+    s, b = page_box()
+    b.pack_start(page_title('Dock', 'Set the position of the application dock'), False, False, 0)
+    c = card()
+    positions = [
+        ('Bottom', 'Place the dock at the bottom of the screen', 'bottom'),
+        ('Left',   'Place the dock on the left side',            'left'),
+        ('Right',  'Place the dock on the right side',           'right'),
+        ('Top',    'Place the dock at the top of the screen',    'top'),
+    ]
+    for i, (label, desc, pos) in enumerate(positions):
+        c.pack_start(row(label, desc,
+            btn('Set', (lambda p: lambda: run_bg(f'blazzcore-dock {p}'))(pos))), False, False, 0)
+        if i < len(positions) - 1:
+            c.pack_start(hsep(), False, False, 0)
+    b.pack_start(c, False, False, 0)
+    return s
+
+def page_sound():
+    s, b = page_box()
+    b.pack_start(page_title('Sound', 'Volume, audio devices, and mixer'), False, False, 0)
+    c = card()
+    c.pack_start(row('Audio Mixer', 'Adjust per-application volume and output devices',
+        btn('Open Mixer', lambda: run_bg('pavucontrol'))), False, False, 0)
+    b.pack_start(c, False, False, 0)
+    return s
+
+def page_bluetooth():
+    s, b = page_box()
+    b.pack_start(page_title('Bluetooth', 'Pair and manage Bluetooth peripherals'), False, False, 0)
+    c = card()
+    c.pack_start(row('Bluetooth Devices', 'Connect headphones, keyboards, mice, and more',
+        btn('Open', lambda: run_bg('blueman-manager'))), False, False, 0)
+    b.pack_start(c, False, False, 0)
+    return s
+
+def page_network():
+    s, b = page_box()
+    b.pack_start(page_title('Network', 'Wi-Fi and wired network connections'), False, False, 0)
+    c = card()
+    c.pack_start(row('Network Manager', 'Connect to Wi-Fi, configure VPN and wired connections',
+        btn('Open', lambda: run_term('Network', 'nmtui'))), False, False, 0)
+    b.pack_start(c, False, False, 0)
+    return s
+
+def page_nightlight():
+    s, b = page_box()
+    b.pack_start(page_title('Night Light', 'Reduce blue light with warm color temperature'), False, False, 0)
+
+    c1 = card()
+    is_on = subprocess.run(['pgrep', '-x', 'wlsunset'], capture_output=True).returncode == 0
+    sw = Gtk.Switch()
+    sw.set_active(is_on)
+    sw.connect('notify::active', lambda *_: run_bg('blazzcore-nightlight'))
+    c1.pack_start(row('Enable Night Light', 'Reduce eye strain by warming the screen color', sw), False, False, 0)
+    b.pack_start(c1, False, False, 0)
+
+    c2 = card()
+    night_t = int(conf_get(NL_CONF, 'NIGHT_TEMP', '3500'))
+    day_t   = int(conf_get(NL_CONF, 'DAY_TEMP',   '6500'))
+
+    def temp_row(label, val, lo, hi, key):
+        hb = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        lbl = Gtk.Label(label=label, xalign=0)
+        lbl.set_size_request(140, -1)
+        sc = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, lo, hi, 100)
+        sc.set_value(val); sc.set_draw_value(False); sc.set_size_request(200, -1)
+        vl = Gtk.Label(label=f'{val}K'); vl.set_size_request(55, -1)
+        def on_change(sc, vl=vl, k=key):
+            v = int(sc.get_value()); vl.set_text(f'{v}K'); conf_set(NL_CONF, k, str(v))
+        sc.connect('value-changed', on_change)
+        hb.pack_start(lbl, False, False, 0)
+        hb.pack_start(sc, True, True, 0)
+        hb.pack_start(vl, False, False, 0)
+        return hb
+
+    c2.pack_start(temp_row('Night (warm)', night_t, 1000, 6500,  'NIGHT_TEMP'), False, False, 0)
+    c2.pack_start(hsep(), False, False, 0)
+    c2.pack_start(temp_row('Day (cool)',   day_t,   3000, 10000, 'DAY_TEMP'),   False, False, 0)
+    b.pack_start(c2, False, False, 0)
+    return s
+
+def page_keyboard():
+    s, b = page_box()
+    b.pack_start(page_title('Keyboard', 'Set your keyboard input layout'), False, False, 0)
+
+    cur_layout = _shell(['localectl', 'get-keymap']) or 'us'
+
+    cur_lbl = Gtk.Label(label=f'Current layout:  {cur_layout}', xalign=0)
+    cur_lbl.get_style_context().add_class('dim')
+    cur_lbl.set_margin_bottom(12)
+    b.pack_start(cur_lbl, False, False, 0)
+
+    try:
+        keymaps = _shell(['localectl', 'list-keymaps']).splitlines()
+    except Exception:
+        keymaps = ['us', 'uk', 'de', 'fr', 'es']
+
+    st = status_label('Double-click a layout to apply it.')
+
+    def apply_layout(layout):
+        result = subprocess.run(['sudo', 'localectl', 'set-keymap', layout],
+                                capture_output=True, text=True)
+        if result.returncode == 0:
+            cur_lbl.set_text(f'Current layout:  {layout}')
+            st.set_text(f'✓  Layout set to \'{layout}\'.')
+        else:
+            st.set_text(f'Failed: {result.stderr.strip()}')
+
+    b.pack_start(searchable_list(keymaps, apply_layout), True, True, 0)
+    b.pack_start(st, False, False, 0)
+    return s
+
+def page_power():
+    s, b = page_box()
+    b.pack_start(page_title('Power Management', 'Configure idle timeouts for lock and display'), False, False, 0)
+
+    def spin_row(label, desc, val, key):
+        spin = Gtk.SpinButton.new_with_range(30, 7200, 30)
+        spin.set_value(int(val)); spin.set_size_request(90, -1)
+        suf = Gtk.Label(label='sec'); suf.get_style_context().add_class('dim')
+        save = btn('Save', (lambda k, sp: lambda: conf_set(AUTOSTART, k, str(int(sp.get_value()))))(key, spin))
+        hb = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        vb = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=1)
+        vb.pack_start(Gtk.Label(label=label, xalign=0), False, False, 0)
+        d = Gtk.Label(label=desc, xalign=0); d.get_style_context().add_class('dim')
+        vb.pack_start(d, False, False, 0)
+        hb.pack_start(vb, True, True, 0)
+        hb.pack_end(save, False, False, 0)
+        hb.pack_end(suf, False, False, 0)
+        hb.pack_end(spin, False, False, 0)
+        return hb
+
+    c = card()
+    c.pack_start(spin_row('Lock screen after',
+        'Seconds of idle before locking', conf_get(AUTOSTART, 'IDLE_LOCK', '300'), 'IDLE_LOCK'), False, False, 0)
+    c.pack_start(hsep(), False, False, 0)
+    c.pack_start(spin_row('Display off after',
+        'Seconds of idle before turning display off', conf_get(AUTOSTART, 'IDLE_DPMS', '600'), 'IDLE_DPMS'), False, False, 0)
+    b.pack_start(c, False, False, 0)
+    note = status_label('Changes apply on next login.')
+    b.pack_start(note, False, False, 0)
+    return s
+
+def page_datetime():
+    s, b = page_box()
+    b.pack_start(page_title('Date & Time', 'Set your timezone'), False, False, 0)
+
+    cur_tz_m = re.search(r'Time zone:\s+(\S+)', _shell(['timedatectl', 'status']))
+    cur_tz = cur_tz_m.group(1) if cur_tz_m else 'UTC'
+
+    cur_lbl = Gtk.Label(label=f'Current timezone:  {cur_tz}', xalign=0)
+    cur_lbl.get_style_context().add_class('dim')
+    cur_lbl.set_margin_bottom(12)
+    b.pack_start(cur_lbl, False, False, 0)
+
+    try:
+        tzones = _shell(['timedatectl', 'list-timezones']).splitlines()
+    except Exception:
+        tzones = ['UTC', 'America/New_York', 'Europe/London']
+
+    st = status_label('Double-click a timezone to apply it.')
+
+    def apply_tz(tz):
+        if tz not in _shell(['timedatectl', 'list-timezones']).splitlines():
+            st.set_text(f'Invalid timezone: {tz}'); return
+        result = subprocess.run(['sudo', 'timedatectl', 'set-timezone', tz],
+                                capture_output=True, text=True)
+        if result.returncode == 0:
+            cur_lbl.set_text(f'Current timezone:  {tz}')
+            st.set_text(f'✓  Timezone set to \'{tz}\'.')
+        else:
+            st.set_text(f'Failed: {result.stderr.strip()}')
+
+    b.pack_start(searchable_list(tzones, apply_tz), True, True, 0)
+    b.pack_start(st, False, False, 0)
+    return s
+
+def page_updates():
+    s, b = page_box()
+    b.pack_start(page_title('System Updates', 'Install available package updates'), False, False, 0)
+    c = card()
+    c.pack_start(row('Update All Packages', 'Install latest updates from Arch Linux repositories',
+        btn('Update Now', lambda: run_term('System Update', 'sudo pacman -Syu'))), False, False, 0)
+    b.pack_start(c, False, False, 0)
+    return s
+
+def page_drivers():
+    s, b = page_box()
+    b.pack_start(page_title('Driver Manager', 'Detect and install hardware drivers'), False, False, 0)
+    c = card()
+    c.pack_start(row('Hardware Drivers', 'Scan for GPU, WiFi, and other hardware and install drivers',
+        btn('Scan Hardware', lambda: run_bg('blazzcore-drivers'))), False, False, 0)
+    b.pack_start(c, False, False, 0)
+    return s
+
+def page_software():
+    s, b = page_box()
+    b.pack_start(page_title('Software Center', 'Browse and install applications'), False, False, 0)
+    c = card()
+    c.pack_start(row('Install Applications', 'Browse available packages and install software',
+        btn('Open', lambda: run_bg('blazzcore-store'))), False, False, 0)
+    b.pack_start(c, False, False, 0)
+    return s
+
+def page_about():
+    s, b = page_box()
+    b.pack_start(page_title('About BlazzCore'), False, False, 0)
+
+    version  = _shell(['cat', '/etc/blazzcore-version']) or 'BlazzCore'
+    kernel   = _shell(['uname', '-r'])
+    pkg_cnt  = _shell('pacman -Q 2>/dev/null | wc -l') + ' packages'
+    uptime   = _shell(['uptime', '-p'])
+
+    c = card()
+    for i, (k, v) in enumerate([
+        ('Version',      version),
+        ('Kernel',       kernel),
+        ('Architecture', 'x86_64'),
+        ('Packages',     pkg_cnt),
+        ('Uptime',       uptime),
+    ]):
+        hb = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
+        kl = Gtk.Label(label=k, xalign=0); kl.set_size_request(160, -1)
+        kl.get_style_context().add_class('dim')
+        vl = Gtk.Label(label=v, xalign=0)
+        hb.pack_start(kl, False, False, 0)
+        hb.pack_start(vl, True, True, 0)
+        c.pack_start(hb, False, False, 2)
+        if i < 4:
+            c.pack_start(hsep(), False, False, 0)
+    b.pack_start(c, False, False, 0)
+    return s
+
+# ── Main window ───────────────────────────────────────────────────────────────
+class SettingsApp(Gtk.Window):
+    def __init__(self):
+        super().__init__(title='BlazzCore Settings')
+        self.set_default_size(900, 640)
+        self.set_border_width(0)
+
+        provider = Gtk.CssProvider()
+        provider.load_from_data(CSS)
+        Gtk.StyleContext.add_provider_for_screen(
+            Gdk.Screen.get_default(), provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+
+        hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        self.add(hbox)
+
+        stack = Gtk.Stack()
+        stack.set_transition_type(Gtk.StackTransitionType.CROSSFADE)
+        stack.set_transition_duration(80)
+
+        sidebar = Gtk.StackSidebar()
+        sidebar.set_stack(stack)
+
+        pages = [
+            ('display',    '  Display',      page_display),
+            ('appearance', '  Appearance',   page_appearance),
+            ('dock',       '  Dock',         page_dock),
+            ('sound',      '  Sound',        page_sound),
+            ('bluetooth',  '  Bluetooth',    page_bluetooth),
+            ('network',    '  Network',      page_network),
+            ('nightlight', '  Night Light',  page_nightlight),
+            ('keyboard',   '  Keyboard',     page_keyboard),
+            ('power',      '  Power',        page_power),
+            ('datetime',   '  Date & Time',  page_datetime),
+            ('updates',    '  Updates',      page_updates),
+            ('drivers',    '  Drivers',      page_drivers),
+            ('software',   '  Software',     page_software),
+            ('about',      '  About',        page_about),
+        ]
+
+        for name, label, builder in pages:
+            stack.add_titled(builder(), name, label)
+
+        hbox.pack_start(sidebar, False, False, 0)
+        hbox.pack_start(Gtk.Separator(orientation=Gtk.Orientation.VERTICAL), False, False, 0)
+        hbox.pack_start(stack, True, True, 0)
+
+
+def main():
+    win = SettingsApp()
+    win.connect('destroy', Gtk.main_quit)
+    win.show_all()
+    Gtk.main()
+
+if __name__ == '__main__':
+    main()

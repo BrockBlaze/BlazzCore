@@ -1,17 +1,21 @@
 #!/usr/bin/env bash
 # BlazzCore volume control + OSD
 
+WOB_PIPE=/tmp/wob.pipe
+
 case "$1" in
     up)   wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 5%+ ;;
     down) wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%- ;;
     mute) wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle ;;
 esac
 
-# Get current volume (0-100), clamped
+# Show OSD — recreate pipe if it was lost (e.g. after crash/reboot)
+[ -p "$WOB_PIPE" ] || mkfifo "$WOB_PIPE" 2>/dev/null || exit 0
+
 MUTED=$(wpctl get-volume @DEFAULT_AUDIO_SINK@ | grep -c MUTED)
 if [[ "$MUTED" -gt 0 ]]; then
-    echo "0" > /tmp/wob.pipe 2>/dev/null || true
+    echo "0" > "$WOB_PIPE" 2>/dev/null || true
 else
     VOL=$(wpctl get-volume @DEFAULT_AUDIO_SINK@ | awk '{printf "%d", $2 * 100}')
-    echo "$VOL" > /tmp/wob.pipe 2>/dev/null || true
+    echo "$VOL" > "$WOB_PIPE" 2>/dev/null || true
 fi

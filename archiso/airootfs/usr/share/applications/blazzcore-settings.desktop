@@ -5,4 +5,5 @@ Exec=blazzcore-settings
 Icon=preferences-system
 Type=Application
 Categories=Settings;
+Keywords=settings;preferences;config;display;theme;wallpaper;network;sound;bluetooth;
 StartupNotify=true

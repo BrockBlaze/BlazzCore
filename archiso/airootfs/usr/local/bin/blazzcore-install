@@ -20,22 +20,39 @@ fi
 # Package list
 # ---------------------------------------------------------------------------
 PACKAGES=(
+    # Base
     base linux linux-firmware linux-headers base-devel
-    networkmanager sudo nano vim git wget curl bash-completion man-db man-pages less which
-    grub efibootmgr dosfstools
+    networkmanager iwd iw wpa_supplicant wireless-regdb
+    sudo nano vim git wget curl bash-completion man-db man-pages less which python
+    grub efibootmgr dosfstools e2fsprogs btrfs-progs
+    # Wayland / display
     labwc swaybg swayidle swaylock wlopm waybar wl-clipboard cliphist
     xdg-desktop-portal xdg-desktop-portal-wlr xdg-utils xorg-xwayland
-    foot wofi grim slurp mako wob wlsunset wf-recorder
-    seatd polkit
-    mesa vulkan-icd-loader libva libva-mesa-driver libva-utils vulkan-radeon vulkan-intel
+    foot wofi grim slurp wob wlsunset wf-recorder
+    # Seat / polkit
+    seatd polkit xfce-polkit
+    # GPU
+    mesa vulkan-icd-loader libva libva-mesa-driver libva-utils libvdpau vulkan-radeon vulkan-intel
+    # Audio
     pipewire pipewire-alsa pipewire-pulse pipewire-jack wireplumber
     alsa-utils alsa-firmware sof-firmware
-    noto-fonts noto-fonts-cjk noto-fonts-emoji ttf-liberation ttf-dejavu fontconfig freetype2
+    # Fonts
+    noto-fonts noto-fonts-cjk noto-fonts-emoji ttf-liberation ttf-dejavu ttf-hack-nerd
+    fontconfig freetype2 harfbuzz
+    # Browser
     chromium
-    nwg-look nwg-dock nwg-menu wdisplays pcmanfm gvfs thunar thunar-volman gvfs-mtp xdg-user-dirs
-    papirus-icon-theme adwaita-icon-theme
+    # Desktop shell
+    nwg-look nwg-dock wdisplays pcmanfm gvfs
+    thunar thunar-volman thunar-archive-plugin gvfs-mtp xdg-user-dirs
+    papirus-icon-theme adwaita-icon-theme network-manager-applet swaync playerctl
+    # GTK layer shell (Start Menu)
+    gtk-layer-shell python-gobject
+    # Apps
     mousepad imv mpv zathura zathura-pdf-mupdf file-roller galculator pavucontrol blueman
+    # System / utilities
     htop btop brightnessctl upower pacman-contrib zenity pulsemixer
+    starship fastfetch bat fzf ripgrep jq unzip p7zip
+    # Boot / performance
     plymouth zram-generator
 )
 
@@ -449,17 +466,6 @@ do_install() {
     # ------------------------------------------------------------------
     progress 74 "Setting timezone and locale..."
 
-    arch-chroot /mnt /bin/bash -s -- "$TIMEZONE" <<'CHROOT_TZ'
-TZ="$1"
-ln -sf "/usr/share/zoneinfo/${TZ}" /etc/localtime
-hwclock --systohc
-echo "en_US.UTF-8 UTF-8" > /etc/locale.gen
-locale-gen
-echo "LANG=en_US.UTF-8" > /etc/locale.conf
-CHROOT_TZ
-
-    # We can't pass variables directly into a heredoc chroot cleanly for the
-    # timezone argument above — use file-based approach instead:
     arch-chroot /mnt ln -sf "/usr/share/zoneinfo/${TIMEZONE}" /etc/localtime
     arch-chroot /mnt hwclock --systohc
     printf "en_US.UTF-8 UTF-8\n" > /mnt/etc/locale.gen
@@ -531,11 +537,19 @@ EOF
     # Skel configs
     [[ -d /etc/skel/.config ]] && cp -rT /etc/skel/.config /mnt/etc/skel/.config 2>/dev/null || true
     [[ -d /etc/skel/.local  ]] && cp -rT /etc/skel/.local  /mnt/etc/skel/.local  2>/dev/null || true
+    # Skel dotfiles (bashrc, bash_profile, etc.)
+    for dotfile in /etc/skel/.*; do
+        [[ -f "$dotfile" ]] && cp "$dotfile" /mnt/etc/skel/ 2>/dev/null || true
+    done
 
     # User home configs
     mkdir -p "/mnt/home/${USERNAME}"
     [[ -d /etc/skel/.config ]] && cp -rT /etc/skel/.config "/mnt/home/${USERNAME}/.config" 2>/dev/null || true
     [[ -d /etc/skel/.local  ]] && cp -rT /etc/skel/.local  "/mnt/home/${USERNAME}/.local"  2>/dev/null || true
+    # User dotfiles (bashrc, bash_profile, etc.)
+    for dotfile in /etc/skel/.*; do
+        [[ -f "$dotfile" ]] && cp "$dotfile" "/mnt/home/${USERNAME}/" 2>/dev/null || true
+    done
     mkdir -p "/mnt/home/${USERNAME}"/{Desktop,Downloads,Pictures,Documents}
 
     # ------------------------------------------------------------------

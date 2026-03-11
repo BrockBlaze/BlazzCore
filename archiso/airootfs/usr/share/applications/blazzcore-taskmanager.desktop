@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Task Manager
+Comment=View and manage running processes
+Exec=blazzcore-taskmanager
+Icon=utilities-system-monitor
+Type=Application
+Categories=System;Monitor;
+StartupNotify=false
+Terminal=false

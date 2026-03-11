@@ -12,17 +12,31 @@ if [[ ! -f "$THEMERC" ]]; then
 fi
 
 # Open color picker (zenity returns hex like #rrggbb)
+CURRENT=$(grep 'window.active.border.color' "$THEMERC" | awk '{print $NF}')
 COLOR=$(zenity --color-selection \
     --title="Choose Accent Color" \
-    --color="$(grep 'window.active.border.color' "$THEMERC" | awk '{print $2}')" \
+    --color="${CURRENT:-#4a4a8a}" \
     2>/dev/null)
 
 [[ -z "$COLOR" ]] && exit 0
 
-# Convert #rrggbb to components for darkening the title bar
-R=$(printf '%d' 0x${COLOR:1:2})
-G=$(printf '%d' 0x${COLOR:3:2})
-B=$(printf '%d' 0x${COLOR:5:2})
+# Validate format: zenity may return #rrggbb or rgb(r,g,b) — normalise to #rrggbb
+if [[ "$COLOR" =~ ^rgb\(([0-9]+),([0-9]+),([0-9]+)\)$ ]]; then
+    R="${BASH_REMATCH[1]}"; G="${BASH_REMATCH[2]}"; B="${BASH_REMATCH[3]}"
+    COLOR=$(printf '#%02x%02x%02x' "$R" "$G" "$B")
+elif [[ "$COLOR" =~ ^#[0-9a-fA-F]{6}$ ]]; then
+    R=$(printf '%d' "0x${COLOR:1:2}")
+    G=$(printf '%d' "0x${COLOR:3:2}")
+    B=$(printf '%d' "0x${COLOR:5:2}")
+else
+    zenity --error --title="Accent Color" \
+        --text="Unrecognised color format: $COLOR" --width=300 2>/dev/null
+    exit 1
+fi
+
+# Clamp values to 0-255
+clamp() { local v=$1; (( v < 0 )) && v=0; (( v > 255 )) && v=255; echo "$v"; }
+R=$(clamp "$R"); G=$(clamp "$G"); B=$(clamp "$B")
 
 # Title bar = accent at 20% brightness (very dark tint)
 TR=$(printf '%02x' $(( R * 20 / 100 )))

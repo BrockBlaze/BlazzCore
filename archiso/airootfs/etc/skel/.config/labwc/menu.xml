@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <openbox_menu>
-  <menu id="root-menu" label="BlazzCore">
+
+  <!-- Applications submenu -->
+  <menu id="menu-apps" label="Applications">
     <item label="Terminal">
       <action name="Execute"><command>foot</command></action>
     </item>
@@ -16,22 +18,42 @@
     <item label="Calculator">
       <action name="Execute"><command>galculator</command></action>
     </item>
-    <item label="Screenshot">
-      <action name="Execute"><command>blazzcore-screenshot area</command></action>
-    </item>
-    <item label="App Launcher">
-      <action name="Execute"><command>wofi --show drun --allow-images</command></action>
-    </item>
-    <separator/>
+  </menu>
+
+  <!-- System submenu -->
+  <menu id="menu-system" label="System">
     <item label="Settings">
       <action name="Execute"><command>blazzcore-settings</command></action>
     </item>
-    <item label="Display">
+    <item label="Display &amp; Monitors">
       <action name="Execute"><command>wdisplays</command></action>
     </item>
     <item label="Wallpaper">
       <action name="Execute"><command>blazzcore-wallpaper</command></action>
     </item>
+    <item label="Night Light">
+      <action name="Execute"><command>blazzcore-nightlight</command></action>
+    </item>
+    <item label="Task Manager">
+      <action name="Execute"><command>blazzcore-taskmanager</command></action>
+    </item>
+    <item label="Software Center">
+      <action name="Execute"><command>blazzcore-store</command></action>
+    </item>
+  </menu>
+
+  <!-- Root (right-click desktop) menu -->
+  <menu id="root-menu" label="BlazzCore">
+    <menu id="menu-apps"/>
+    <separator/>
+    <item label="Start Menu">
+      <action name="Execute"><command>blazzcore-startmenu</command></action>
+    </item>
+    <item label="Screenshot">
+      <action name="Execute"><command>blazzcore-screenshot area</command></action>
+    </item>
+    <separator/>
+    <menu id="menu-system"/>
     <separator/>
     <item label="Install BlazzCore to Disk">
       <action name="Execute"><command>sudo blazzcore-install</command></action>
@@ -41,4 +63,5 @@
       <action name="Execute"><command>blazzcore-power</command></action>
     </item>
   </menu>
+
 </openbox_menu>

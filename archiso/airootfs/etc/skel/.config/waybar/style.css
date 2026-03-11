@@ -5,7 +5,7 @@
 * {
     border: none;
     border-radius: 0;
-    font-family: "Noto Sans", sans-serif;
+    font-family: "Noto Sans", "Hack Nerd Font Mono", "Symbols Nerd Font Mono", sans-serif;
     font-size: 13px;
     min-height: 0;
 }
@@ -16,18 +16,23 @@ window#waybar {
     border-bottom: 1px solid #2a2a45;
 }
 
-/* ---- Left ---- */
+/* ---- Start button ---- */
 #custom-menu {
-    padding: 0 16px;
-    color: #a0a0d0;
-    font-weight: bold;
-    font-size: 13px;
-    background-color: #15152a;
+    padding: 0 18px;
+    color: #8888cc;
+    font-size: 17px;
+    background-color: transparent;
     border-right: 1px solid #2a2a45;
+    transition: all 150ms ease;
 }
 
 #custom-menu:hover {
-    background-color: #1e1e38;
+    background-color: #1a1a35;
+    color: #b0b0ff;
+}
+
+#custom-menu:active {
+    background-color: #25254a;
     color: #ffffff;
 }
 
@@ -62,6 +67,7 @@ window#waybar {
 #backlight,
 #battery,
 #tray,
+#custom-updates,
 #custom-nightlight,
 #custom-power {
     padding: 0 12px;
@@ -73,6 +79,7 @@ window#waybar {
 #pulseaudio:hover,
 #backlight:hover,
 #battery:hover,
+#custom-updates:hover,
 #custom-nightlight:hover,
 #custom-power:hover {
     background-color: #18182e;
@@ -84,6 +91,37 @@ window#waybar {
 #battery.critical { color: #c0392b; animation-name: blink; animation-duration: 1s; animation-timing-function: linear; animation-iteration-count: infinite; animation-direction: alternate; }
 #network.disconnected { color: #c0392b; }
 #pulseaudio.muted { color: #555568; }
+
+/* ---- Updates ---- */
+#custom-updates {
+    color: #d4ac0d;
+    font-weight: bold;
+}
+#custom-updates:empty {
+    padding: 0;
+    border: none;
+}
+
+/* ---- MPRIS media player ---- */
+#mpris {
+    padding: 0 14px;
+    color: #9898c8;
+    font-size: 12px;
+    font-style: italic;
+}
+#mpris:empty { padding: 0; }
+#mpris:hover { color: #ffffff; background-color: #181830; }
+
+/* ---- Notification bell ---- */
+#custom-notifications {
+    padding: 0 12px;
+    color: #888898;
+    border-left: 1px solid #1e1e32;
+}
+#custom-notifications:hover { background-color: #18182e; color: #ffffff; }
+#custom-notifications.notification { color: #d4ac0d; }
+#custom-notifications.dnd-none,
+#custom-notifications.dnd-notification { color: #555568; }
 
 /* ---- Night light ---- */
 #custom-nightlight {

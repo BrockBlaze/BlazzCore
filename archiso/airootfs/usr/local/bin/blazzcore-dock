@@ -15,11 +15,16 @@ POSITION=$(zenity --list \
 [[ -z "$POSITION" ]] && exit 0
 
 pkill nwg-dock 2>/dev/null
-sleep 0.2
+
+# Wait for old dock process to exit (up to 2 seconds)
+for _ in {1..20}; do
+    pgrep -x nwg-dock > /dev/null || break
+    sleep 0.1
+done
 
 case "$POSITION" in
-    "Bottom (default)") nwg-dock -p bottom -a center -i 52 -mb 6 & ;;
-    "Left")             nwg-dock -p left   -a center -i 52 -ml 6 & ;;
-    "Right")            nwg-dock -p right  -a center -i 52 -mr 6 & ;;
-    "Top")              nwg-dock -p top    -a center -i 52 -mt 6 & ;;
+    "Bottom (default)") nwg-dock -p bottom -a center -i 38 -mb 0 -f & ;;
+    "Left")             nwg-dock -p left   -a center -i 38 -ml 0 -f & ;;
+    "Right")            nwg-dock -p right  -a center -i 38 -mr 0 -f & ;;
+    "Top")              nwg-dock -p top    -a center -i 38 -mt 0 -f & ;;
 esac

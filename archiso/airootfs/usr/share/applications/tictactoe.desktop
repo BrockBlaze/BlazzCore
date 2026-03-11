@@ -5,4 +5,5 @@ Exec=foot -e tictactoe
 Icon=applications-games
 Type=Application
 Categories=Game;
+Keywords=tictactoe;game;tic;tac;toe;terminal;
 StartupNotify=true

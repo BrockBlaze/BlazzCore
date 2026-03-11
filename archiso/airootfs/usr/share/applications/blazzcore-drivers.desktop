@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Driver Manager
+Comment=Detect and install hardware drivers
+Exec=blazzcore-drivers
+Icon=preferences-system
+Type=Application
+Categories=Settings;System;
+Keywords=driver;gpu;wifi;hardware;nvidia;amd;intel;install;
+StartupNotify=true

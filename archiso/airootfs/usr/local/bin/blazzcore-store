@@ -1,0 +1,107 @@
+#!/usr/bin/env bash
+# BlazzCore Software Center — simple pacman GUI wrapper
+
+ACTION=$(zenity --list \
+    --title="BlazzCore Software Center" \
+    --text="What would you like to do?" \
+    --column="Action" --column="Description" \
+    "Search & Install"   "Find and install a package by name" \
+    "Remove Package"     "Uninstall an installed package" \
+    "Installed Packages" "Browse all installed packages" \
+    "System Update"      "Update all installed packages" \
+    --width=500 --height=300 \
+    --print-column=1 2>/dev/null) || exit 0
+
+case "$ACTION" in
+    "Search & Install")
+        QUERY=$(zenity --entry \
+            --title="Search Packages" \
+            --text="Enter a package name or keyword to search:" \
+            --width=400 2>/dev/null) || exit 0
+        [[ -z "$QUERY" ]] && exit 0
+
+        # Search and build list
+        RESULTS=$(pacman -Ss "$QUERY" 2>/dev/null | awk '
+            /^[a-z]/ {
+                split($1, a, "/"); pkg=a[2]; ver=$2
+                getline desc
+                gsub(/^[[:space:]]+/, "", desc)
+                installed=""
+                cmd="pacman -Q " pkg " 2>/dev/null"
+                if ((cmd | getline) > 0) installed=" [installed]"
+                close(cmd)
+                print pkg "\t" ver installed "\t" desc
+            }
+        ')
+
+        if [[ -z "$RESULTS" ]]; then
+            zenity --info --title="No Results" \
+                --text="No packages found matching <b>$QUERY</b>." \
+                --width=360 2>/dev/null
+            exit 0
+        fi
+
+        SELECTED=$(echo "$RESULTS" | zenity --list \
+            --title="Search Results: $QUERY" \
+            --text="Select a package to install:" \
+            --column="Package" --column="Version" --column="Description" \
+            --width=700 --height=500 \
+            --print-column=1 2>/dev/null) || exit 0
+
+        [[ -z "$SELECTED" ]] && exit 0
+
+        zenity --question \
+            --title="Install Package" \
+            --text="Install <b>$SELECTED</b>?\n\nThis requires your password." \
+            --width=360 2>/dev/null || exit 0
+
+        foot --title="Installing $SELECTED" -e bash -c \
+            "sudo pacman -S --noconfirm '$SELECTED'; echo; echo 'Press Enter to close...'; read"
+        ;;
+
+    "Remove Package")
+        QUERY=$(zenity --entry \
+            --title="Remove Package" \
+            --text="Enter the package name to remove:" \
+            --width=400 2>/dev/null) || exit 0
+        [[ -z "$QUERY" ]] && exit 0
+
+        if ! pacman -Q "$QUERY" &>/dev/null; then
+            zenity --error --title="Not Found" \
+                --text="Package <b>$QUERY</b> is not installed." \
+                --width=360 2>/dev/null
+            exit 1
+        fi
+
+        zenity --question \
+            --title="Remove Package" \
+            --text="Remove <b>$QUERY</b>?\n\nThis requires your password." \
+            --width=360 2>/dev/null || exit 0
+
+        foot --title="Removing $QUERY" -e bash -c \
+            "sudo pacman -Rs '$QUERY'; echo; echo 'Press Enter to close...'; read"
+        ;;
+
+    "Installed Packages")
+        LIST=$(pacman -Q 2>/dev/null | awk '{print $1 "\t" $2}')
+        SELECTED=$(echo "$LIST" | zenity --list \
+            --title="Installed Packages" \
+            --text="All installed packages:" \
+            --column="Package" --column="Version" \
+            --width=500 --height=600 \
+            --print-column=1 2>/dev/null) || exit 0
+
+        if [[ -n "$SELECTED" ]]; then
+            INFO=$(pacman -Qi "$SELECTED" 2>/dev/null | head -20)
+            zenity --info \
+                --title="Package: $SELECTED" \
+                --text="<tt>$INFO</tt>" \
+                --width=500 2>/dev/null
+        fi
+        ;;
+
+    "System Update")
+        foot --title="System Update" -e bash -c \
+            'sudo pacman -Syu; echo; echo "Press Enter to close..."; read'
+        ;;
+esac

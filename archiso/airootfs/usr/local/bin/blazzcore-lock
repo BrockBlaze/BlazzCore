@@ -1,22 +1,43 @@
 #!/usr/bin/env bash
 # BlazzCore styled lock screen
+# Accent colors follow the user's themerc (updated by blazzcore-accent)
 
-exec swaylock \
-    --image /usr/share/backgrounds/blazzcore/default.png \
-    --scaling fill \
-    --indicator \
-    --indicator-radius 80 \
-    --indicator-thickness 6 \
-    --ring-color 1a1a2e \
-    --key-hl-color 4a4a8a \
-    --line-color 00000000 \
-    --inside-color 0d0d1acc \
-    --separator-color 00000000 \
-    --text-color e8e8f0 \
-    --ring-wrong-color c0392b \
-    --inside-wrong-color 3a0a0acc \
-    --ring-ver-color 27ae60 \
-    --inside-ver-color 0a1a0acc \
-    --bs-hl-color c0392b \
-    --caps-lock-key-hl-color d4ac0d \
+# Read accent color from user themerc, fall back to default purple
+THEMERC="$HOME/.config/labwc/themerc"
+SYSTEM_THEMERC="/usr/share/themes/BlazzCore/openbox-3/themerc"
+[[ ! -f "$THEMERC" ]] && THEMERC="$SYSTEM_THEMERC"
+
+# Extract accent hex (strip leading #)
+ACCENT=$(grep 'window.active.border.color' "$THEMERC" 2>/dev/null | awk '{print $NF}' | tr -d '#')
+ACCENT=${ACCENT:-4a4a8a}
+
+# Use current wallpaper if it exists, otherwise fall back to solid
+WALLPAPER="$HOME/.config/labwc/autostart"
+BG=$(grep '^WALLPAPER=' "$WALLPAPER" 2>/dev/null | cut -d= -f2-)
+[[ -f "$BG" ]] || BG=/usr/share/backgrounds/blazzcore/default.png
+
+SWAYLOCK_ARGS=(
+    --scaling fill
+    --indicator
+    --indicator-radius 80
+    --indicator-thickness 6
+    --ring-color "$ACCENT"
+    --key-hl-color "$ACCENT"
+    --line-color 00000000
+    --inside-color 0d0d1acc
+    --separator-color 00000000
+    --text-color e8e8f0
+    --ring-wrong-color c0392b
+    --inside-wrong-color 3a0a0acc
+    --ring-ver-color 27ae60
+    --inside-ver-color 0a1a0acc
+    --bs-hl-color c0392b
+    --caps-lock-key-hl-color d4ac0d
     --ignore-empty-password
+)
+
+if [[ -f "$BG" ]]; then
+    exec swaylock --image "$BG" "${SWAYLOCK_ARGS[@]}"
+else
+    exec swaylock --color 0d0d1a "${SWAYLOCK_ARGS[@]}"
+fi

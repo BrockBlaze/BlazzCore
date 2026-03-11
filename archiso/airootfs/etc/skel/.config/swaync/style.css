@@ -1,0 +1,166 @@
+/* ============================================
+   BlazzCore — SwayNC Notification Center
+   ============================================ */
+
+* {
+    font-family: "Noto Sans", "Hack Nerd Font Mono", sans-serif;
+    font-size: 13px;
+    color: #e0e0f0;
+}
+
+/* ---- Notification popup (live toast) ---- */
+.notification-row {
+    outline: none;
+}
+
+.notification-row:focus,
+.notification-row:hover {
+    opacity: 1;
+}
+
+.notification {
+    background-color: rgba(14, 14, 26, 0.97);
+    border: 1px solid rgba(80, 80, 160, 0.4);
+    border-radius: 10px;
+    padding: 0;
+    margin: 6px 0;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
+.notification-content {
+    padding: 12px 14px;
+}
+
+.notification-default-action {
+    background: transparent;
+    border: none;
+    border-radius: 10px;
+    padding: 0;
+}
+
+.notification-default-action:hover {
+    background-color: rgba(255, 255, 255, 0.04);
+}
+
+/* ---- Urgency colors ---- */
+.low    { border-left: 3px solid rgba(80, 80, 160, 0.6); }
+.normal { border-left: 3px solid rgba(128, 128, 200, 0.8); }
+.critical {
+    border-left: 3px solid #c0392b;
+    background-color: rgba(30, 8, 8, 0.97);
+}
+
+/* ---- Notification summary / body ---- */
+.summary {
+    font-size: 13px;
+    font-weight: bold;
+    color: #e8e8f8;
+}
+
+.body {
+    font-size: 12px;
+    color: #a8a8c8;
+    margin-top: 2px;
+}
+
+.app-name {
+    font-size: 11px;
+    color: #686888;
+    margin-bottom: 2px;
+}
+
+.time {
+    font-size: 11px;
+    color: #555570;
+}
+
+/* ---- Icon ---- */
+image {
+    border-radius: 4px;
+    margin-right: 10px;
+}
+
+/* ---- Close button ---- */
+.close-button {
+    background-color: transparent;
+    border: none;
+    color: #555568;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 12px;
+}
+
+.close-button:hover {
+    background-color: rgba(192, 57, 43, 0.25);
+    color: #c0392b;
+}
+
+/* ---- Control center panel ---- */
+.control-center {
+    background-color: rgba(10, 10, 22, 0.97);
+    border: 1px solid rgba(80, 80, 160, 0.35);
+    border-radius: 14px 0 0 14px;
+    padding: 0;
+}
+
+.control-center-list {
+    padding: 4px 8px;
+}
+
+/* ---- Header row (title + clear all) ---- */
+.widget-title {
+    background-color: rgba(15, 15, 30, 0.9);
+    border-radius: 14px 0 0 0;
+    padding: 12px 16px 10px 16px;
+    border-bottom: 1px solid rgba(70, 70, 130, 0.3);
+}
+
+.widget-title > label {
+    font-size: 14px;
+    font-weight: bold;
+    color: #a0a0d8;
+}
+
+.widget-title > button {
+    background-color: rgba(80, 80, 160, 0.2);
+    border: 1px solid rgba(80, 80, 160, 0.3);
+    border-radius: 6px;
+    color: #8080c0;
+    font-size: 11px;
+    padding: 3px 10px;
+}
+
+.widget-title > button:hover {
+    background-color: rgba(80, 80, 160, 0.4);
+    color: #c0c0ff;
+}
+
+/* ---- Do Not Disturb toggle ---- */
+.widget-dnd {
+    padding: 8px 16px;
+    border-bottom: 1px solid rgba(70, 70, 130, 0.2);
+}
+
+.widget-dnd > switch {
+    border-radius: 20px;
+    background-color: rgba(40, 40, 70, 0.8);
+    border: 1px solid rgba(70, 70, 130, 0.4);
+}
+
+.widget-dnd > switch:checked {
+    background-color: rgba(80, 80, 160, 0.7);
+}
+
+.widget-dnd > switch slider {
+    border-radius: 50%;
+    background-color: #8080c8;
+    min-height: 16px;
+    min-width: 16px;
+}
+
+/* ---- Empty state ---- */
+.notification-center-placeholder-text {
+    color: #444460;
+    font-size: 12px;
+    padding: 24px;
+}

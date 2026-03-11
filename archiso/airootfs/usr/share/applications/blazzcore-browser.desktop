@@ -5,4 +5,5 @@ Exec=blazzcore-browser
 Icon=chromium
 Type=Application
 Categories=Network;WebBrowser;
+Keywords=browser;web;internet;chromium;chrome;
 StartupNotify=true

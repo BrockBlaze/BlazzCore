@@ -1,37 +1,57 @@
 #!/usr/bin/env bash
 # BlazzCore screenshot utility
+#
+# Usage:
+#   blazzcore-screenshot              Full screen
+#   blazzcore-screenshot area         Select region
+#   blazzcore-screenshot clip         Full screen → clipboard only
+#   blazzcore-screenshot delay [N]    Full screen after N second countdown (default 5)
+#   blazzcore-screenshot record       Toggle screen recording
+#
+# Output directory: set SCREENSHOT_DIR in ~/.config/blazzcore/screenshot.conf
+# Default: ~/Pictures
 
-mkdir -p ~/Pictures
-FILE=~/Pictures/screenshot-$(date +%Y%m%d-%H%M%S).png
+CONF="$HOME/.config/blazzcore/screenshot.conf"
+SCREENSHOT_DIR="$HOME/Pictures"
+[[ -f "$CONF" ]] && source "$CONF"
+
+mkdir -p "$SCREENSHOT_DIR"
+FILE="$SCREENSHOT_DIR/screenshot-$(date +%Y%m%d-%H%M%S).png"
 
 case "$1" in
     area)
-        # Select region → save + copy to clipboard
         SEL=$(slurp 2>/dev/null) || exit 0
         grim -g "$SEL" "$FILE" && \
             wl-copy < "$FILE" && \
-            notify-send "Screenshot" "Region saved and copied to clipboard" -i camera-photo
+            notify-send "Screenshot" "Region saved to $SCREENSHOT_DIR" -i camera-photo
         ;;
     clip)
-        # Full screen → clipboard only
         grim - | wl-copy && \
             notify-send "Screenshot" "Copied to clipboard" -i camera-photo
         ;;
+    delay)
+        SECS="${2:-5}"
+        for i in $(seq "$SECS" -1 1); do
+            notify-send "Screenshot" "Taking screenshot in ${i}s..." -t 900 -i camera-photo
+            sleep 1
+        done
+        grim "$FILE" && \
+            wl-copy < "$FILE" && \
+            notify-send "Screenshot" "Saved to $SCREENSHOT_DIR" -i camera-photo
+        ;;
     record)
-        # Toggle screen recording
         if pgrep -x wf-recorder > /dev/null; then
             pkill -INT wf-recorder
-            notify-send "Screen Recording" "Recording stopped" -i media-record
+            notify-send "Screen Recording" "Recording stopped — saved to $SCREENSHOT_DIR" -i media-record
         else
-            REC=~/Pictures/recording-$(date +%Y%m%d-%H%M%S).mp4
+            REC="$SCREENSHOT_DIR/recording-$(date +%Y%m%d-%H%M%S).mp4"
             wf-recorder -f "$REC" &
-            notify-send "Screen Recording" "Recording started — run again to stop" -i media-record
+            notify-send "Screen Recording" "Recording started — Super+Shift+R to stop" -i media-record
         fi
         ;;
     *)
-        # Full screen → save + copy to clipboard
         grim "$FILE" && \
             wl-copy < "$FILE" && \
-            notify-send "Screenshot" "Saved to ~/Pictures" -i camera-photo
+            notify-send "Screenshot" "Saved to $SCREENSHOT_DIR" -i camera-photo
         ;;
 esac

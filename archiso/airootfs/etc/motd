@@ -17,26 +17,39 @@
   └─────────────────────────────────────────────────────────┘
 
   Keyboard shortcuts:
-    Super + Enter       Terminal (foot)
-    Super + D           App launcher (wofi)
-    Super + E           File manager (thunar)
-    Super + B           Browser (Chromium)
-    Super + V           Clipboard history
-    Super + L           Lock screen
-    Super + N           Toggle night light
-    Super + Shift + P   Power menu
-    Super + ,           Settings
-    Alt   + Tab         Switch windows
-    Print               Screenshot (full screen)
-    Shift + Print       Screenshot (select area)
-    Ctrl  + Print       Screenshot (to clipboard only)
-    Super + Shift + R   Toggle screen recording
+    Super + Enter         Terminal (foot)
+    Super + D             App launcher (wofi)
+    Super + E             File manager (thunar)
+    Super + B             Browser (Chromium)
+    Super + V             Clipboard history
+    Super + ,             Settings
+    Super + L             Lock screen
+    Super + N             Toggle night light
+    Super + Shift + P     Power menu
+
+    Super + F             Maximize / restore window
+    Super + Shift + F     Toggle fullscreen
+    Super + M             Minimize window
+    Super + Left/Right    Snap window to half screen
+    Super + Shift + Space Toggle always-on-top
+    Super + Shift + Q     Close window
+
+    Alt   + Tab           Next window
+    Alt   + Shift + Tab   Previous window
+    Super + 1–5           Switch workspace
+    Super + Shift + 1–5   Move window to workspace
+
+    Print                 Screenshot (full screen)
+    Shift + Print         Screenshot (select area)
+    Ctrl  + Print         Screenshot (to clipboard only)
+    Super + Shift + R     Toggle screen recording
 
   Useful commands:
-    blazzcore-settings  Settings GUI
-    blazzcore-power     Power menu
-    btop                System monitor
-    tictactoe           Tic Tac Toe game
-    nmtui               Wi-Fi (text UI)
-    pacman -Syu         Update all packages
+    blazzcore-settings        Settings GUI
+    blazzcore-power           Power menu
+    blazzcore-screenshot delay 5  Delayed screenshot (5s countdown)
+    btop                      System monitor
+    tictactoe                 Tic Tac Toe game
+    nmtui                     Wi-Fi (text UI)
+    pacman -Syu               Update all packages
 
