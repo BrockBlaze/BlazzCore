@@ -16,11 +16,6 @@ jobs:
       options: --privileged
 
     steps:
-      - name: Install dependencies
-        run: |
-          pacman -Syu --noconfirm
-          pacman -S --noconfirm archiso git dosfstools e2fsprogs squashfs-tools erofs-utils grub syslinux
-
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -31,9 +26,13 @@ jobs:
           key: pacman-pkgs-${{ hashFiles('archiso/packages.x86_64') }}
           restore-keys: pacman-pkgs-
 
+      - name: Install dependencies
+        run: |
+          pacman -Sy --noconfirm
+          pacman -S --noconfirm --needed archiso git dosfstools e2fsprogs squashfs-tools erofs-utils grub syslinux
+
       - name: Build ISO
         run: |
-          chmod +x scripts/build.sh
           mkdir -p /run/archiso
           mkarchiso -v -w /tmp/blazzcore-build -o /tmp/blazzcore-out archiso/
 
