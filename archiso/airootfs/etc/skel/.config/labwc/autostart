@@ -24,7 +24,7 @@ waybar &
 pcmanfm --desktop &
 
 # Polkit authentication agent (allows GUI apps to request elevated privileges)
-/usr/lib/xfce-polkit/xfce-polkit &
+/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 &
 
 # Notification center (replaces mako — handles notifications + shows history panel)
 swaync &

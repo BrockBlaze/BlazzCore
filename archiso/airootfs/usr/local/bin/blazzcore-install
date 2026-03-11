@@ -30,7 +30,7 @@ PACKAGES=(
     xdg-desktop-portal xdg-desktop-portal-wlr xdg-utils xorg-xwayland
     foot wofi grim slurp wob wlsunset wf-recorder
     # Seat / polkit
-    seatd polkit xfce-polkit
+    seatd polkit polkit-gnome
     # GPU
     mesa vulkan-icd-loader libva libva-mesa-driver libva-utils libvdpau vulkan-radeon vulkan-intel
     # Audio

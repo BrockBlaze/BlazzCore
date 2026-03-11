@@ -56,7 +56,7 @@ slurp
 # --- Seat Management ---
 seatd
 polkit
-xfce-polkit
+polkit-gnome
 
 # --- GPU / Hardware Acceleration ---
 mesa
