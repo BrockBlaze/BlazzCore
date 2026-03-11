@@ -26,6 +26,25 @@ input type:keyboard {
     xkb_options caps:escape
 }
 
+# --- Floating Windows (default behaviour) ---
+floating_modifier $mod normal
+
+# Make all windows float by default
+for_window [app_id=".*"] floating enable
+
+# Exceptions — keep these tiled
+for_window [app_id="foot"] floating enable, resize set 900 600
+for_window [app_id="chromium"] floating enable, resize set 1280 800
+for_window [app_id="thunar"] floating enable, resize set 1000 640
+for_window [app_id="nwg-look"] floating enable
+for_window [app_id="wdisplays"] floating enable
+for_window [app_id="blazzcore-settings"] floating enable
+
+# Window decorations for floating
+default_border normal 1
+default_floating_border normal 1
+font pango:Noto Sans 10
+
 # --- Idle / Lock ---
 exec swayidle -w \
     timeout 300 'swaylock -f -c 0a0a0a' \
@@ -38,6 +57,8 @@ exec swayidle -w \
 bindsym $mod+Return exec $term
 bindsym $mod+b exec $browser
 bindsym $mod+d exec $menu
+bindsym $mod+e exec thunar
+bindsym $mod+comma exec blazzcore-settings
 
 # Kill / Reload
 bindsym $mod+Shift+q kill
@@ -45,24 +66,34 @@ bindsym $mod+Shift+c reload
 bindsym $mod+Shift+e exec swaynag -t warning -m 'Exit BlazzCore?' -B 'Yes' 'swaymsg exit'
 
 # Focus
-bindsym $mod+$left focus left
-bindsym $mod+$down focus down
-bindsym $mod+$up focus up
-bindsym $mod+$right focus right
 bindsym $mod+Left focus left
 bindsym $mod+Down focus down
 bindsym $mod+Up focus up
 bindsym $mod+Right focus right
 
 # Move windows
-bindsym $mod+Shift+$left move left
-bindsym $mod+Shift+$down move down
-bindsym $mod+Shift+$up move up
-bindsym $mod+Shift+$right move right
 bindsym $mod+Shift+Left move left
 bindsym $mod+Shift+Down move down
 bindsym $mod+Shift+Up move up
 bindsym $mod+Shift+Right move right
+
+# Resize floating windows
+bindsym $mod+r mode "resize"
+mode "resize" {
+    bindsym Left  resize shrink width  20px
+    bindsym Down  resize grow   height 20px
+    bindsym Up    resize shrink height 20px
+    bindsym Right resize grow   width  20px
+    bindsym Return mode "default"
+    bindsym Escape mode "default"
+}
+
+# Toggle tiling/floating
+bindsym $mod+Shift+space floating toggle
+bindsym $mod+space focus mode_toggle
+
+# Fullscreen
+bindsym $mod+f fullscreen
 
 # Workspaces
 bindsym $mod+1 workspace number 1
@@ -76,27 +107,6 @@ bindsym $mod+Shift+3 move container to workspace number 3
 bindsym $mod+Shift+4 move container to workspace number 4
 bindsym $mod+Shift+5 move container to workspace number 5
 
-# Layout
-bindsym $mod+s layout stacking
-bindsym $mod+w layout tabbed
-bindsym $mod+e layout toggle split
-bindsym $mod+f fullscreen
-bindsym $mod+Shift+space floating toggle
-bindsym $mod+space focus mode_toggle
-bindsym $mod+v splitv
-bindsym $mod+Shift+v splith
-
-# Resize mode
-mode "resize" {
-    bindsym $left resize shrink width 10px
-    bindsym $down resize grow height 10px
-    bindsym $up resize shrink height 10px
-    bindsym $right resize grow width 10px
-    bindsym Return mode "default"
-    bindsym Escape mode "default"
-}
-bindsym $mod+r mode "resize"
-
 # Media / Brightness
 bindsym XF86AudioRaiseVolume exec wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+
 bindsym XF86AudioLowerVolume exec wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-
@@ -108,16 +118,17 @@ bindsym XF86MonBrightnessDown exec brightnessctl set 5%-
 bindsym Print exec grim ~/Pictures/screenshot-$(date +%Y%m%d-%H%M%S).png
 bindsym $mod+Print exec grim -g "$(slurp)" ~/Pictures/screenshot-$(date +%Y%m%d-%H%M%S).png
 
-# --- Appearance ---
-default_border pixel 2
-gaps inner 6
-gaps outer 2
-smart_gaps on
-smart_borders on
+# --- Right-click desktop menu ---
+bindsym --whole-window button3 exec ~/.config/sway/desktop-menu.sh
 
-# Colors          border  bg      text    indicator child_border
-client.focused    #4c7899 #285577 #ffffff #2e9ef4   #4c7899
-client.unfocused  #333333 #222222 #888888 #292d2e   #222222
+# --- Appearance ---
+gaps inner 6
+gaps outer 4
+smart_gaps on
+
+# Colors          border   bg       text     indicator child_border
+client.focused    #4c7899  #285577  #ffffff  #2e9ef4   #4c7899
+client.unfocused  #2a2a2a  #1a1a1a  #888888  #292d2e   #222222
 
 # --- Bar ---
 bar {
@@ -130,5 +141,11 @@ exec_always {
     gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'
 }
 
-# Start notification daemon
+# Desktop icons via pcmanfm
+exec pcmanfm --desktop
+
+# Notification daemon
 exec mako
+
+# Dock (bottom of screen, autohide)
+exec nwg-dock -p bottom -a center -i 48 -mb 4 -nolauncher

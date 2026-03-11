@@ -21,7 +21,9 @@ echo "root:" | chpasswd -e
 # Add blazzcore to sudoers
 echo "%wheel ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/wheel
 
-# Create home directory
+# Create home directory and standard folders
 mkdir -p /home/blazzcore
 cp -rT /etc/skel /home/blazzcore
+xdg-user-dirs-update --force
+mkdir -p /home/blazzcore/{Desktop,Downloads,Pictures,Documents}
 chown -R 1000:1000 /home/blazzcore

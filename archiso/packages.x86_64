@@ -83,9 +83,23 @@ chromium
 # --- Boot Splash ---
 plymouth
 
+# --- Desktop Shell ---
+nwg-look
+nwg-dock
+nwg-menu
+wdisplays
+pcmanfm
+gvfs
+thunar
+thunar-volman
+gvfs-mtp
+xdg-user-dirs
+
 # --- Utilities ---
 htop
 brightnessctl
 upower
 pacman-contrib
 bash-completion
+zenity
+pulsemixer

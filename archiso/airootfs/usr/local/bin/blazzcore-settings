@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# BlazzCore Settings Launcher
+
+choice=$(printf \
+    "󰍛  Display & Monitors\n  Appearance & Themes\n  Wallpaper\n  Sound\n  Network\n  Packages" \
+    | wofi --dmenu --prompt "Settings" --width 280 --height 320 2>/dev/null \
+    | sed 's/^[[:space:]]*//' | awk '{$1=""; print $0}' | xargs)
+
+case "$choice" in
+    "Display & Monitors") wdisplays ;;
+    "Appearance & Themes") nwg-look ;;
+    "Wallpaper") blazzcore-wallpaper ;;
+    "Sound") foot -e pulsemixer ;;
+    "Network") foot -e nmtui ;;
+    "Packages") foot -e sudo pacman -Syu ;;
+esac

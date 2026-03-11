@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# BlazzCore wallpaper picker — opens file chooser, sets wallpaper live
+
+IMG=$(zenity --file-selection \
+    --title="Choose Wallpaper" \
+    --file-filter="Images | *.png *.jpg *.jpeg *.webp" \
+    2>/dev/null)
+
+if [[ -n "$IMG" ]]; then
+    swaymsg "output * bg \"$IMG\" fill"
+    # Persist it across reboots
+    sed -i "s|output \* bg .*|output * bg \"$IMG\" fill|" ~/.config/sway/config
+fi

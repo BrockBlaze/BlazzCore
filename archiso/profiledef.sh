@@ -22,5 +22,8 @@ file_permissions=(
   ["/root/customize_airootfs.sh"]="0:0:755"
   ["/usr/local/bin/blazzcore-browser"]="0:0:755"
   ["/usr/local/bin/blazzcore-setup"]="0:0:755"
+  ["/usr/local/bin/blazzcore-settings"]="0:0:755"
+  ["/usr/local/bin/blazzcore-wallpaper"]="0:0:755"
   ["/etc/profile.d/blazzcore-sway-autostart.sh"]="0:0:755"
+  ["/etc/skel/.config/sway/desktop-menu.sh"]="0:0:755"
 )
