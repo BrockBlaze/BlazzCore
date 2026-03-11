@@ -153,5 +153,5 @@ exec pcmanfm --desktop
 # Notification daemon
 exec mako
 
-# Dock (bottom of screen, autohide)
-exec nwg-dock -p bottom -a center -i 48 -mb 4 -nolauncher
+# Dock (bottom, centered, 52px icons, pinned apps shown)
+exec nwg-dock -p bottom -a center -i 52 -mb 6

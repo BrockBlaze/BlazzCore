@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=App Launcher
+Comment=Launch applications
+Exec=wofi --show drun --allow-images
+Icon=view-app-grid
+Type=Application
+Categories=Utility;
+StartupNotify=false

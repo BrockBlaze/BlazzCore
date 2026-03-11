@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Settings
+Comment=BlazzCore system settings
+Exec=blazzcore-settings
+Icon=preferences-system
+Type=Application
+Categories=Settings;
+StartupNotify=true

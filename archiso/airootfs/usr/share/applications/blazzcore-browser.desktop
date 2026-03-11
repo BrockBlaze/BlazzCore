@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Browser
+Comment=Launch Chromium with GPU acceleration
+Exec=blazzcore-browser
+Icon=chromium
+Type=Application
+Categories=Network;WebBrowser;
+StartupNotify=true

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Tic Tac Toe
+Comment=Play Tic Tac Toe
+Exec=foot -e tictactoe
+Icon=applications-games
+Type=Application
+Categories=Game;
+StartupNotify=true

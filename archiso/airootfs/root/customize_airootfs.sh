@@ -28,6 +28,9 @@ echo "root:" | chpasswd -e
 # Add blazzcore to sudoers
 echo "%wheel ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/wheel
 
+# Update desktop database so app icons resolve in dock/launcher
+update-desktop-database /usr/share/applications/ || true
+
 # Create home directory and standard folders
 mkdir -p /home/blazzcore
 cp -rT /etc/skel /home/blazzcore
