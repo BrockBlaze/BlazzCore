@@ -10,6 +10,15 @@
     <item label="Files">
       <action name="Execute"><command>thunar</command></action>
     </item>
+    <item label="Text Editor">
+      <action name="Execute"><command>mousepad</command></action>
+    </item>
+    <item label="Calculator">
+      <action name="Execute"><command>galculator</command></action>
+    </item>
+    <item label="Screenshot">
+      <action name="Execute"><command>blazzcore-screenshot area</command></action>
+    </item>
     <item label="App Launcher">
       <action name="Execute"><command>wofi --show drun --allow-images</command></action>
     </item>

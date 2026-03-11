@@ -171,14 +171,23 @@
 
     <!-- Screenshots -->
     <keybind key="Print">
-      <action name="Execute">
-        <command>sh -c "grim ~/Pictures/screenshot-$(date +%Y%m%d-%H%M%S).png"</command>
-      </action>
+      <action name="Execute"><command>blazzcore-screenshot</command></action>
     </keybind>
-    <keybind key="Super+Print">
-      <action name="Execute">
-        <command>sh -c "grim -g \"$(slurp)\" ~/Pictures/screenshot-$(date +%Y%m%d-%H%M%S).png"</command>
-      </action>
+    <keybind key="Shift+Print">
+      <action name="Execute"><command>blazzcore-screenshot area</command></action>
+    </keybind>
+    <keybind key="Control+Print">
+      <action name="Execute"><command>blazzcore-screenshot clip</command></action>
+    </keybind>
+
+    <!-- Screen recorder -->
+    <keybind key="Super+shift+r">
+      <action name="Execute"><command>blazzcore-screenshot record</command></action>
+    </keybind>
+
+    <!-- Night light -->
+    <keybind key="Super+n">
+      <action name="Execute"><command>blazzcore-nightlight</command></action>
     </keybind>
   </keyboard>
 

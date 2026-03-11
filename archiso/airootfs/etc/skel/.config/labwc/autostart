@@ -5,7 +5,7 @@
 dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=labwc XDG_SESSION_TYPE=wayland
 
 # Cursor theme
-export XCURSOR_THEME=breeze_cursors
+export XCURSOR_THEME=Adwaita
 export XCURSOR_SIZE=24
 
 # Wallpaper
@@ -19,6 +19,9 @@ pcmanfm --desktop &
 
 # Notifications
 mako &
+
+# Bluetooth tray applet
+blueman-applet &
 
 # Clipboard history daemon
 wl-paste --watch cliphist store &
@@ -45,9 +48,12 @@ swayidle -w \
     resume 'wlopm --on "*"' \
     before-sleep 'blazzcore-lock' &
 
+# Ensure ~/Pictures exists for screenshots
+mkdir -p ~/Pictures
+
 # GTK dark theme + cursor + icons
 gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita-dark' 2>/dev/null || true
 gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark' 2>/dev/null || true
 gsettings set org.gnome.desktop.interface icon-theme 'Papirus-Dark' 2>/dev/null || true
-gsettings set org.gnome.desktop.interface cursor-theme 'breeze_cursors' 2>/dev/null || true
+gsettings set org.gnome.desktop.interface cursor-theme 'Adwaita' 2>/dev/null || true
 gsettings set org.gnome.desktop.interface cursor-size 24 2>/dev/null || true

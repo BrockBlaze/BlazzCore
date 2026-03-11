@@ -11,29 +11,32 @@
   ┌─────────────────────────────────────────────────────────┐
   │  Desktop      labwc (Wayland compositor)                │
   │  Audio        PipeWire + WirePlumber                    │
-  │  Browser      Chromium (GPU-accelerated via VA-API)     │
-  │  Shell        Bash                                      │
-  │  Packages     pacman (Arch Linux)                       │
-  │  Base         Arch Linux (rolling release)              │
+  │  Browser      Chromium (GPU-accelerated)                │
+  │  Shell        Bash + foot terminal                      │
+  │  Packages     pacman (Arch Linux rolling)               │
   └─────────────────────────────────────────────────────────┘
 
-  Useful commands:
-    blazzcore-browser   Launch Chromium with GPU acceleration
-    blazzcore-settings  Settings (display, theme, wallpaper, sound)
-    blazzcore-power     Power menu (shutdown, restart, lock, logout)
-    tictactoe           Play Tic Tac Toe
-    nmtui               Connect to Wi-Fi
-    pacman -Syu         Update all packages
-
   Keyboard shortcuts:
-    Super + Enter       Open terminal (foot)
+    Super + Enter       Terminal (foot)
     Super + D           App launcher (wofi)
     Super + E           File manager (thunar)
-    Super + V           Clipboard history (cliphist)
+    Super + B           Browser (Chromium)
+    Super + V           Clipboard history
     Super + L           Lock screen
+    Super + N           Toggle night light
     Super + Shift + P   Power menu
     Super + ,           Settings
-    Alt  + Tab          Switch windows
-    Super + Shift + Q   Close window
-    Right-click desktop Open desktop menu
+    Alt   + Tab         Switch windows
+    Print               Screenshot (full screen)
+    Shift + Print       Screenshot (select area)
+    Ctrl  + Print       Screenshot (to clipboard only)
+    Super + Shift + R   Toggle screen recording
+
+  Useful commands:
+    blazzcore-settings  Settings GUI
+    blazzcore-power     Power menu
+    btop                System monitor
+    tictactoe           Tic Tac Toe game
+    nmtui               Wi-Fi (text UI)
+    pacman -Syu         Update all packages
 

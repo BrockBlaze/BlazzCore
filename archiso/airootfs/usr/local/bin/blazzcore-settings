@@ -10,10 +10,12 @@ CHOICE=$(zenity --list \
     "Appearance & Themes" "GTK theme, icons, cursor, fonts" \
     "Wallpaper"           "Set desktop background image" \
     "Sound"               "Volume mixer and audio devices" \
+    "Bluetooth"           "Bluetooth devices and connections" \
     "Network"             "Wi-Fi and network connections" \
+    "Night Light"         "Warm color temperature to reduce eye strain" \
     "Date & Time"         "Timezone and clock settings" \
     "Update System"       "Install available package updates" \
-    --width=560 --height=460 \
+    --width=580 --height=520 \
     --print-column=1 2>/dev/null)
 
 case "$CHOICE" in
@@ -21,10 +23,12 @@ case "$CHOICE" in
     "Accent Color")        blazzcore-accent ;;
     "Appearance & Themes") nwg-look ;;
     "Wallpaper")           blazzcore-wallpaper ;;
-    "Sound")               foot --title="Sound Mixer" -e pulsemixer ;;
+    "Sound")               pavucontrol ;;
+    "Bluetooth")           blueman-manager ;;
     "Network")             foot --title="Network" -e nmtui ;;
+    "Night Light")         blazzcore-nightlight ;;
     "Date & Time")
-        TZ=$(timedatectl list-timezones | head -200 | zenity --list \
+        TZ=$(timedatectl list-timezones | zenity --list \
             --title="Select Timezone" --text="Choose your timezone:" \
             --column="Timezone" --width=500 --height=500 \
             --print-column=1 2>/dev/null)

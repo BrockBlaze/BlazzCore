@@ -5,7 +5,7 @@
     "spacing": 0,
     "modules-left": ["custom/menu", "wlr/taskbar"],
     "modules-center": ["clock"],
-    "modules-right": ["tray", "network", "pulseaudio", "backlight", "battery", "custom/power"],
+    "modules-right": ["tray", "network", "pulseaudio", "backlight", "battery", "custom/nightlight", "custom/power"],
 
     "custom/menu": {
         "format": "  BlazzCore",
@@ -70,6 +70,13 @@
     "tray": {
         "icon-size": 16,
         "spacing": 6
+    },
+
+    "custom/nightlight": {
+        "exec": "pgrep -x wlsunset >/dev/null && echo '󰛨' || echo '󰛨'",
+        "interval": 3,
+        "on-click": "blazzcore-nightlight",
+        "tooltip-format": "Toggle Night Light (Super+N)"
     },
 
     "custom/power": {

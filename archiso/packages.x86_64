@@ -105,7 +105,7 @@ thunar-volman
 gvfs-mtp
 xdg-user-dirs
 papirus-icon-theme
-xcursor-breeze
+adwaita-icon-theme
 
 # --- Apps ---
 mousepad
@@ -114,6 +114,18 @@ mpv
 zathura
 zathura-pdf-mupdf
 file-roller
+galculator
+pavucontrol
+blueman
+
+# --- System monitor ---
+btop
+
+# --- Screen capture ---
+wf-recorder
+
+# --- Night light ---
+wlsunset
 
 # --- Utilities ---
 htop

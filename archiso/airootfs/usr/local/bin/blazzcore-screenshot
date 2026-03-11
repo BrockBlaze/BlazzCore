@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# BlazzCore screenshot utility
+
+mkdir -p ~/Pictures
+FILE=~/Pictures/screenshot-$(date +%Y%m%d-%H%M%S).png
+
+case "$1" in
+    area)
+        # Select region → save + copy to clipboard
+        SEL=$(slurp 2>/dev/null) || exit 0
+        grim -g "$SEL" "$FILE" && \
+            wl-copy < "$FILE" && \
+            notify-send "Screenshot" "Region saved and copied to clipboard" -i camera-photo
+        ;;
+    clip)
+        # Full screen → clipboard only
+        grim - | wl-copy && \
+            notify-send "Screenshot" "Copied to clipboard" -i camera-photo
+        ;;
+    record)
+        # Toggle screen recording
+        if pgrep -x wf-recorder > /dev/null; then
+            pkill -INT wf-recorder
+            notify-send "Screen Recording" "Recording stopped" -i media-record
+        else
+            REC=~/Pictures/recording-$(date +%Y%m%d-%H%M%S).mp4
+            wf-recorder -f "$REC" &
+            notify-send "Screen Recording" "Recording started — run again to stop" -i media-record
+        fi
+        ;;
+    *)
+        # Full screen → save + copy to clipboard
+        grim "$FILE" && \
+            wl-copy < "$FILE" && \
+            notify-send "Screenshot" "Saved to ~/Pictures" -i camera-photo
+        ;;
+esac

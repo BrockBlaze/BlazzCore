@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# BlazzCore night light toggle (wlsunset)
+# Reduces blue light with warm color temperature
+
+if pgrep -x wlsunset > /dev/null; then
+    pkill -x wlsunset
+    notify-send "Night Light" "Disabled" -i weather-clear
+else
+    # 4000K warm tone; latitude auto-detection falls back to manual temp
+    wlsunset -t 3500 -T 6500 &
+    notify-send "Night Light" "Enabled — warm color temperature" -i weather-clear-night
+fi
