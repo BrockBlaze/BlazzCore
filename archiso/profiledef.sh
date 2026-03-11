@@ -37,4 +37,5 @@ file_permissions=(
   ["/usr/local/bin/blazzcore-power"]="0:0:755"
   ["/usr/local/bin/blazzcore-screenshot"]="0:0:755"
   ["/usr/local/bin/blazzcore-nightlight"]="0:0:755"
+  ["/usr/local/bin/blazzcore-dock"]="0:0:755"
 )

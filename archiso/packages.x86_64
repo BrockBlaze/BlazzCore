@@ -127,6 +127,9 @@ wf-recorder
 # --- Night light ---
 wlsunset
 
+# --- Performance (compressed RAM swap) ---
+zram-generator
+
 # --- Utilities ---
 htop
 brightnessctl

@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=btop
+GenericName=Resource Monitor
+Comment=Resource monitor showing usage and stats
+Exec=foot --title="btop" -e btop
+Icon=btop
+Categories=System;Monitor;
+Keywords=system;process;task;cpu;memory;
+Terminal=false
+StartupNotify=false

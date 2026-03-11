@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# BlazzCore dock position control
+
+POSITION=$(zenity --list \
+    --title="Dock Position" \
+    --text="Choose where to show the dock:" \
+    --column="Position" \
+    "Bottom (default)" \
+    "Left" \
+    "Right" \
+    "Top" \
+    --width=300 --height=280 \
+    --print-column=1 2>/dev/null)
+
+[[ -z "$POSITION" ]] && exit 0
+
+pkill nwg-dock 2>/dev/null
+sleep 0.2
+
+case "$POSITION" in
+    "Bottom (default)") nwg-dock -p bottom -a center -i 52 -mb 6 & ;;
+    "Left")             nwg-dock -p left   -a center -i 52 -ml 6 & ;;
+    "Right")            nwg-dock -p right  -a center -i 52 -mr 6 & ;;
+    "Top")              nwg-dock -p top    -a center -i 52 -mt 6 & ;;
+esac

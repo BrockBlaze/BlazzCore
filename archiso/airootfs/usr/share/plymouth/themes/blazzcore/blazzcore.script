@@ -9,12 +9,12 @@ screen_h = Window.GetHeight();
 Window.SetBackgroundTopColor(0.05, 0.05, 0.07);
 Window.SetBackgroundBottomColor(0.02, 0.02, 0.03);
 
-// --- Logo: scale to 28% screen width, centered slightly above middle ---
+// --- Logo: scale to ~48% screen width, centered ---
 logo_img = Image("logo.png");
 
 scale = Math.Min(
-    screen_w * 0.28 / logo_img.GetWidth(),
-    screen_h * 0.14 / logo_img.GetHeight()
+    screen_w * 0.48 / logo_img.GetWidth(),
+    screen_h * 0.30 / logo_img.GetHeight()
 );
 scaled_logo = logo_img.Scale(
     Math.Int(logo_img.GetWidth()  * scale),
@@ -23,7 +23,7 @@ scaled_logo = logo_img.Scale(
 
 logo = Sprite(scaled_logo);
 logo.SetX(Math.Int((screen_w - scaled_logo.GetWidth())  / 2));
-logo.SetY(Math.Int(screen_h * 0.38));
+logo.SetY(Math.Int((screen_h - scaled_logo.GetHeight()) / 2 - screen_h * 0.08));
 logo.SetZ(1);
 logo.SetOpacity(0);
 

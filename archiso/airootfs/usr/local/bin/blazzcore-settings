@@ -1,21 +1,22 @@
 #!/usr/bin/env bash
-# BlazzCore Settings — proper zenity window
+# BlazzCore Settings
 
 CHOICE=$(zenity --list \
     --title="BlazzCore Settings" \
-    --text="What would you like to configure?" \
+    --text="Double-click a setting to open it:" \
     --column="Setting" --column="Description" \
     "Display & Monitors"  "Resolution, arrangement, refresh rate" \
     "Accent Color"        "Window border and title bar color" \
     "Appearance & Themes" "GTK theme, icons, cursor, fonts" \
     "Wallpaper"           "Set desktop background image" \
+    "Dock Position"       "Move dock to bottom, left, right, or top" \
     "Sound"               "Volume mixer and audio devices" \
     "Bluetooth"           "Bluetooth devices and connections" \
     "Network"             "Wi-Fi and network connections" \
     "Night Light"         "Warm color temperature to reduce eye strain" \
     "Date & Time"         "Timezone and clock settings" \
     "Update System"       "Install available package updates" \
-    --width=580 --height=520 \
+    --width=600 --height=560 \
     --print-column=1 2>/dev/null)
 
 case "$CHOICE" in
@@ -23,6 +24,7 @@ case "$CHOICE" in
     "Accent Color")        blazzcore-accent ;;
     "Appearance & Themes") nwg-look ;;
     "Wallpaper")           blazzcore-wallpaper ;;
+    "Dock Position")       blazzcore-dock ;;
     "Sound")               pavucontrol ;;
     "Bluetooth")           blueman-manager ;;
     "Network")             foot --title="Network" -e nmtui ;;

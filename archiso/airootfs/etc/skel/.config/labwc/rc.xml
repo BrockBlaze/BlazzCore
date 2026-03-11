@@ -218,9 +218,17 @@
   </mouse>
 
   <windowRules>
-    <!-- Centre new windows -->
+    <!-- Force server-side decorations (min/max/close buttons) on all windows -->
     <windowRule identifier="*">
+      <serverDecoration>yes</serverDecoration>
       <action name="AutoPlace"/>
+    </windowRule>
+    <!-- Chromium draws its own tab bar as the title bar — don't add a second one -->
+    <windowRule identifier="chromium">
+      <serverDecoration>no</serverDecoration>
+    </windowRule>
+    <windowRule identifier="Chromium-browser">
+      <serverDecoration>no</serverDecoration>
     </windowRule>
   </windowRules>
 
