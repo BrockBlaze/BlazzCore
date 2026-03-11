@@ -104,6 +104,16 @@ thunar
 thunar-volman
 gvfs-mtp
 xdg-user-dirs
+papirus-icon-theme
+xcursor-breeze
+
+# --- Apps ---
+mousepad
+imv
+mpv
+zathura
+zathura-pdf-mupdf
+file-roller
 
 # --- Utilities ---
 htop
@@ -113,3 +123,4 @@ pacman-contrib
 bash-completion
 zenity
 pulsemixer
+wob

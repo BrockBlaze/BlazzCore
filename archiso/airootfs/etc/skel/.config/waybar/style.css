@@ -1,50 +1,106 @@
-/* BlazzCore — Waybar Theme */
+/* ============================================
+   BlazzCore — Waybar Style
+   ============================================ */
 
 * {
     border: none;
     border-radius: 0;
-    font-family: "Noto Sans", "DejaVu Sans", monospace;
+    font-family: "Noto Sans", sans-serif;
     font-size: 13px;
     min-height: 0;
 }
 
 window#waybar {
-    background-color: rgba(10, 10, 10, 0.92);
-    color: #e0e0e0;
+    background-color: #0e0e1a;
+    color: #e0e0f0;
+    border-bottom: 1px solid #2a2a45;
 }
 
-#workspaces button {
-    padding: 0 8px;
-    color: #888888;
-    background: transparent;
+/* ---- Left ---- */
+#custom-menu {
+    padding: 0 16px;
+    color: #a0a0d0;
+    font-weight: bold;
+    font-size: 13px;
+    background-color: #15152a;
+    border-right: 1px solid #2a2a45;
 }
 
-#workspaces button.focused {
+#custom-menu:hover {
+    background-color: #1e1e38;
     color: #ffffff;
-    background: #285577;
 }
 
-#workspaces button.urgent {
-    color: #e74c3c;
+#taskbar button {
+    padding: 0 8px;
+    color: #888898;
+    background: transparent;
+    border-bottom: 2px solid transparent;
 }
 
-#clock, #cpu, #memory, #battery, #network, #pulseaudio, #tray {
-    padding: 0 10px;
-    color: #e0e0e0;
+#taskbar button.active {
+    color: #e0e0f0;
+    background-color: #1a1a30;
+    border-bottom: 2px solid #5a5aaa;
 }
 
-#battery.warning {
-    color: #f1c40f;
+#taskbar button:hover {
+    background-color: #16162c;
+    color: #ffffff;
 }
 
-#battery.critical {
-    color: #e74c3c;
+/* ---- Center ---- */
+#clock {
+    padding: 0 16px;
+    color: #c8c8e8;
+    font-weight: 600;
 }
 
-#network.disconnected {
-    color: #e74c3c;
+/* ---- Right modules shared style ---- */
+#network,
+#pulseaudio,
+#backlight,
+#battery,
+#tray,
+#custom-power {
+    padding: 0 12px;
+    color: #b0b0cc;
+    border-left: 1px solid #1e1e32;
 }
 
-#pulseaudio.muted {
-    color: #888888;
+#network:hover,
+#pulseaudio:hover,
+#backlight:hover,
+#battery:hover,
+#custom-power:hover {
+    background-color: #18182e;
+    color: #ffffff;
+}
+
+/* ---- States ---- */
+#battery.warning  { color: #d4ac0d; }
+#battery.critical { color: #c0392b; animation-name: blink; animation-duration: 1s; animation-timing-function: linear; animation-iteration-count: infinite; animation-direction: alternate; }
+#network.disconnected { color: #c0392b; }
+#pulseaudio.muted { color: #555568; }
+
+/* ---- Power button ---- */
+#custom-power {
+    padding: 0 14px;
+    color: #888898;
+    font-size: 15px;
+}
+#custom-power:hover {
+    background-color: #2a0a0a;
+    color: #c0392b;
+}
+
+/* ---- Tooltip ---- */
+tooltip {
+    background-color: #0e0e1a;
+    border: 1px solid #2a2a45;
+    color: #e0e0f0;
+}
+
+@keyframes blink {
+    to { color: #ffffff; }
 }

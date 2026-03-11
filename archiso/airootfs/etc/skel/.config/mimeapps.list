@@ -1,0 +1,46 @@
+[Default Applications]
+# Browser
+text/html=blazzcore-browser.desktop
+x-scheme-handler/http=blazzcore-browser.desktop
+x-scheme-handler/https=blazzcore-browser.desktop
+x-scheme-handler/ftp=blazzcore-browser.desktop
+
+# Text
+text/plain=mousepad.desktop
+text/x-script.sh=mousepad.desktop
+application/x-shellscript=mousepad.desktop
+
+# Images
+image/png=imv.desktop
+image/jpeg=imv.desktop
+image/gif=imv.desktop
+image/webp=imv.desktop
+image/svg+xml=imv.desktop
+image/bmp=imv.desktop
+image/tiff=imv.desktop
+
+# Video / Audio
+video/mp4=mpv.desktop
+video/x-matroska=mpv.desktop
+video/webm=mpv.desktop
+video/avi=mpv.desktop
+video/quicktime=mpv.desktop
+audio/mpeg=mpv.desktop
+audio/ogg=mpv.desktop
+audio/flac=mpv.desktop
+audio/x-wav=mpv.desktop
+
+# PDF / Documents
+application/pdf=org.pwmt.zathura.desktop
+
+# Archives
+application/zip=org.gnome.FileRoller.desktop
+application/x-tar=org.gnome.FileRoller.desktop
+application/x-compressed-tar=org.gnome.FileRoller.desktop
+application/x-bzip2=org.gnome.FileRoller.desktop
+application/x-xz=org.gnome.FileRoller.desktop
+application/x-7z-compressed=org.gnome.FileRoller.desktop
+application/vnd.rar=org.gnome.FileRoller.desktop
+
+# File manager
+inode/directory=thunar.desktop

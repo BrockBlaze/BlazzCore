@@ -31,4 +31,8 @@ file_permissions=(
   ["/usr/local/bin/blazzcore-gen-wallpapers"]="0:0:755"
   ["/etc/skel/.config/labwc/autostart"]="0:0:755"
   ["/usr/local/bin/blazzcore-accent"]="0:0:755"
+  ["/usr/local/bin/blazzcore-volume"]="0:0:755"
+  ["/usr/local/bin/blazzcore-brightness"]="0:0:755"
+  ["/usr/local/bin/blazzcore-lock"]="0:0:755"
+  ["/usr/local/bin/blazzcore-power"]="0:0:755"
 )

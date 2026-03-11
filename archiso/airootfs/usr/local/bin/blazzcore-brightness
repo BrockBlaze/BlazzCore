@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# BlazzCore brightness control + OSD
+
+case "$1" in
+    up)   brightnessctl set +5% ;;
+    down) brightnessctl set 5%- ;;
+esac
+
+# Get current brightness as percentage
+BRIGHT=$(brightnessctl -m 2>/dev/null | cut -d, -f4 | tr -d '%')
+echo "${BRIGHT:-50}" > /tmp/wob.pipe 2>/dev/null || true

@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# BlazzCore styled lock screen
+
+exec swaylock \
+    --image /usr/share/backgrounds/blazzcore/default.png \
+    --scaling fill \
+    --indicator \
+    --indicator-radius 80 \
+    --indicator-thickness 6 \
+    --ring-color 1a1a2e \
+    --key-hl-color 4a4a8a \
+    --line-color 00000000 \
+    --inside-color 0d0d1acc \
+    --separator-color 00000000 \
+    --text-color e8e8f0 \
+    --ring-wrong-color c0392b \
+    --inside-wrong-color 3a0a0acc \
+    --ring-ver-color 27ae60 \
+    --inside-ver-color 0a1a0acc \
+    --bs-hl-color c0392b \
+    --caps-lock-key-hl-color d4ac0d \
+    --ignore-empty-password

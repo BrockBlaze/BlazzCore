@@ -9,7 +9,7 @@
   Welcome to BlazzCore — a minimal, fast, Wayland-first Linux OS.
 
   ┌─────────────────────────────────────────────────────────┐
-  │  Desktop      Sway (Wayland compositor)                 │
+  │  Desktop      labwc (Wayland compositor)                │
   │  Audio        PipeWire + WirePlumber                    │
   │  Browser      Chromium (GPU-accelerated via VA-API)     │
   │  Shell        Bash                                      │
@@ -20,16 +20,20 @@
   Useful commands:
     blazzcore-browser   Launch Chromium with GPU acceleration
     blazzcore-settings  Settings (display, theme, wallpaper, sound)
+    blazzcore-power     Power menu (shutdown, restart, lock, logout)
     tictactoe           Play Tic Tac Toe
     nmtui               Connect to Wi-Fi
     pacman -Syu         Update all packages
 
-  Shortcuts (Sway):
+  Keyboard shortcuts:
     Super + Enter       Open terminal (foot)
     Super + D           App launcher (wofi)
     Super + E           File manager (thunar)
-    Super + V           Clipboard history
+    Super + V           Clipboard history (cliphist)
+    Super + L           Lock screen
+    Super + Shift + P   Power menu
     Super + ,           Settings
+    Alt  + Tab          Switch windows
     Super + Shift + Q   Close window
-    Super + Shift + E   Exit Sway
+    Right-click desktop Open desktop menu
 

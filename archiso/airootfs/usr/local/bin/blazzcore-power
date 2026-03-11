@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# BlazzCore power menu
+
+CHOICE=$(zenity --list \
+    --title="Power" \
+    --text="What would you like to do?" \
+    --column="" --column="Action" --column="Description" \
+    "⏻" "Shutdown"  "Power off the computer" \
+    "↺" "Restart"   "Reboot the computer" \
+    "⏸" "Suspend"   "Suspend to RAM" \
+    "🔒" "Lock"      "Lock the screen" \
+    "⎋" "Log Out"   "Exit the desktop session" \
+    --width=400 --height=340 \
+    --print-column=2 \
+    --hide-column=1 2>/dev/null)
+
+case "$CHOICE" in
+    "Shutdown") systemctl poweroff ;;
+    "Restart")  systemctl reboot ;;
+    "Suspend")  blazzcore-lock & sleep 1 && systemctl suspend ;;
+    "Lock")     blazzcore-lock ;;
+    "Log Out")
+        zenity --question --title="Log Out" \
+            --text="Exit BlazzCore?" \
+            --ok-label="Log Out" --cancel-label="Cancel" \
+            --width=300 2>/dev/null && labwc --exit
+        ;;
+esac

@@ -24,10 +24,8 @@
       <action name="Execute"><command>blazzcore-wallpaper</command></action>
     </item>
     <separator/>
-    <item label="Exit BlazzCore">
-      <action name="Execute">
-        <command>sh -c "zenity --question --title='Exit' --text='Exit BlazzCore?' --ok-label='Exit' --cancel-label='Cancel' && labwc --exit"</command>
-      </action>
+    <item label="Power...">
+      <action name="Execute"><command>blazzcore-power</command></action>
     </item>
   </menu>
 </openbox_menu>
