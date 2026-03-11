@@ -80,6 +80,9 @@ harfbuzz
 # --- Browser ---
 chromium
 
+# --- Boot Splash ---
+plymouth
+
 # --- Utilities ---
 htop
 brightnessctl

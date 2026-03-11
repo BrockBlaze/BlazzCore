@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=BlazzCore
+Description=BlazzCore boot splash
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/blazzcore
+ScriptFile=/usr/share/plymouth/themes/blazzcore/blazzcore.script

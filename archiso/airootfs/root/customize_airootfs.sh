@@ -7,6 +7,9 @@ set -euo pipefail
 # Generate locale
 locale-gen
 
+# Set Plymouth theme
+plymouth-set-default-theme -R blazzcore
+
 # Enable services
 systemctl enable NetworkManager
 systemctl enable seatd

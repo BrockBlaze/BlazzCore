@@ -1,0 +1,27 @@
+// BlazzCore Plymouth splash script
+
+screen_width  = Window.GetWidth();
+screen_height = Window.GetHeight();
+
+// Black background
+background_image = Image("background.png");
+bg = Sprite(background_image);
+bg.SetX(0);
+bg.SetY(0);
+bg.SetZ(-100);
+
+// Center the logo
+logo_image = Image("logo.png");
+logo_width  = logo_image.GetWidth();
+logo_height = logo_image.GetHeight();
+
+logo = Sprite(logo_image);
+logo.SetX((screen_width  - logo_width)  / 2);
+logo.SetY((screen_height - logo_height) / 2);
+logo.SetZ(1);
+
+// Subtle fade-in
+fun refresh_callback() {
+    logo.SetOpacity(Math.Min(logo.GetOpacity() + 0.03, 1.0));
+}
+Plymouth.SetRefreshFunction(refresh_callback);
