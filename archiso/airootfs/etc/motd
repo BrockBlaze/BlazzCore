@@ -1,0 +1,31 @@
+
+  ██████╗ ██╗      █████╗ ███████╗███████╗ ██████╗ ██████╗ ██████╗ ███████╗
+  ██╔══██╗██║     ██╔══██╗╚══███╔╝╚══███╔╝██╔════╝██╔═══██╗██╔══██╗██╔════╝
+  ██████╔╝██║     ███████║  ███╔╝   ███╔╝ ██║     ██║   ██║██████╔╝█████╗
+  ██╔══██╗██║     ██╔══██║ ███╔╝   ███╔╝  ██║     ██║   ██║██╔══██╗██╔══╝
+  ██████╔╝███████╗██║  ██║███████╗███████╗╚██████╗╚██████╔╝██║  ██║███████╗
+  ╚═════╝ ╚══════╝╚═╝  ╚═╝╚══════╝╚══════╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝
+
+  Welcome to BlazzCore — a minimal, fast, Wayland-first Linux OS.
+
+  ┌─────────────────────────────────────────────────────────┐
+  │  Desktop      Sway (Wayland compositor)                 │
+  │  Audio        PipeWire + WirePlumber                    │
+  │  Browser      Chromium (GPU-accelerated via VA-API)     │
+  │  Shell        Bash                                      │
+  │  Packages     pacman (Arch Linux)                       │
+  │  Base         Arch Linux (rolling release)              │
+  └─────────────────────────────────────────────────────────┘
+
+  Useful commands:
+    blazzcore-browser   Launch Chromium with GPU acceleration
+    blazzcore-setup     System configuration tool
+    nmtui               Connect to Wi-Fi
+    pacman -Syu         Update all packages
+
+  Shortcuts (Sway):
+    Super + Enter       Open terminal (foot)
+    Super + D           App launcher (wofi)
+    Super + Shift + Q   Close window
+    Super + Shift + E   Exit Sway
+
