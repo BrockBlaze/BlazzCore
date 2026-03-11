@@ -6,17 +6,19 @@ CHOICE=$(zenity --list \
     --text="What would you like to configure?" \
     --column="Setting" --column="Description" \
     "Display & Monitors"  "Resolution, arrangement, refresh rate" \
+    "Accent Color"        "Window border and title bar color" \
     "Appearance & Themes" "GTK theme, icons, cursor, fonts" \
     "Wallpaper"           "Set desktop background image" \
     "Sound"               "Volume mixer and audio devices" \
     "Network"             "Wi-Fi and network connections" \
     "Date & Time"         "Timezone and clock settings" \
     "Update System"       "Install available package updates" \
-    --width=560 --height=420 \
+    --width=560 --height=460 \
     --print-column=1 2>/dev/null)
 
 case "$CHOICE" in
     "Display & Monitors")  wdisplays ;;
+    "Accent Color")        blazzcore-accent ;;
     "Appearance & Themes") nwg-look ;;
     "Wallpaper")           blazzcore-wallpaper ;;
     "Sound")               foot --title="Sound Mixer" -e pulsemixer ;;

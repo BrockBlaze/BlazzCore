@@ -10,7 +10,7 @@
 
   <theme>
     <name>BlazzCore</name>
-    <cornerRadius>8</cornerRadius>
+    <cornerRadius>0</cornerRadius>
     <font place="ActiveWindow">
       <name>Noto Sans</name>
       <size>10</size>

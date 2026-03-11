@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# BlazzCore — Accent Color Picker
+# Updates window border and title bar tint, then reloads labwc theme
+
+THEMERC="$HOME/.config/labwc/themerc"
+SYSTEM_THEMERC="/usr/share/themes/BlazzCore/openbox-3/themerc"
+
+# Copy system theme to user dir if not already customised
+if [[ ! -f "$THEMERC" ]]; then
+    mkdir -p "$(dirname "$THEMERC")"
+    cp "$SYSTEM_THEMERC" "$THEMERC"
+fi
+
+# Open color picker (zenity returns hex like #rrggbb)
+COLOR=$(zenity --color-selection \
+    --title="Choose Accent Color" \
+    --color="$(grep 'window.active.border.color' "$THEMERC" | awk '{print $2}')" \
+    2>/dev/null)
+
+[[ -z "$COLOR" ]] && exit 0
+
+# Convert #rrggbb to components for darkening the title bar
+R=$(printf '%d' 0x${COLOR:1:2})
+G=$(printf '%d' 0x${COLOR:3:2})
+B=$(printf '%d' 0x${COLOR:5:2})
+
+# Title bar = accent at 20% brightness (very dark tint)
+TR=$(printf '%02x' $(( R * 20 / 100 )))
+TG=$(printf '%02x' $(( G * 20 / 100 )))
+TB=$(printf '%02x' $(( B * 20 / 100 )))
+TITLE_COLOR="#${TR}${TG}${TB}"
+
+# Update themerc
+sed -i "s|^window.active.border.color:.*|window.active.border.color:         $COLOR|" "$THEMERC"
+sed -i "s|^window.active.title.bg.color:.*|window.active.title.bg.color:       $TITLE_COLOR|" "$THEMERC"
+
+# Point labwc rc.xml at the user theme override
+RCXML="$HOME/.config/labwc/rc.xml"
+if grep -q '<name>BlazzCore</name>' "$RCXML"; then
+    # Already using BlazzCore theme — labwc will pick up ~/.config/labwc/themerc automatically
+    :
+fi
+
+# Reload labwc theme live (no full restart needed)
+labwc --reconfigure 2>/dev/null || true
+
+zenity --info \
+    --title="Accent Color Applied" \
+    --text="Accent color updated to <b>$COLOR</b>.\nWindow borders and title bars updated." \
+    --width=320 2>/dev/null
