@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Install BlazzCore
+GenericName=Install to Disk
+Comment=Install BlazzCore permanently to a disk
+Exec=sudo blazzcore-install
+Icon=system-software-install
+Categories=System;
+Terminal=false
+StartupNotify=false

@@ -33,6 +33,10 @@
       <action name="Execute"><command>blazzcore-wallpaper</command></action>
     </item>
     <separator/>
+    <item label="Install BlazzCore to Disk">
+      <action name="Execute"><command>sudo blazzcore-install</command></action>
+    </item>
+    <separator/>
     <item label="Power...">
       <action name="Execute"><command>blazzcore-power</command></action>
     </item>

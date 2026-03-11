@@ -5,6 +5,7 @@
 # --- Base System ---
 base
 base-devel
+archinstall
 linux
 linux-firmware
 linux-headers

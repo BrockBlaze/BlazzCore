@@ -38,4 +38,7 @@ file_permissions=(
   ["/usr/local/bin/blazzcore-screenshot"]="0:0:755"
   ["/usr/local/bin/blazzcore-nightlight"]="0:0:755"
   ["/usr/local/bin/blazzcore-dock"]="0:0:755"
+  ["/usr/local/bin/blazzcore-install"]="0:0:755"
+  ["/usr/share/blazzcore/install-tui.sh"]="0:0:755"
+  ["/usr/share/blazzcore/postinstall.sh"]="0:0:755"
 )

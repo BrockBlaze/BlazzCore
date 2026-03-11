@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# BlazzCore — Disk Installer Launcher
+# Opens a terminal and runs the full installation process.
+
+# Must be root
+if [[ $EUID -ne 0 ]]; then
+    zenity --error \
+        --title="Root Required" \
+        --text="The installer must be run as root.\n\nOpen a terminal and type:\n  sudo blazzcore-install" \
+        --width=380 2>/dev/null
+    exit 1
+fi
+
+# Welcome dialog
+zenity --info \
+    --title="Install BlazzCore to Disk" \
+    --text="<b>BlazzCore Installer</b>\n\nThis will install BlazzCore permanently to a disk.\n\nYou will be guided through:\n  • Choosing a target disk\n  • Setting your username and password\n  • Configuring timezone and locale\n\n<b>⚠  Warning: the selected disk will be erased.</b>\n\nClick OK to open the installer terminal." \
+    --ok-label="Open Installer" --width=460 2>/dev/null || exit 0
+
+# Run the TUI installer in a foot terminal
+foot --title="BlazzCore Installer" \
+     --override "colors.background=0d0d1a" \
+     --override "colors.foreground=e0e0f0" \
+     -e bash /usr/share/blazzcore/install-tui.sh
