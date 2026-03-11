@@ -1,24 +1,712 @@
 #!/usr/bin/env bash
-# BlazzCore — Disk Installer Launcher
-# Opens a terminal and runs the full installation process.
+# =============================================================================
+#  BlazzCore GUI Installer
+#  Full graphical installer using zenity dialogs.
+#  No archinstall, no TUI — pure Bash + zenity.
+# =============================================================================
 
-# Must be root
+# ---------------------------------------------------------------------------
+# Root check
+# ---------------------------------------------------------------------------
 if [[ $EUID -ne 0 ]]; then
     zenity --error \
         --title="Root Required" \
-        --text="The installer must be run as root.\n\nOpen a terminal and type:\n  sudo blazzcore-install" \
+        --text="Run as root: sudo blazzcore-install" \
         --width=380 2>/dev/null
     exit 1
 fi
 
-# Welcome dialog
-zenity --info \
-    --title="Install BlazzCore to Disk" \
-    --text="<b>BlazzCore Installer</b>\n\nThis will install BlazzCore permanently to a disk.\n\nYou will be guided through:\n  • Choosing a target disk\n  • Setting your username and password\n  • Configuring timezone and locale\n\n<b>⚠  Warning: the selected disk will be erased.</b>\n\nClick OK to open the installer terminal." \
-    --ok-label="Open Installer" --width=460 2>/dev/null || exit 0
+# ---------------------------------------------------------------------------
+# Package list
+# ---------------------------------------------------------------------------
+PACKAGES=(
+    base linux linux-firmware linux-headers base-devel
+    networkmanager sudo nano vim git wget curl bash-completion man-db man-pages less which
+    grub efibootmgr dosfstools
+    labwc swaybg swayidle swaylock wlopm waybar wl-clipboard cliphist
+    xdg-desktop-portal xdg-desktop-portal-wlr xdg-utils xorg-xwayland
+    foot wofi grim slurp mako wob wlsunset wf-recorder
+    seatd polkit
+    mesa vulkan-icd-loader libva libva-mesa-driver libva-utils vulkan-radeon vulkan-intel
+    pipewire pipewire-alsa pipewire-pulse pipewire-jack wireplumber
+    alsa-utils alsa-firmware sof-firmware
+    noto-fonts noto-fonts-cjk noto-fonts-emoji ttf-liberation ttf-dejavu fontconfig freetype2
+    chromium
+    nwg-look nwg-dock nwg-menu wdisplays pcmanfm gvfs thunar thunar-volman gvfs-mtp xdg-user-dirs
+    papirus-icon-theme adwaita-icon-theme
+    mousepad imv mpv zathura zathura-pdf-mupdf file-roller galculator pavucontrol blueman
+    htop btop brightnessctl upower pacman-contrib zenity pulsemixer
+    plymouth zram-generator
+)
 
-# Run the TUI installer in a foot terminal
-foot --title="BlazzCore Installer" \
-     --override "colors.background=0d0d1a" \
-     --override "colors.foreground=e0e0f0" \
-     -e bash /usr/share/blazzcore/install-tui.sh
+# ---------------------------------------------------------------------------
+# Helper: show error dialog and clean up
+# ---------------------------------------------------------------------------
+ZENITY_PID=""
+
+show_error() {
+    exec 4>&- 2>/dev/null || true   # close progress FIFO if open
+    kill "$ZENITY_PID" 2>/dev/null || true
+    zenity --error \
+        --title="Installation Failed" \
+        --text="$1\n\nSee /tmp/blazzcore-install.log for details." \
+        --width=420 2>/dev/null
+}
+
+# ---------------------------------------------------------------------------
+# Step 1: Welcome
+# ---------------------------------------------------------------------------
+step_welcome() {
+    zenity --info \
+        --title="Welcome to BlazzCore" \
+        --ok-label="Get Started" \
+        --width=520 \
+        --text='
+  ██████╗ ██╗      █████╗ ███████╗███████╗ ██████╗ ██████╗ ██████╗ ███████╗
+  ██╔══██╗██║     ██╔══██╗╚══███╔╝╚══███╔╝██╔════╝██╔═══██╗██╔══██╗██╔════╝
+  ██████╔╝██║     ███████║  ███╔╝   ███╔╝ ██║     ██║   ██║██████╔╝█████╗
+  ██╔══██╗██║     ██╔══██║ ███╔╝   ███╔╝  ██║     ██║   ██║██╔══██╗██╔══╝
+  ██████╔╝███████╗██║  ██║███████╗███████╗╚██████╗╚██████╔╝██║  ██║███████╗
+  ╚═════╝ ╚══════╝╚═╝  ╚═╝╚══════╝╚══════╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝
+
+  A minimal, stylish Wayland desktop built on Arch Linux.
+  Powered by labwc  ·  waybar  ·  pipewire  ·  Plymouth
+
+  This wizard will:
+    •  Partition and format a disk of your choice
+    •  Install all BlazzCore packages
+    •  Configure your user account and timezone
+    •  Set up autologin and the bootloader
+
+  The entire process takes 5–15 minutes depending on your connection.
+
+  Click "Get Started" to begin.' \
+        2>/dev/null || exit 0
+}
+
+# ---------------------------------------------------------------------------
+# Step 2: Disk selection
+# ---------------------------------------------------------------------------
+step_disk() {
+    while true; do
+        # Build list of physical disks
+        local disk_data
+        disk_data=$(lsblk -d -n -p -o NAME,SIZE,MODEL --exclude 7,11 2>/dev/null)
+
+        if [[ -z "$disk_data" ]]; then
+            zenity --error \
+                --title="No Disks Found" \
+                --text="No physical disks were detected.\n\nMake sure your storage device is connected and try again." \
+                --width=420 2>/dev/null
+            exit 1
+        fi
+
+        # Build zenity list arguments: NAME SIZE MODEL (one triplet per line)
+        local zen_args=()
+        while IFS= read -r line; do
+            local name size model
+            name=$(awk '{print $1}' <<< "$line")
+            size=$(awk '{print $2}' <<< "$line")
+            model=$(awk '{$1=$2=""; sub(/^  +/,"",$0); print}' <<< "$line")
+            [[ -z "$model" ]] && model="(no model)"
+            zen_args+=("$name" "$size" "$model")
+        done <<< "$disk_data"
+
+        DISK=$(zenity --list \
+            --title="Select Installation Disk" \
+            --text="Choose the disk to install BlazzCore on.\n<b>All data on the selected disk will be erased.</b>" \
+            --column="Device" \
+            --column="Size" \
+            --column="Description" \
+            --print-column=1 \
+            --width=580 --height=360 \
+            "${zen_args[@]}" \
+            2>/dev/null)
+
+        if [[ -z "$DISK" ]]; then
+            # User cancelled — exit installer
+            exit 0
+        fi
+
+        # Validate the selection is a real block device
+        if [[ -b "$DISK" ]]; then
+            break
+        else
+            zenity --error \
+                --title="Invalid Selection" \
+                --text="\"$DISK\" is not a valid block device. Please select again." \
+                --width=420 2>/dev/null
+        fi
+    done
+}
+
+# ---------------------------------------------------------------------------
+# Step 3: Disk warning
+# ---------------------------------------------------------------------------
+step_disk_warning() {
+    zenity --warning \
+        --title="Data Destruction Warning" \
+        --ok-label="Yes, Erase Disk" \
+        --cancel-label="Go Back" \
+        --text="⚠  ALL DATA ON ${DISK} WILL BE ERASED.\n\nThis cannot be undone. Make sure you have selected the correct disk and have backed up any important data.\n\nDisk: <b>${DISK}</b>" \
+        --width=500 \
+        2>/dev/null
+}
+
+# ---------------------------------------------------------------------------
+# Step 4: User setup
+# ---------------------------------------------------------------------------
+step_user_setup() {
+    while true; do
+        local result
+        result=$(zenity --forms \
+            --title="User Account Setup" \
+            --text="Enter your account details." \
+            --add-entry="Full Name" \
+            --add-entry="Username" \
+            --add-entry="Hostname" \
+            --ok-label="Next" \
+            --cancel-label="Cancel" \
+            --width=500 \
+            2>/dev/null)
+
+        if [[ $? -ne 0 ]]; then
+            exit 0
+        fi
+
+        FULLNAME=$(cut -d'|' -f1 <<< "$result")
+        USERNAME=$(cut -d'|' -f2 <<< "$result")
+        HOSTNAME=$(cut -d'|' -f3 <<< "$result")
+
+        # Apply default hostname if blank
+        [[ -z "$HOSTNAME" ]] && HOSTNAME="blazzcore"
+
+        # Validate username
+        if [[ -z "$USERNAME" ]]; then
+            zenity --error \
+                --title="Invalid Username" \
+                --text="Username cannot be empty." \
+                --width=420 2>/dev/null
+            continue
+        fi
+
+        if [[ ! "$USERNAME" =~ ^[a-z][a-z0-9_-]{2,}$ ]]; then
+            zenity --error \
+                --title="Invalid Username" \
+                --text="Username \"$USERNAME\" is not valid.\n\nRules:\n  •  Must start with a lowercase letter\n  •  At least 3 characters long\n  •  Only lowercase letters, digits, _ and - allowed" \
+                --width=480 2>/dev/null
+            continue
+        fi
+
+        # Validate hostname
+        if [[ -z "$HOSTNAME" ]]; then
+            zenity --error \
+                --title="Invalid Hostname" \
+                --text="Hostname cannot be empty." \
+                --width=420 2>/dev/null
+            continue
+        fi
+
+        break
+    done
+}
+
+# ---------------------------------------------------------------------------
+# Step 5: Password
+# ---------------------------------------------------------------------------
+step_password() {
+    while true; do
+        PASSWORD=$(zenity --password \
+            --title="Set Password" \
+            --text="Enter a password for user <b>${USERNAME}</b> (also used for root):" \
+            --width=500 \
+            2>/dev/null)
+
+        if [[ $? -ne 0 ]]; then
+            exit 0
+        fi
+
+        if [[ -z "$PASSWORD" ]]; then
+            zenity --error \
+                --title="Empty Password" \
+                --text="Password cannot be empty. Please try again." \
+                --width=420 2>/dev/null
+            continue
+        fi
+
+        local confirm
+        confirm=$(zenity --password \
+            --title="Confirm Password" \
+            --text="Re-enter the password to confirm:" \
+            --width=500 \
+            2>/dev/null)
+
+        if [[ $? -ne 0 ]]; then
+            exit 0
+        fi
+
+        if [[ "$PASSWORD" != "$confirm" ]]; then
+            zenity --error \
+                --title="Passwords Do Not Match" \
+                --text="The passwords you entered do not match.\n\nPlease try again." \
+                --width=420 2>/dev/null
+            continue
+        fi
+
+        break
+    done
+}
+
+# ---------------------------------------------------------------------------
+# Step 6: Timezone
+# ---------------------------------------------------------------------------
+step_timezone() {
+    local tz_list
+    tz_list=$(timedatectl list-timezones 2>/dev/null)
+
+    if [[ -z "$tz_list" ]]; then
+        # Fallback if timedatectl unavailable
+        tz_list="UTC"
+    fi
+
+    TIMEZONE=$(zenity --list \
+        --title="Select Timezone" \
+        --text="Choose your timezone:" \
+        --column="Timezone" \
+        --print-column=1 \
+        --width=500 --height=460 \
+        $tz_list \
+        2>/dev/null)
+
+    if [[ $? -ne 0 ]] || [[ -z "$TIMEZONE" ]]; then
+        TIMEZONE="UTC"
+    fi
+}
+
+# ---------------------------------------------------------------------------
+# Step 7: Summary / confirmation
+# ---------------------------------------------------------------------------
+step_summary() {
+    zenity --question \
+        --title="Confirm Installation" \
+        --ok-label="Install Now" \
+        --cancel-label="Go Back" \
+        --text="Please review your installation settings:\n\n  <b>Disk:</b>      ${DISK}\n  <b>User:</b>      ${USERNAME} (${FULLNAME})\n  <b>Hostname:</b>  ${HOSTNAME}\n  <b>Timezone:</b>  ${TIMEZONE}\n\n⚠  <b>All data on ${DISK} will be permanently erased.</b>\n\nClick <b>Install Now</b> to begin, or <b>Go Back</b> to change settings." \
+        --width=520 \
+        2>/dev/null
+}
+
+# ---------------------------------------------------------------------------
+# Step 8: Installation
+# ---------------------------------------------------------------------------
+do_install() {
+    # Redirect all stdout/stderr to log file from this point on
+    exec &>> /tmp/blazzcore-install.log
+
+    echo "=== BlazzCore Install Log: $(date) ==="
+    echo "DISK=$DISK  USER=$USERNAME  HOST=$HOSTNAME  TZ=$TIMEZONE"
+
+    # ------------------------------------------------------------------
+    # Detect UEFI vs BIOS
+    # ------------------------------------------------------------------
+    if [[ -d /sys/firmware/efi ]]; then
+        BOOT_MODE="uefi"
+    else
+        BOOT_MODE="bios"
+    fi
+    echo "Boot mode: $BOOT_MODE"
+
+    # ------------------------------------------------------------------
+    # Open progress dialog via FIFO
+    # ------------------------------------------------------------------
+    local FIFO
+    FIFO=$(mktemp -u /tmp/blazzcore-install-XXXXXX.fifo)
+    mkfifo "$FIFO"
+
+    # Open FIFO on fd 4 for writing
+    exec 4>"$FIFO"
+
+    zenity --progress \
+        --title="Installing BlazzCore" \
+        --text="Preparing..." \
+        --percentage=0 \
+        --auto-close \
+        --width=520 \
+        --no-cancel \
+        < "$FIFO" 2>/dev/null &
+    ZENITY_PID=$!
+
+    # Give zenity a moment to start reading
+    sleep 0.5
+
+    # Helper to send progress updates
+    progress() {
+        local pct="$1"; shift
+        echo "$pct" >&4
+        echo "# $*" >&4
+    }
+
+    # ------------------------------------------------------------------
+    # 2% — Preparing disk
+    # ------------------------------------------------------------------
+    progress 2 "Preparing disk ${DISK}..."
+    # Unmount anything on target disk
+    umount -R /mnt 2>/dev/null || true
+    # Wipe partition table signatures
+    wipefs -af "$DISK" >> /tmp/blazzcore-install.log 2>&1 || true
+    sleep 1
+
+    # ------------------------------------------------------------------
+    # 5% — Partitioning
+    # ------------------------------------------------------------------
+    progress 5 "Partitioning ${DISK}..."
+
+    if [[ "$BOOT_MODE" == "uefi" ]]; then
+        parted -s "$DISK" mklabel gpt
+        parted -s "$DISK" mkpart "EFI" fat32 1MiB 513MiB
+        parted -s "$DISK" set 1 esp on
+        parted -s "$DISK" mkpart "ROOT" ext4 513MiB 100%
+    else
+        parted -s "$DISK" mklabel msdos
+        parted -s "$DISK" mkpart primary ext4 1MiB 100%
+        parted -s "$DISK" set 1 boot on
+    fi
+
+    # Allow kernel to re-read partition table
+    partprobe "$DISK" 2>/dev/null || true
+    sleep 2
+
+    # ------------------------------------------------------------------
+    # Determine partition device names
+    # ------------------------------------------------------------------
+    if [[ "$DISK" =~ nvme|mmcblk ]]; then
+        EFI_PART="${DISK}p1"
+        ROOT_PART="${DISK}p2"
+        BIOS_ROOT="${DISK}p1"
+    else
+        EFI_PART="${DISK}1"
+        ROOT_PART="${DISK}2"
+        BIOS_ROOT="${DISK}1"
+    fi
+
+    # ------------------------------------------------------------------
+    # 12% — Formatting
+    # ------------------------------------------------------------------
+    progress 12 "Formatting partitions..."
+
+    if [[ "$BOOT_MODE" == "uefi" ]]; then
+        mkfs.fat -F32 -n EFI "$EFI_PART"
+        mkfs.ext4 -F -L BlazzCore "$ROOT_PART"
+    else
+        mkfs.ext4 -F -L BlazzCore "$BIOS_ROOT"
+        ROOT_PART="$BIOS_ROOT"
+    fi
+
+    # ------------------------------------------------------------------
+    # 15% — Mounting
+    # ------------------------------------------------------------------
+    progress 15 "Mounting partitions..."
+
+    if [[ "$BOOT_MODE" == "uefi" ]]; then
+        mount "$ROOT_PART" /mnt
+        mkdir -p /mnt/boot/efi
+        mount "$EFI_PART" /mnt/boot/efi
+    else
+        mount "$ROOT_PART" /mnt
+    fi
+
+    # ------------------------------------------------------------------
+    # 18–70% — Installing packages (pacstrap with pulsating progress)
+    # ------------------------------------------------------------------
+    progress 18 "Installing packages — this may take several minutes..."
+
+    pacstrap -K /mnt "${PACKAGES[@]}" --noconfirm &>> /tmp/blazzcore-install.log &
+    PACSTRAP_PID=$!
+
+    local PCT=18
+    while kill -0 "$PACSTRAP_PID" 2>/dev/null; do
+        [[ $PCT -lt 70 ]] && PCT=$((PCT + 1))
+        echo "$PCT" >&4
+        echo "# Installing packages ($PCT%)..." >&4
+        sleep 3
+    done
+
+    wait "$PACSTRAP_PID"
+    local pacstrap_exit=$?
+    if [[ $pacstrap_exit -ne 0 ]]; then
+        show_error "Package installation (pacstrap) failed with exit code $pacstrap_exit."
+        exit 1
+    fi
+
+    # ------------------------------------------------------------------
+    # 72% — Generating fstab
+    # ------------------------------------------------------------------
+    progress 72 "Generating fstab..."
+    genfstab -U /mnt >> /mnt/etc/fstab
+
+    # ------------------------------------------------------------------
+    # 74% — Timezone and locale
+    # ------------------------------------------------------------------
+    progress 74 "Setting timezone and locale..."
+
+    arch-chroot /mnt /bin/bash -s -- "$TIMEZONE" <<'CHROOT_TZ'
+TZ="$1"
+ln -sf "/usr/share/zoneinfo/${TZ}" /etc/localtime
+hwclock --systohc
+echo "en_US.UTF-8 UTF-8" > /etc/locale.gen
+locale-gen
+echo "LANG=en_US.UTF-8" > /etc/locale.conf
+CHROOT_TZ
+
+    # We can't pass variables directly into a heredoc chroot cleanly for the
+    # timezone argument above — use file-based approach instead:
+    arch-chroot /mnt ln -sf "/usr/share/zoneinfo/${TIMEZONE}" /etc/localtime
+    arch-chroot /mnt hwclock --systohc
+    printf "en_US.UTF-8 UTF-8\n" > /mnt/etc/locale.gen
+    arch-chroot /mnt locale-gen
+    printf "LANG=en_US.UTF-8\n" > /mnt/etc/locale.conf
+
+    # ------------------------------------------------------------------
+    # 76% — Hostname and hosts
+    # ------------------------------------------------------------------
+    progress 76 "Configuring hostname and hosts..."
+
+    printf "%s\n" "$HOSTNAME" > /mnt/etc/hostname
+    cat > /mnt/etc/hosts <<EOF
+127.0.0.1   localhost
+::1         localhost
+127.0.1.1   ${HOSTNAME}.localdomain ${HOSTNAME}
+EOF
+
+    # ------------------------------------------------------------------
+    # 78% — Users and passwords
+    # ------------------------------------------------------------------
+    progress 78 "Setting up users and passwords..."
+
+    arch-chroot /mnt useradd -m -G wheel,video,audio,input,seat,network -s /bin/bash "$USERNAME"
+    printf "%s:%s\n" "$USERNAME" "$PASSWORD" | arch-chroot /mnt chpasswd
+    printf "root:%s\n"  "$PASSWORD"          | arch-chroot /mnt chpasswd
+
+    # sudoers
+    printf "%%wheel ALL=(ALL:ALL) NOPASSWD: ALL\n" > /mnt/etc/sudoers.d/wheel
+    chmod 440 /mnt/etc/sudoers.d/wheel
+
+    # ------------------------------------------------------------------
+    # 80% — Enable services
+    # ------------------------------------------------------------------
+    progress 80 "Enabling services..."
+
+    arch-chroot /mnt systemctl enable NetworkManager 2>/dev/null || true
+    arch-chroot /mnt systemctl enable seatd          2>/dev/null || true
+    arch-chroot /mnt systemctl enable bluetooth      2>/dev/null || true
+
+    # ------------------------------------------------------------------
+    # 82% — Plymouth
+    # ------------------------------------------------------------------
+    progress 82 "Configuring Plymouth splash screen..."
+
+    # Copy Plymouth theme if available on live system
+    if [[ -d /usr/share/plymouth/themes/blazzcore ]]; then
+        mkdir -p /mnt/usr/share/plymouth/themes/blazzcore
+        cp -r /usr/share/plymouth/themes/blazzcore/. /mnt/usr/share/plymouth/themes/blazzcore/
+    fi
+
+    # Insert plymouth hook into mkinitcpio.conf
+    if [[ -f /mnt/etc/mkinitcpio.conf ]]; then
+        sed -i 's/^HOOKS=.*/HOOKS=(base udev autodetect modconf block filesystems keyboard plymouth fsck)/' \
+            /mnt/etc/mkinitcpio.conf
+    fi
+
+    arch-chroot /mnt plymouth-set-default-theme blazzcore 2>/dev/null || true
+
+    # ------------------------------------------------------------------
+    # 84% — Copy BlazzCore scripts and configs
+    # ------------------------------------------------------------------
+    progress 84 "Copying BlazzCore scripts and configuration..."
+
+    # Scripts
+    cp /usr/local/bin/blazzcore-* /mnt/usr/local/bin/ 2>/dev/null || true
+    chmod 755 /mnt/usr/local/bin/blazzcore-* 2>/dev/null || true
+
+    # Skel configs
+    [[ -d /etc/skel/.config ]] && cp -rT /etc/skel/.config /mnt/etc/skel/.config 2>/dev/null || true
+    [[ -d /etc/skel/.local  ]] && cp -rT /etc/skel/.local  /mnt/etc/skel/.local  2>/dev/null || true
+
+    # User home configs
+    mkdir -p "/mnt/home/${USERNAME}"
+    [[ -d /etc/skel/.config ]] && cp -rT /etc/skel/.config "/mnt/home/${USERNAME}/.config" 2>/dev/null || true
+    [[ -d /etc/skel/.local  ]] && cp -rT /etc/skel/.local  "/mnt/home/${USERNAME}/.local"  2>/dev/null || true
+    mkdir -p "/mnt/home/${USERNAME}"/{Desktop,Downloads,Pictures,Documents}
+
+    # ------------------------------------------------------------------
+    # 86% — Wallpapers and themes
+    # ------------------------------------------------------------------
+    progress 86 "Setting up wallpapers and themes..."
+
+    mkdir -p /mnt/usr/share/backgrounds/blazzcore
+    cp /usr/share/backgrounds/blazzcore/*.png \
+       /mnt/usr/share/backgrounds/blazzcore/ 2>/dev/null || true
+
+    if [[ -d /usr/share/themes/BlazzCore ]]; then
+        mkdir -p /mnt/usr/share/themes
+        cp -r /usr/share/themes/BlazzCore /mnt/usr/share/themes/ 2>/dev/null || true
+    fi
+
+    # Font config and zram config
+    [[ -f /etc/fonts/local.conf ]] && \
+        mkdir -p /mnt/etc/fonts && \
+        cp /etc/fonts/local.conf /mnt/etc/fonts/local.conf 2>/dev/null || true
+
+    [[ -f /etc/systemd/zram-generator.conf ]] && \
+        mkdir -p /mnt/etc/systemd && \
+        cp /etc/systemd/zram-generator.conf /mnt/etc/systemd/zram-generator.conf 2>/dev/null || true
+
+    # Profile autostart
+    if [[ -f /etc/profile.d/blazzcore-sway-autostart.sh ]]; then
+        mkdir -p /mnt/etc/profile.d
+        cp /etc/profile.d/blazzcore-sway-autostart.sh /mnt/etc/profile.d/
+        chmod 755 /mnt/etc/profile.d/blazzcore-sway-autostart.sh
+    fi
+
+    # Fix ownership of user home
+    local USER_UID USER_GID
+    USER_UID=$(arch-chroot /mnt id -u "$USERNAME" 2>/dev/null || echo 1000)
+    USER_GID=$(arch-chroot /mnt id -g "$USERNAME" 2>/dev/null || echo 1000)
+    chown -R "${USER_UID}:${USER_GID}" "/mnt/home/${USERNAME}"
+
+    # ------------------------------------------------------------------
+    # 88% — Autologin
+    # ------------------------------------------------------------------
+    progress 88 "Configuring autologin..."
+
+    mkdir -p /mnt/etc/systemd/system/getty@tty1.service.d
+    cat > /mnt/etc/systemd/system/getty@tty1.service.d/autologin.conf <<EOF
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty -o '-p -f -- \\u' --noclear --autologin ${USERNAME} %I \$TERM
+EOF
+
+    # ------------------------------------------------------------------
+    # 90% — GRUB bootloader
+    # ------------------------------------------------------------------
+    progress 90 "Installing GRUB bootloader..."
+
+    # Set quiet splash in grub defaults
+    if [[ -f /mnt/etc/default/grub ]]; then
+        sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"/' \
+            /mnt/etc/default/grub
+    fi
+
+    if [[ "$BOOT_MODE" == "uefi" ]]; then
+        arch-chroot /mnt grub-install \
+            --target=x86_64-efi \
+            --efi-directory=/boot/efi \
+            --bootloader-id=BlazzCore
+    else
+        arch-chroot /mnt grub-install \
+            --target=i386-pc \
+            "$DISK"
+    fi
+
+    arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
+
+    # ------------------------------------------------------------------
+    # 94% — Rebuild initramfs
+    # ------------------------------------------------------------------
+    progress 94 "Rebuilding initramfs (mkinitcpio)..."
+
+    arch-chroot /mnt mkinitcpio -P
+
+    # ------------------------------------------------------------------
+    # 97% — Final cleanup
+    # ------------------------------------------------------------------
+    progress 97 "Final cleanup..."
+
+    # XDG user dirs, icon cache, desktop database
+    arch-chroot /mnt /bin/bash -s -- "$USERNAME" <<'CHROOT_FINAL'
+U="$1"
+xdg-user-dirs-update 2>/dev/null || true
+update-desktop-database /usr/share/applications/ 2>/dev/null || true
+gtk-update-icon-cache /usr/share/icons/Papirus-Dark/ -f 2>/dev/null || true
+CHROOT_FINAL
+
+    umount -R /mnt 2>/dev/null || true
+
+    # ------------------------------------------------------------------
+    # 100% — Done
+    # ------------------------------------------------------------------
+    progress 100 "Installation complete!"
+
+    # Close the FIFO
+    exec 4>&-
+    rm -f "$FIFO"
+
+    # Wait for zenity progress to close
+    wait "$ZENITY_PID" 2>/dev/null || true
+    ZENITY_PID=""
+}
+
+# ---------------------------------------------------------------------------
+# Step 9: Done / Reboot
+# ---------------------------------------------------------------------------
+step_done() {
+    zenity --info \
+        --title="Installation Complete" \
+        --ok-label="Reboot Now" \
+        --text="BlazzCore has been installed successfully!\n\nRemove the USB drive and click <b>Reboot Now</b> to boot into your new system." \
+        --width=500 \
+        2>/dev/null
+
+    systemctl reboot
+}
+
+# ---------------------------------------------------------------------------
+# Main flow
+# ---------------------------------------------------------------------------
+main() {
+    # Clear/start the log
+    : > /tmp/blazzcore-install.log
+
+    # Step 1: Welcome (always shown once)
+    step_welcome
+
+    # Steps 2–7 loop: allow going back from summary
+    while true; do
+        # Step 2: Disk selection
+        step_disk
+
+        # Step 3: Disk warning — loop back to disk selection if cancelled
+        if ! step_disk_warning; then
+            continue  # back to disk selection
+        fi
+
+        # Step 4: User setup
+        step_user_setup
+
+        # Step 5: Password
+        step_password
+
+        # Step 6: Timezone
+        step_timezone
+
+        # Step 7: Summary — loop back to step 1 (restart flow) if cancelled
+        if step_summary; then
+            break  # User clicked "Install Now"
+        else
+            # Go back — restart from disk selection
+            continue
+        fi
+    done
+
+    # Step 8: Installation
+    if ! do_install; then
+        show_error "Installation encountered an error."
+        umount -R /mnt 2>/dev/null || true
+        exit 1
+    fi
+
+    # Step 9: Done
+    step_done
+}
+
+main "$@"
