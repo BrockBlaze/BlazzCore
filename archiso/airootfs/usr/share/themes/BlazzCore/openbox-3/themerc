@@ -1,0 +1,60 @@
+# ============================================
+# BlazzCore Window Decoration Theme
+# Dark, minimal — Windows 11 inspired
+# ============================================
+
+# --- Title bar ---
+window.active.title.bg:             flat solid
+window.active.title.bg.color:       #1a1a2e
+window.active.label.text.color:     #e8e8f0
+
+window.inactive.title.bg:           flat solid
+window.inactive.title.bg.color:     #111118
+window.inactive.label.text.color:   #555568
+
+# --- Borders ---
+window.active.border.color:         #4a4a8a
+window.inactive.border.color:       #22222a
+border.width:                       1
+
+# --- Handle (bottom resize grip) ---
+window.active.handle.bg:            flat solid
+window.active.handle.bg.color:      #1a1a2e
+window.inactive.handle.bg:          flat solid
+window.inactive.handle.bg.color:    #111118
+handle.width:                       4
+
+# --- Close button (red) ---
+window.active.button.close.bg:             flat solid
+window.active.button.close.bg.color:       #c0392b
+window.active.button.close.image.color:    #ffffff
+window.inactive.button.close.bg:           flat solid
+window.inactive.button.close.bg.color:     #3a2222
+window.inactive.button.close.image.color:  #666666
+
+# --- Maximize button (green) ---
+window.active.button.max.bg:               flat solid
+window.active.button.max.bg.color:         #27ae60
+window.active.button.max.image.color:      #ffffff
+window.inactive.button.max.bg:             flat solid
+window.inactive.button.max.bg.color:       #1a3322
+window.inactive.button.max.image.color:    #666666
+
+# --- Minimize button (yellow) ---
+window.active.button.iconify.bg:           flat solid
+window.active.button.iconify.bg.color:     #d4ac0d
+window.active.button.iconify.image.color:  #ffffff
+window.inactive.button.iconify.bg:         flat solid
+window.inactive.button.iconify.bg.color:   #332e10
+window.inactive.button.iconify.image.color: #666666
+
+# --- Window icon ---
+window.active.button.desk.bg:             flat solid
+window.active.button.desk.bg.color:       #1a1a2e
+window.inactive.button.desk.bg:           flat solid
+window.inactive.button.desk.bg.color:     #111118
+
+# --- Dimensions ---
+padding.width:                      6
+padding.height:                     5
+border.width:                       1

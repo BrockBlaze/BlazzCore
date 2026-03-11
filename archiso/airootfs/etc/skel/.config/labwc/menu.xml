@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openbox_menu>
+  <menu id="root-menu" label="BlazzCore">
+    <item label="Terminal">
+      <action name="Execute"><command>foot</command></action>
+    </item>
+    <item label="Browser">
+      <action name="Execute"><command>blazzcore-browser</command></action>
+    </item>
+    <item label="Files">
+      <action name="Execute"><command>thunar</command></action>
+    </item>
+    <item label="App Launcher">
+      <action name="Execute"><command>wofi --show drun --allow-images</command></action>
+    </item>
+    <separator/>
+    <item label="Settings">
+      <action name="Execute"><command>blazzcore-settings</command></action>
+    </item>
+    <item label="Display">
+      <action name="Execute"><command>wdisplays</command></action>
+    </item>
+    <item label="Wallpaper">
+      <action name="Execute"><command>blazzcore-wallpaper</command></action>
+    </item>
+    <separator/>
+    <item label="Exit BlazzCore">
+      <action name="Execute">
+        <command>sh -c "zenity --question --title='Exit' --text='Exit BlazzCore?' --ok-label='Exit' --cancel-label='Cancel' && labwc --exit"</command>
+      </action>
+    </item>
+  </menu>
+</openbox_menu>

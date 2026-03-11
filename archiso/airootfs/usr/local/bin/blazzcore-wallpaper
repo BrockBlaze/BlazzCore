@@ -7,7 +7,9 @@ IMG=$(zenity --file-selection \
     2>/dev/null)
 
 if [[ -n "$IMG" ]]; then
-    swaymsg "output * bg \"$IMG\" fill"
-    # Persist it across reboots
-    sed -i "s|output \* bg .*|output * bg \"$IMG\" fill|" ~/.config/sway/config
+    # Kill existing swaybg and start fresh with new wallpaper
+    pkill swaybg 2>/dev/null || true
+    swaybg -i "$IMG" -m fill &
+    # Persist across reboots via labwc autostart
+    sed -i "s|swaybg -i .* -m fill|swaybg -i \"$IMG\" -m fill|" ~/.config/labwc/autostart
 fi

@@ -35,10 +35,11 @@ wget
 curl
 
 # --- Wayland / Display ---
-sway
+labwc
 swaybg
 swayidle
 swaylock
+wlopm
 waybar
 wl-clipboard
 cliphist

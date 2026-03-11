@@ -1,0 +1,202 @@
+<?xml version="1.0"?>
+<!-- BlazzCore labwc configuration -->
+<labwc_config>
+
+  <core>
+    <gap>8</gap>
+    <adaptiveSync>yes</adaptiveSync>
+    <allowTearing>no</allowTearing>
+  </core>
+
+  <theme>
+    <name>BlazzCore</name>
+    <cornerRadius>8</cornerRadius>
+    <font place="ActiveWindow">
+      <name>Noto Sans</name>
+      <size>10</size>
+      <weight>Bold</weight>
+      <slant>Normal</slant>
+    </font>
+    <font place="InactiveWindow">
+      <name>Noto Sans</name>
+      <size>10</size>
+      <weight>Normal</weight>
+      <slant>Normal</slant>
+    </font>
+    <titlebar>
+      <layout>icon:title,min,max,close</layout>
+    </titlebar>
+  </theme>
+
+  <desktops>
+    <popupTime>500</popupTime>
+    <names>
+      <name>1</name>
+      <name>2</name>
+      <name>3</name>
+      <name>4</name>
+      <name>5</name>
+    </names>
+  </desktops>
+
+  <resize>
+    <popupShow>Never</popupShow>
+  </resize>
+
+  <focus>
+    <followMouse>no</followMouse>
+    <raiseOnFocus>no</raiseOnFocus>
+  </focus>
+
+  <keyboard>
+    <default/>
+
+    <!-- Launch apps -->
+    <keybind key="Super+Return">
+      <action name="Execute"><command>foot</command></action>
+    </keybind>
+    <keybind key="Super+b">
+      <action name="Execute"><command>blazzcore-browser</command></action>
+    </keybind>
+    <keybind key="Super+d">
+      <action name="Execute"><command>wofi --show drun --allow-images</command></action>
+    </keybind>
+    <keybind key="Super+e">
+      <action name="Execute"><command>thunar</command></action>
+    </keybind>
+    <keybind key="Super+comma">
+      <action name="Execute"><command>blazzcore-settings</command></action>
+    </keybind>
+    <keybind key="Super+v">
+      <action name="Execute">
+        <command>sh -c "cliphist list | wofi --dmenu --prompt 'Clipboard' | cliphist decode | wl-copy"</command>
+      </action>
+    </keybind>
+
+    <!-- Window management -->
+    <keybind key="Super+shift+q">
+      <action name="Close"/>
+    </keybind>
+    <keybind key="Super+f">
+      <action name="ToggleMaximize"/>
+    </keybind>
+    <keybind key="Super+shift+f">
+      <action name="ToggleFullscreen"/>
+    </keybind>
+    <keybind key="Super+m">
+      <action name="Iconify"/>
+    </keybind>
+    <keybind key="Super+Up">
+      <action name="ToggleMaximize"/>
+    </keybind>
+    <keybind key="Super+Down">
+      <action name="Iconify"/>
+    </keybind>
+    <keybind key="Super+shift+space">
+      <action name="ToggleAlwaysOnTop"/>
+    </keybind>
+
+    <!-- Snap to halves -->
+    <keybind key="Super+Left">
+      <action name="SnapToEdge"><direction>left</direction></action>
+    </keybind>
+    <keybind key="Super+Right">
+      <action name="SnapToEdge"><direction>right</direction></action>
+    </keybind>
+
+    <!-- Workspaces -->
+    <keybind key="Super+1">
+      <action name="GoToDesktop"><to>1</to></action>
+    </keybind>
+    <keybind key="Super+2">
+      <action name="GoToDesktop"><to>2</to></action>
+    </keybind>
+    <keybind key="Super+3">
+      <action name="GoToDesktop"><to>3</to></action>
+    </keybind>
+    <keybind key="Super+4">
+      <action name="GoToDesktop"><to>4</to></action>
+    </keybind>
+    <keybind key="Super+5">
+      <action name="GoToDesktop"><to>5</to></action>
+    </keybind>
+    <keybind key="Super+shift+1">
+      <action name="SendToDesktop"><to>1</to></action>
+    </keybind>
+    <keybind key="Super+shift+2">
+      <action name="SendToDesktop"><to>2</to></action>
+    </keybind>
+    <keybind key="Super+shift+3">
+      <action name="SendToDesktop"><to>3</to></action>
+    </keybind>
+    <keybind key="Super+shift+4">
+      <action name="SendToDesktop"><to>4</to></action>
+    </keybind>
+    <keybind key="Super+shift+5">
+      <action name="SendToDesktop"><to>5</to></action>
+    </keybind>
+
+    <!-- Media keys -->
+    <keybind key="XF86AudioRaiseVolume">
+      <action name="Execute"><command>wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+</command></action>
+    </keybind>
+    <keybind key="XF86AudioLowerVolume">
+      <action name="Execute"><command>wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-</command></action>
+    </keybind>
+    <keybind key="XF86AudioMute">
+      <action name="Execute"><command>wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle</command></action>
+    </keybind>
+    <keybind key="XF86MonBrightnessUp">
+      <action name="Execute"><command>brightnessctl set +5%</command></action>
+    </keybind>
+    <keybind key="XF86MonBrightnessDown">
+      <action name="Execute"><command>brightnessctl set 5%-</command></action>
+    </keybind>
+
+    <!-- Screenshots -->
+    <keybind key="Print">
+      <action name="Execute">
+        <command>sh -c "grim ~/Pictures/screenshot-$(date +%Y%m%d-%H%M%S).png"</command>
+      </action>
+    </keybind>
+    <keybind key="Super+Print">
+      <action name="Execute">
+        <command>sh -c "grim -g \"$(slurp)\" ~/Pictures/screenshot-$(date +%Y%m%d-%H%M%S).png"</command>
+      </action>
+    </keybind>
+  </keyboard>
+
+  <mouse>
+    <default/>
+    <context name="Titlebar">
+      <mousebind button="Left" action="DoubleClick">
+        <action name="ToggleMaximize"/>
+      </mousebind>
+      <mousebind button="Left" action="Drag">
+        <action name="Move"/>
+      </mousebind>
+      <mousebind button="Right" action="Click">
+        <action name="Focus"/>
+        <action name="Raise"/>
+      </mousebind>
+    </context>
+    <context name="Frame">
+      <mousebind button="Left" action="Drag">
+        <action name="Resize"/>
+      </mousebind>
+    </context>
+    <context name="Desktop">
+      <mousebind button="Right" action="Click">
+        <action name="ShowMenu"><menu>root-menu</menu></action>
+      </mousebind>
+    </context>
+  </mouse>
+
+  <windowRules>
+    <!-- Centre new windows -->
+    <windowRule identifier="*">
+      <action name="AutoPlace"/>
+    </windowRule>
+  </windowRules>
+
+</labwc_config>

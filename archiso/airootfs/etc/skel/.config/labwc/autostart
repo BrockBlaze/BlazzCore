@@ -1,0 +1,34 @@
+#!/bin/sh
+# BlazzCore labwc autostart
+
+# Pass Wayland vars to dbus/systemd
+dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=labwc XDG_SESSION_TYPE=wayland
+
+# Wallpaper
+swaybg -i /usr/share/backgrounds/blazzcore/default.png -m fill &
+
+# Status bar
+waybar &
+
+# Desktop icons
+pcmanfm --desktop &
+
+# Notifications
+mako &
+
+# Clipboard history daemon
+wl-paste --watch cliphist store &
+
+# Dock
+nwg-dock -p bottom -a center -i 52 -mb 6 &
+
+# Idle: lock after 5min, display off after 10min
+swayidle -w \
+    timeout 300 'swaylock -f -c 0a0a0a' \
+    timeout 600 'wlopm --off "*"' \
+    resume 'wlopm --on "*"' \
+    before-sleep 'swaylock -f -c 0a0a0a' &
+
+# GTK dark theme
+gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita-dark' 2>/dev/null || true
+gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark' 2>/dev/null || true
