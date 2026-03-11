@@ -112,7 +112,9 @@ def conf_get(path, key, default=''):
         for line in open(path):
             m = re.match(rf'^{key}=(.+)', line.strip())
             if m:
-                return m.group(1).strip('"\'')
+                val = m.group(1).strip('"\'')
+                val = val.split('#')[0].strip()   # strip inline comments
+                return val
     except FileNotFoundError:
         pass
     return default

@@ -31,7 +31,7 @@ BUILTIN = [
 
 # ---- Stylesheet --------------------------------------------
 CSS = b"""
-* { box-sizing: border-box; }
+/* GTK does not support box-sizing; omitted */
 
 window {
     background-color: rgba(10, 10, 22, 0.97);
