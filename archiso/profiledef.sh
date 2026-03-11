@@ -26,4 +26,5 @@ file_permissions=(
   ["/usr/local/bin/blazzcore-wallpaper"]="0:0:755"
   ["/etc/profile.d/blazzcore-sway-autostart.sh"]="0:0:755"
   ["/etc/skel/.config/sway/desktop-menu.sh"]="0:0:755"
+  ["/usr/local/bin/tictactoe"]="0:0:755"
 )

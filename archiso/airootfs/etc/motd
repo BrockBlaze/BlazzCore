@@ -19,13 +19,17 @@
 
   Useful commands:
     blazzcore-browser   Launch Chromium with GPU acceleration
-    blazzcore-setup     System configuration tool
+    blazzcore-settings  Settings (display, theme, wallpaper, sound)
+    tictactoe           Play Tic Tac Toe
     nmtui               Connect to Wi-Fi
     pacman -Syu         Update all packages
 
   Shortcuts (Sway):
     Super + Enter       Open terminal (foot)
     Super + D           App launcher (wofi)
+    Super + E           File manager (thunar)
+    Super + V           Clipboard history
+    Super + ,           Settings
     Super + Shift + Q   Close window
     Super + Shift + E   Exit Sway
 

@@ -59,6 +59,7 @@ bindsym $mod+b exec $browser
 bindsym $mod+d exec $menu
 bindsym $mod+e exec thunar
 bindsym $mod+comma exec blazzcore-settings
+bindsym $mod+v exec cliphist list | wofi --dmenu --prompt "Clipboard" | cliphist decode | wl-copy
 
 # Kill / Reload
 bindsym $mod+Shift+q kill
@@ -140,6 +141,9 @@ exec_always {
     gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita-dark'
     gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'
 }
+
+# Clipboard history daemon (pipes wl-paste into cliphist)
+exec wl-paste --watch cliphist store
 
 # Desktop icons via pcmanfm
 exec pcmanfm --desktop

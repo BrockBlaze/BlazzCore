@@ -18,6 +18,11 @@ e2fsprogs
 btrfs-progs
 networkmanager
 iwd
+iw
+wpa_supplicant
+wireless-regdb
+b43-fwcutter
+python
 sudo
 nano
 vim
@@ -36,6 +41,7 @@ swayidle
 swaylock
 waybar
 wl-clipboard
+cliphist
 xdg-desktop-portal
 xdg-desktop-portal-wlr
 xdg-utils
@@ -60,12 +66,15 @@ libvdpau
 vulkan-radeon
 vulkan-intel
 
-# --- Audio (PipeWire) ---
+# --- Audio (PipeWire + firmware) ---
 pipewire
 pipewire-alsa
 pipewire-pulse
 pipewire-jack
 wireplumber
+alsa-utils
+alsa-firmware
+sof-firmware
 
 # --- Fonts ---
 noto-fonts
