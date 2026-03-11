@@ -97,10 +97,7 @@ window#waybar {
     color: #d4ac0d;
     font-weight: bold;
 }
-#custom-updates:empty {
-    padding: 0;
-    border: none;
-}
+/* Hide when no updates (waybar hides empty modules natively) */
 
 /* ---- MPRIS media player ---- */
 #mpris {
@@ -109,7 +106,7 @@ window#waybar {
     font-size: 12px;
     font-style: italic;
 }
-#mpris:empty { padding: 0; }
+/* waybar hides empty mpris module natively */
 #mpris:hover { color: #ffffff; background-color: #181830; }
 
 /* ---- Notification bell ---- */

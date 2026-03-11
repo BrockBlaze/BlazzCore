@@ -1,8 +1,11 @@
 #!/bin/sh
 # BlazzCore labwc autostart
 
+# Expose labwc's Wayland socket as SWAYSOCK so nwg-dock task list works
+export SWAYSOCK="${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY}"
+
 # Pass Wayland vars to dbus/systemd
-dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=labwc XDG_SESSION_TYPE=wayland
+dbus-update-activation-environment --systemd WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP=labwc XDG_SESSION_TYPE=wayland
 
 # Cursor theme
 export XCURSOR_THEME=Adwaita
