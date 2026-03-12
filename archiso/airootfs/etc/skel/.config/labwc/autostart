@@ -1,11 +1,21 @@
-#!/bin/sh
+#!/bin/bash
 # BlazzCore labwc autostart
 
-# Expose labwc's Wayland socket as SWAYSOCK so nwg-dock task list works
-export SWAYSOCK="${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY}"
+# Pass Wayland vars to dbus/systemd (includes QT + Firefox native Wayland)
+# GTK_CSD=0 disables GTK3 client-side decorations so labwc's titlebar is used instead
+export GTK_CSD=0
+dbus-update-activation-environment --systemd \
+    WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=labwc XDG_SESSION_TYPE=wayland \
+    MOZ_ENABLE_WAYLAND=1 QT_QPA_PLATFORM=wayland \
+    XCURSOR_THEME=Adwaita XCURSOR_SIZE=24 GTK_CSD=0
 
-# Pass Wayland vars to dbus/systemd
-dbus-update-activation-environment --systemd WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP=labwc XDG_SESSION_TYPE=wayland
+# Create standard user folders (Downloads, Pictures, Documents, Desktop, etc.)
+xdg-user-dirs-update
+
+# Audio (PipeWire + WirePlumber session manager)
+pipewire &
+pipewire-pulse &
+wireplumber &
 
 # Cursor theme
 export XCURSOR_THEME=Adwaita
@@ -23,18 +33,33 @@ fi
 # Status bar
 waybar &
 
+# Application dock (restores last-used position)
+_DOCK_CONF="$HOME/.config/blazzcore/dock.conf"
+_DOCK_POS=$(grep '^DOCK_POSITION=' "$_DOCK_CONF" 2>/dev/null | cut -d= -f2)
+case "$_DOCK_POS" in
+    left)  nwg-dock -p left  -a center -i 38 -ml 0 -f & ;;
+    right) nwg-dock -p right -a center -i 38 -mr 0 -f & ;;
+    top)   nwg-dock -p top   -a center -i 38 -mt 0 -f & ;;
+    *)     nwg-dock -p bottom -a center -i 38 -mb 0 -f & ;;
+esac
+unset _DOCK_CONF _DOCK_POS
+
 # Desktop icons
 pcmanfm --desktop &
 
 # Polkit authentication agent (allows GUI apps to request elevated privileges)
 /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 &
 
-# Notification center (replaces mako — handles notifications + shows history panel)
+# Notification center (handles notifications + shows history panel)
 swaync &
 
-# System tray: network, bluetooth
+# System tray: network
 nm-applet &
-blueman-applet &
+
+# Bluetooth tray (only if hardware is present)
+if ls /sys/class/bluetooth/ 2>/dev/null | grep -q .; then
+    blueman-applet &
+fi
 
 # Clipboard history daemon
 wl-paste --watch cliphist store &
@@ -52,9 +77,6 @@ wob \
     --height 28 --offset-y 60 \
     < "$WOB_PIPE" &
 
-# Dock — full-width taskbar style
-nwg-dock -p bottom -a center -i 38 -mb 0 -f &
-
 # Idle timeouts — edit these values to customize (seconds)
 # IDLE_LOCK=300  → lock after 5 min
 # IDLE_DPMS=600  → display off after 10 min
@@ -69,14 +91,20 @@ swayidle -w \
 # Ensure ~/Pictures exists for screenshots
 mkdir -p ~/Pictures
 
-# GTK dark theme + cursor + icons
-gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita-dark' 2>/dev/null || true
-gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark' 2>/dev/null || true
-gsettings set org.gnome.desktop.interface icon-theme 'Papirus-Dark' 2>/dev/null || true
-gsettings set org.gnome.desktop.interface cursor-theme 'Adwaita' 2>/dev/null || true
-gsettings set org.gnome.desktop.interface cursor-size 24 2>/dev/null || true
+# GTK dark theme + cursor + icons (first login only — nwg-look can change these after)
+_GTK_FLAG="$HOME/.config/blazzcore/gtk_defaults_set"
+if [[ ! -f "$_GTK_FLAG" ]]; then
+    mkdir -p "$(dirname "$_GTK_FLAG")"
+    touch "$_GTK_FLAG"
+    gsettings set org.gnome.desktop.interface gtk-theme 'Adwaita-dark' 2>/dev/null || true
+    gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark' 2>/dev/null || true
+    gsettings set org.gnome.desktop.interface icon-theme 'Papirus-Dark' 2>/dev/null || true
+    gsettings set org.gnome.desktop.interface cursor-theme 'Adwaita' 2>/dev/null || true
+    gsettings set org.gnome.desktop.interface cursor-size 24 2>/dev/null || true
+fi
+unset _GTK_FLAG
 
 # Auto-launch installer if booted via "Install BlazzCore" GRUB entry
 if grep -qw 'blazzcore_install' /proc/cmdline; then
-    (sleep 4 && foot -e sudo blazzcore-install) &
+    (sleep 4 && foot -e sudo -E blazzcore-install) &
 fi

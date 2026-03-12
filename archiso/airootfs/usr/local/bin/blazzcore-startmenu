@@ -11,13 +11,27 @@ import gi
 gi.require_version('Gtk', '3.0')
 gi.require_version('GtkLayerShell', '0.1')
 from gi.repository import Gtk, Gdk, Gio, GtkLayerShell, GLib
-import json, os, subprocess
+import json, os, subprocess, shlex
 
 # ---- Paths -------------------------------------------------
 CFG_DIR        = os.path.expanduser("~/.config/blazzcore")
 PINNED_QA_FILE = os.path.join(CFG_DIR, "startmenu-pinned.json")
 DOCK_PINNED    = os.path.expanduser("~/.config/nwg-dock/pinned")
-DOCK_CMD       = "nwg-dock -p bottom -a center -i 38 -mb 0 -f"
+DOCK_CONF      = os.path.join(CFG_DIR, "dock.conf")
+
+_DOCK_MARGINS  = {'bottom': '-mb', 'left': '-ml', 'right': '-mr', 'top': '-mt'}
+
+def _dock_cmd():
+    pos = 'bottom'
+    try:
+        for line in open(DOCK_CONF):
+            if line.startswith('DOCK_POSITION='):
+                pos = line.split('=', 1)[1].strip()
+                break
+    except FileNotFoundError:
+        pass
+    margin = _DOCK_MARGINS.get(pos, '-mb')
+    return f"nwg-dock -p {pos} -a center -i 38 {margin} 0 -f"
 
 # ---- Built-in shortcuts (always in Quick Access) -----------
 BUILTIN = [
@@ -166,7 +180,7 @@ def _dock_pinned():
 
 def _dock_restart():
     subprocess.Popen(['pkill', 'nwg-dock'])
-    subprocess.Popen(['bash', '-c', f'sleep 0.4; {DOCK_CMD}'])
+    subprocess.Popen(['bash', '-c', f'sleep 0.4; {_dock_cmd()}'])
 
 def _dock_add(desktop_name):
     pinned = _dock_pinned()
@@ -195,16 +209,38 @@ class StartMenu(Gtk.Window):
         GtkLayerShell.init_for_window(self)
         GtkLayerShell.set_layer(self, GtkLayerShell.Layer.TOP)
         GtkLayerShell.set_anchor(self, GtkLayerShell.Edge.BOTTOM, True)
-        GtkLayerShell.set_margin(self, GtkLayerShell.Edge.BOTTOM, 0)
+        GtkLayerShell.set_anchor(self, GtkLayerShell.Edge.LEFT, True)
+        GtkLayerShell.set_margin(self, GtkLayerShell.Edge.BOTTOM, 36)
+        GtkLayerShell.set_margin(self, GtkLayerShell.Edge.LEFT, 0)
         GtkLayerShell.set_keyboard_mode(self, GtkLayerShell.KeyboardMode.ON_DEMAND)
         GtkLayerShell.set_exclusive_zone(self, 0)
 
         self.set_default_size(580, 560)
+        self._menu_active = False
         self._load_css()
         self._build_ui()
         self._load_apps()
         self.connect("key-press-event", self._on_key)
-        self.connect("focus-out-event", lambda *_: self.destroy())
+        self.connect("focus-out-event", self._on_focus_out)
+        self.connect("realize", self._on_realize)
+
+    # ---- Window events --------------------------------------
+    def _on_realize(self, *_):
+        try:
+            cursor = Gdk.Cursor.new_from_name(self.get_display(), "default")
+            self.get_window().set_cursor(cursor)
+        except Exception:
+            pass
+
+    def _on_focus_out(self, *_):
+        # Don't close immediately — a context menu popup briefly steals focus.
+        # Wait a short moment and only close if no menu is active.
+        GLib.timeout_add(120, self._maybe_close)
+
+    def _maybe_close(self):
+        if not self._menu_active and not self.has_toplevel_focus():
+            self.destroy()
+        return False  # don't repeat
 
     # ---- CSS ------------------------------------------------
     def _load_css(self):
@@ -478,6 +514,8 @@ class StartMenu(Gtk.Window):
             mi3.connect("activate", lambda *_: _dock_add(row._fname))
         menu.append(mi3)
 
+        self._menu_active = True
+        menu.connect("hide", self._on_menu_hide)
         menu.show_all()
         menu.popup_at_pointer(event)
 
@@ -507,9 +545,16 @@ class StartMenu(Gtk.Window):
         if not menu.get_children():
             return False
 
+        self._menu_active = True
+        menu.connect("hide", self._on_menu_hide)
         menu.show_all()
         menu.popup_at_pointer(event)
         return True
+
+    def _on_menu_hide(self, *_):
+        self._menu_active = False
+        # Re-grab focus so the window stays open after menu closes
+        GLib.idle_add(self.present)
 
     # ---- Add folder shortcut --------------------------------
     def _add_folder_shortcut(self, _btn):
@@ -526,7 +571,7 @@ class StartMenu(Gtk.Window):
         if resp == Gtk.ResponseType.OK:
             path = dialog.get_filename()
             name = os.path.basename(path) or path
-            _add_to_qa(name, f"thunar '{path}'", "folder")
+            _add_to_qa(name, f"thunar {shlex.quote(path)}", "folder")
             self._rebuild_shortcuts()
         dialog.destroy()
 

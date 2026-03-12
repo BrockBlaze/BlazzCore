@@ -44,4 +44,5 @@ file_permissions=(
   ["/usr/local/bin/blazzcore-startmenu"]="0:0:755"
   ["/usr/share/blazzcore/postinstall.sh"]="0:0:755"
   ["/usr/local/bin/blazzcore-drivers"]="0:0:755"
+  ["/etc/profile.d/blazzcore-sway-autostart.sh"]="0:0:755"
 )

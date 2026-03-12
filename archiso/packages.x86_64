@@ -95,6 +95,10 @@ chromium
 # --- Boot Splash ---
 plymouth
 
+# --- Flatpak ---
+flatpak
+xdg-desktop-portal-gtk
+
 # --- Desktop Shell ---
 nwg-look
 nwg-dock

@@ -4,7 +4,7 @@
 import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gdk, GLib
-import subprocess, os, re, threading
+import subprocess, os, re, threading, shutil
 
 HOME      = os.path.expanduser('~')
 AUTOSTART = f'{HOME}/.config/labwc/autostart'
@@ -103,21 +103,74 @@ label { color: #e0e0f0; }
 # ── Helpers ───────────────────────────────────────────────────────────────────
 def run_bg(cmd, status_lbl=None):
     """Launch a background process. Shows feedback in status_lbl if provided."""
+    # Determine executable name for validation
+    exe = (cmd.split()[0] if isinstance(cmd, str) else cmd[0])
+    if not shutil.which(exe):
+        msg = f'Not installed: {exe}'
+        if status_lbl:
+            status_lbl.set_text(msg)
+        else:
+            try:
+                subprocess.Popen(['notify-send', '-u', 'critical', 'Settings', msg])
+            except Exception:
+                pass
+        return
+
     if status_lbl:
         status_lbl.set_text('Launching…')
-        GLib.timeout_add(3000, lambda: status_lbl.set_text('') or False)
+
     try:
-        subprocess.Popen(cmd, shell=isinstance(cmd, str))
-    except FileNotFoundError:
+        proc = subprocess.Popen(cmd, shell=isinstance(cmd, str))
+    except Exception as e:
         if status_lbl:
-            status_lbl.set_text(f'Error: command not found — {cmd}')
+            status_lbl.set_text(f'Error: {e}')
+        return
+
+    # Check after 1 s whether the process is still alive
+    def _check_alive():
+        rc = proc.poll()
+        if rc is None:
+            if status_lbl:
+                status_lbl.set_text('✓  Opened.')
+                GLib.timeout_add(2500, lambda: status_lbl.set_text('') or False)
         else:
-            subprocess.Popen(['notify-send', '-u', 'critical', 'Settings',
-                              f'Command not found: {cmd}'])
+            if status_lbl:
+                status_lbl.set_text(f'Failed to launch {exe} (exit {rc}).')
+        return False
+
+    GLib.timeout_add(1000, _check_alive)
 
 def run_term(title, cmd, status_lbl=None):
     run_bg(f"foot --title='{title}' -e bash -c '{cmd}; echo; echo \"Press Enter to close...\"; read'",
            status_lbl)
+
+def themerc_get(path, key, default=''):
+    """Read a value from an openbox/labwc themerc file (key:   value format)."""
+    try:
+        for line in open(path):
+            s = line.strip()
+            if s.startswith(f'{key}:'):
+                return s.split(':', 1)[1].strip()
+    except FileNotFoundError:
+        pass
+    return default
+
+def themerc_set(path, key, value):
+    """Update or append a key in a themerc file."""
+    try:
+        lines = open(path).readlines()
+    except FileNotFoundError:
+        lines = []
+    found = False
+    for i, l in enumerate(lines):
+        if l.strip().startswith(f'{key}:'):
+            lines[i] = f'{key}:             {value}\n'
+            found = True
+            break
+    if not found:
+        lines.append(f'{key}:             {value}\n')
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    open(path, 'w').writelines(lines)
 
 def conf_get(path, key, default=''):
     try:
@@ -262,9 +315,54 @@ def page_appearance():
     s, b = page_box()
     b.pack_start(page_title('Appearance', 'Colors, wallpaper, theme, icons, and fonts'), False, False, 0)
     st = status_label()
+
+    THEMERC       = os.path.expanduser('~/.config/labwc/themerc')
+    SYS_THEMERC   = '/usr/share/themes/BlazzCore/openbox-3/themerc'
+
+    # Read current accent color from user or system themerc
+    cur_hex = (themerc_get(THEMERC, 'window.active.border.color') or
+               themerc_get(SYS_THEMERC, 'window.active.border.color') or
+               '#4a4a8a')
+    rgba = Gdk.RGBA()
+    if not rgba.parse(cur_hex):
+        rgba.parse('#4a4a8a')
+
+    color_btn = Gtk.ColorButton.new_with_rgba(rgba)
+    color_btn.set_use_alpha(False)
+    color_btn.set_title('Choose Accent Color')
+
+    def _on_color_set(button):
+        c = button.get_rgba()
+        r, g, bl = int(c.red * 255), int(c.green * 255), int(c.blue * 255)
+        accent = f'#{r:02x}{g:02x}{bl:02x}'
+        title  = f'#{int(r*.20):02x}{int(g*.20):02x}{int(bl*.20):02x}'
+
+        # Ensure user themerc exists (copy system themerc as base)
+        if not os.path.exists(THEMERC):
+            try:
+                shutil.copy(SYS_THEMERC, THEMERC)
+            except Exception:
+                pass
+
+        themerc_set(THEMERC, 'window.active.border.color',     accent)
+        themerc_set(THEMERC, 'window.active.title.bg.color',   title)
+
+        # Reload labwc theme live
+        try:
+            subprocess.Popen(['labwc', '--reconfigure'])
+        except Exception:
+            try:
+                subprocess.run(['pkill', '-HUP', 'labwc'], capture_output=True)
+            except Exception:
+                pass
+
+        st.set_text(f'✓  Accent set to {accent}.')
+        GLib.timeout_add(2500, lambda: st.set_text('') or False)
+
+    color_btn.connect('color-set', _on_color_set)
+
     c1 = card()
-    c1.pack_start(row('Accent Color', 'Window border and highlight color',
-        btn('Change', lambda: run_bg('blazzcore-accent', st))), False, False, 0)
+    c1.pack_start(row('Accent Color', 'Window border and highlight color', color_btn), False, False, 0)
     c1.pack_start(hsep(), False, False, 0)
     c1.pack_start(row('Wallpaper', 'Set the desktop background image',
         btn('Choose', lambda: run_bg('blazzcore-wallpaper', st))), False, False, 0)
@@ -276,36 +374,20 @@ def page_appearance():
     b.pack_start(st, False, False, 0)
     return s
 
-def page_dock():
+def page_taskbar():
     s, b = page_box()
-    b.pack_start(page_title('Dock', 'Set the position of the application dock'), False, False, 0)
+    b.pack_start(page_title('Taskbar', 'Restart or configure the Waybar taskbar'), False, False, 0)
     st = status_label()
 
-    def set_dock(pos):
-        # Kill existing dock and restart at new position (mirrors blazzcore-dock logic)
-        subprocess.run(['pkill', 'nwg-dock'], capture_output=True)
-        for _ in range(20):
-            if subprocess.run(['pgrep', '-x', 'nwg-dock'], capture_output=True).returncode != 0:
-                break
-            import time; time.sleep(0.1)
-        margin_flag = {
-            'bottom': '-mb', 'left': '-ml', 'right': '-mr', 'top': '-mt'
-        }[pos]
-        subprocess.Popen(['nwg-dock', '-p', pos, '-a', 'center', '-i', '38', margin_flag, '0', '-f'])
-        st.set_text(f'✓  Dock moved to {pos}.')
+    def restart_waybar():
+        subprocess.run(['pkill', 'waybar'], capture_output=True)
+        subprocess.Popen(['waybar'])
+        st.set_text('✓  Waybar restarted.')
 
     c = card()
-    positions = [
-        ('Bottom', 'Place the dock at the bottom of the screen', 'bottom'),
-        ('Left',   'Place the dock on the left side',            'left'),
-        ('Right',  'Place the dock on the right side',           'right'),
-        ('Top',    'Place the dock at the top of the screen',    'top'),
-    ]
-    for i, (label, desc, pos) in enumerate(positions):
-        c.pack_start(row(label, desc,
-            btn('Set', (lambda p: lambda: set_dock(p))(pos))), False, False, 0)
-        if i < len(positions) - 1:
-            c.pack_start(hsep(), False, False, 0)
+    c.pack_start(row('Restart Taskbar',
+        'Apply config changes by restarting waybar',
+        btn('Restart', restart_waybar)), False, False, 0)
     b.pack_start(c, False, False, 0)
     b.pack_start(st, False, False, 0)
     return s
@@ -351,7 +433,18 @@ def page_nightlight():
     is_on = subprocess.run(['pgrep', '-x', 'wlsunset'], capture_output=True).returncode == 0
     sw = Gtk.Switch()
     sw.set_active(is_on)
-    sw.connect('notify::active', lambda *_: run_bg('blazzcore-nightlight'))
+
+    def _toggle_nightlight(sw, _):
+        run_bg('blazzcore-nightlight')
+        def _resync():
+            actual = subprocess.run(['pgrep', '-x', 'wlsunset'], capture_output=True).returncode == 0
+            sw.handler_block_by_func(_toggle_nightlight)
+            sw.set_active(actual)
+            sw.handler_unblock_by_func(_toggle_nightlight)
+            return False
+        GLib.timeout_add(600, _resync)
+
+    sw.connect('notify::active', _toggle_nightlight)
     c1.pack_start(row('Enable Night Light', 'Reduce eye strain by warming the screen color', sw), False, False, 0)
     b.pack_start(c1, False, False, 0)
 
@@ -428,11 +521,28 @@ def page_power():
     s, b = page_box()
     b.pack_start(page_title('Power Management', 'Configure idle timeouts for lock and display'), False, False, 0)
 
+    note = status_label()
+
+    def save_and_apply(key, spin):
+        conf_set(AUTOSTART, key, str(int(spin.get_value())))
+        lock_val = conf_get(AUTOSTART, 'IDLE_LOCK', '300')
+        dpms_val = conf_get(AUTOSTART, 'IDLE_DPMS', '600')
+        subprocess.run(['pkill', 'swayidle'], capture_output=True)
+        subprocess.Popen([
+            'swayidle', '-w',
+            'timeout', lock_val, 'blazzcore-lock',
+            'timeout', dpms_val, 'wlopm --off "*"',
+            'resume', 'wlopm --on "*"',
+            'before-sleep', 'blazzcore-lock',
+        ])
+        note.set_text('✓  Applied.')
+        GLib.timeout_add(2500, lambda: note.set_text('') or False)
+
     def spin_row(label, desc, val, key):
         spin = Gtk.SpinButton.new_with_range(30, 7200, 30)
         spin.set_value(int(val)); spin.set_size_request(90, -1)
         suf = Gtk.Label(label='sec'); suf.get_style_context().add_class('dim')
-        save = btn('Save', (lambda k, sp: lambda: conf_set(AUTOSTART, k, str(int(sp.get_value()))))(key, spin))
+        save = btn('Save', (lambda k, sp: lambda: save_and_apply(k, sp))(key, spin))
         hb = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         vb = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=1)
         vb.pack_start(Gtk.Label(label=label, xalign=0), False, False, 0)
@@ -451,7 +561,6 @@ def page_power():
     c.pack_start(spin_row('Display off after',
         'Seconds of idle before turning display off', conf_get(AUTOSTART, 'IDLE_DPMS', '600'), 'IDLE_DPMS'), False, False, 0)
     b.pack_start(c, False, False, 0)
-    note = status_label('Changes apply on next login.')
     b.pack_start(note, False, False, 0)
     return s
 
@@ -540,7 +649,10 @@ def page_about():
     s, b = page_box()
     b.pack_start(page_title('About BlazzCore'), False, False, 0)
 
-    version  = _shell(['cat', '/etc/blazzcore-version']) or 'BlazzCore'
+    try:
+        version = open('/etc/blazzcore-version').read().strip()
+    except FileNotFoundError:
+        version = 'BlazzCore'
     kernel   = _shell(['uname', '-r'])
     pkg_cnt  = _shell('pacman -Q 2>/dev/null | wc -l') + ' packages'
     uptime   = _shell(['uptime', '-p'])
@@ -590,7 +702,7 @@ class SettingsApp(Gtk.Window):
         pages = [
             ('display',    '  Display',      page_display),
             ('appearance', '  Appearance',   page_appearance),
-            ('dock',       '  Dock',         page_dock),
+            ('taskbar',    '  Taskbar',      page_taskbar),
             ('sound',      '  Sound',        page_sound),
             ('bluetooth',  '  Bluetooth',    page_bluetooth),
             ('network',    '  Network',      page_network),
@@ -604,12 +716,40 @@ class SettingsApp(Gtk.Window):
             ('about',      '  About',        page_about),
         ]
 
+        # Lazy-load: add placeholder boxes now, build the real page on first visit
+        self._built        = set()
+        self._builders     = {}
+        self._ph_to_name   = {}
         for name, label, builder in pages:
-            stack.add_titled(builder(), name, label)
+            ph = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+            stack.add_titled(ph, name, label)
+            self._builders[name]   = (ph, builder)
+            self._ph_to_name[id(ph)] = name
+
+        stack.connect('notify::visible-child', self._on_page_change)
+        # Build the first page immediately so the window isn't blank
+        self._build_page(pages[0][0])
 
         hbox.pack_start(sidebar, False, False, 0)
         hbox.pack_start(Gtk.Separator(orientation=Gtk.Orientation.VERTICAL), False, False, 0)
         hbox.pack_start(stack, True, True, 0)
+
+    def _build_page(self, name):
+        if name in self._built:
+            return
+        self._built.add(name)
+        ph, builder = self._builders[name]
+        widget = builder()
+        widget.set_vexpand(True)
+        ph.pack_start(widget, True, True, 0)
+        ph.show_all()
+
+    def _on_page_change(self, stack, _):
+        child = stack.get_visible_child()
+        if child is not None:
+            name = self._ph_to_name.get(id(child))
+            if name:
+                self._build_page(name)
 
 
 def main():

@@ -18,12 +18,9 @@ case "$CHOICE" in
     "Shutdown") systemctl poweroff ;;
     "Restart")  systemctl reboot ;;
     "Suspend")
-        # Lock first, wait until swaylock is running, then suspend
+        # Lock screen first, give it time to render, then suspend
         blazzcore-lock &
-        for _ in {1..30}; do
-            pgrep -x swaylock > /dev/null && break
-            sleep 0.1
-        done
+        sleep 1
         systemctl suspend
         ;;
     "Lock") blazzcore-lock ;;

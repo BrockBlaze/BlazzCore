@@ -24,39 +24,39 @@ window.inactive.handle.bg:          flat solid
 window.inactive.handle.bg.color:    #111118
 handle.width:                       4
 
-# --- Close button (red) ---
-window.active.button.close.bg:             flat solid
-window.active.button.close.bg.color:       #c0392b
-window.active.button.close.image.color:    #ffffff
-window.inactive.button.close.bg:           flat solid
-window.inactive.button.close.bg.color:     #5c2a2a
-window.inactive.button.close.image.color:  #888888
+# --- Close button ---
+window.active.button.close.bg:                  flat solid
+window.active.button.close.bg.color:            #c0392b
+window.active.button.close.image.color:         #ffffff
+window.active.button.close.hover.bg.color:      #e74c3c
+window.active.button.close.hover.image.color:   #ffffff
+window.inactive.button.close.bg:                flat solid
+window.inactive.button.close.bg.color:          #5c2a2a
+window.inactive.button.close.image.color:       #aaaaaa
 
-# --- Maximize button (green) ---
-window.active.button.max.bg:               flat solid
-window.active.button.max.bg.color:         #27ae60
-window.active.button.max.image.color:      #ffffff
-window.inactive.button.max.bg:             flat solid
-window.inactive.button.max.bg.color:       #1e4d30
-window.inactive.button.max.image.color:    #888888
+# --- Maximize button ---
+window.active.button.max.bg:                    flat solid
+window.active.button.max.bg.color:              #27ae60
+window.active.button.max.image.color:           #ffffff
+window.active.button.max.hover.bg.color:        #2ecc71
+window.active.button.max.hover.image.color:     #ffffff
+window.inactive.button.max.bg:                  flat solid
+window.inactive.button.max.bg.color:            #1e4d30
+window.inactive.button.max.image.color:         #aaaaaa
 
-# --- Minimize button (yellow) ---
-window.active.button.iconify.bg:           flat solid
-window.active.button.iconify.bg.color:     #d4ac0d
-window.active.button.iconify.image.color:  #ffffff
-window.inactive.button.iconify.bg:         flat solid
-window.inactive.button.iconify.bg.color:   #4a3f12
-window.inactive.button.iconify.image.color: #888888
-
-# --- Window icon ---
-window.active.button.desk.bg:             flat solid
-window.active.button.desk.bg.color:       #1a1a2e
-window.inactive.button.desk.bg:           flat solid
-window.inactive.button.desk.bg.color:     #111118
+# --- Minimize button ---
+window.active.button.iconify.bg:                flat solid
+window.active.button.iconify.bg.color:          #d4ac0d
+window.active.button.iconify.image.color:       #ffffff
+window.active.button.iconify.hover.bg.color:    #f1c40f
+window.active.button.iconify.hover.image.color: #ffffff
+window.inactive.button.iconify.bg:              flat solid
+window.inactive.button.iconify.bg.color:        #4a3f12
+window.inactive.button.iconify.image.color:     #aaaaaa
 
 # --- Dimensions ---
-padding.width:                      6
-padding.height:                     5
+padding.width:                      10
+padding.height:                     8
 border.width:                       1
 
 # --- Menu ---

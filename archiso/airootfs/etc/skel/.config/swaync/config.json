@@ -1,12 +1,12 @@
 {
   "$schema": "/etc/xdg/swaync/configSchema.json",
   "positionX": "right",
-  "positionY": "top",
+  "positionY": "bottom",
   "layer": "overlay",
   "layer-shell": true,
   "cssPriority": "application",
-  "control-center-margin-top": 8,
-  "control-center-margin-bottom": 8,
+  "control-center-margin-top": 0,
+  "control-center-margin-bottom": 44,
   "control-center-margin-right": 8,
   "control-center-margin-left": 0,
   "notification-icon-size": 48,
@@ -28,6 +28,7 @@
   "widgets": [
     "title",
     "dnd",
+    "mpris",
     "notifications"
   ],
   "widget-config": {
@@ -38,10 +39,6 @@
     },
     "dnd": {
       "text": "Do Not Disturb"
-    },
-    "label": {
-      "max-lines": 1,
-      "text": "BlazzCore"
     },
     "mpris": {
       "image-size": 96,

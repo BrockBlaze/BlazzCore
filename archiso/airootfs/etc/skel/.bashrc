@@ -79,5 +79,10 @@ export VISUAL=nano
 # Starship prompt
 eval "$(starship init bash)"
 
-# Show system info on new terminal
-command -v fastfetch &>/dev/null && fastfetch
+# Show system info only on the first terminal of each login session
+_FF_FLAG="${XDG_RUNTIME_DIR:-/tmp}/blazzcore_ff_shown"
+if command -v fastfetch &>/dev/null && [[ ! -f "$_FF_FLAG" ]]; then
+    touch "$_FF_FLAG"
+    fastfetch
+fi
+unset _FF_FLAG

@@ -10,7 +10,7 @@
 
   <theme>
     <name>BlazzCore</name>
-    <cornerRadius>0</cornerRadius>
+    <cornerRadius>10</cornerRadius>
     <font place="ActiveWindow">
       <name>Noto Sans</name>
       <size>10</size>
@@ -195,6 +195,22 @@
     <keybind key="Super+n">
       <action name="Execute"><command>blazzcore-nightlight</command></action>
     </keybind>
+
+    <!-- Move window to adjacent workspace and follow -->
+    <keybind key="Super+shift+Left">
+      <action name="SendToDesktop"><to>previous</to><follow>yes</follow></action>
+    </keybind>
+    <keybind key="Super+shift+Right">
+      <action name="SendToDesktop"><to>next</to><follow>yes</follow></action>
+    </keybind>
+
+    <!-- Cycle workspaces -->
+    <keybind key="Control+Alt+Left">
+      <action name="GoToDesktop"><to>previous</to><wrap>yes</wrap></action>
+    </keybind>
+    <keybind key="Control+Alt+Right">
+      <action name="GoToDesktop"><to>next</to><wrap>yes</wrap></action>
+    </keybind>
   </keyboard>
 
   <mouse>
@@ -217,6 +233,8 @@
       </mousebind>
     </context>
     <context name="Desktop">
+      <!-- Suppress default left-click menu from <default/> -->
+      <mousebind button="Left" action="Click"/>
       <mousebind button="Right" action="Click">
         <action name="ShowMenu"><menu>root-menu</menu></action>
       </mousebind>
@@ -224,16 +242,38 @@
   </mouse>
 
   <windowRules>
-    <!-- Force server-side decorations (min/max/close buttons) on all windows -->
+    <!-- Force BlazzCore server-side decorations on all windows.
+         GTK_CSD=0 (set in autostart) strips GTK3 apps' own CSD so only ours shows.
+         GTK4/libadwaita apps that hardcode CSD are listed below with SSD disabled
+         to avoid double-decoration. -->
     <windowRule identifier="*">
       <serverDecoration>yes</serverDecoration>
       <action name="AutoPlace"/>
     </windowRule>
-    <!-- Chromium draws its own tab bar as the title bar — don't add a second one -->
+
+    <!-- Apps that hardcode CSD and cannot be overridden — disable SSD to avoid double-decoration -->
     <windowRule identifier="chromium">
       <serverDecoration>no</serverDecoration>
     </windowRule>
     <windowRule identifier="Chromium-browser">
+      <serverDecoration>no</serverDecoration>
+    </windowRule>
+    <windowRule identifier="gnome-calculator">
+      <serverDecoration>no</serverDecoration>
+    </windowRule>
+    <windowRule identifier="org.gnome.Calculator">
+      <serverDecoration>no</serverDecoration>
+    </windowRule>
+    <windowRule identifier="nautilus">
+      <serverDecoration>no</serverDecoration>
+    </windowRule>
+    <windowRule identifier="org.gnome.Nautilus">
+      <serverDecoration>no</serverDecoration>
+    </windowRule>
+    <windowRule identifier="gedit">
+      <serverDecoration>no</serverDecoration>
+    </windowRule>
+    <windowRule identifier="org.gnome.gedit">
       <serverDecoration>no</serverDecoration>
     </windowRule>
   </windowRules>

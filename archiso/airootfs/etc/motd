@@ -18,7 +18,7 @@
 
   Keyboard shortcuts:
     Super + Enter         Terminal (foot)
-    Super + D             App launcher (wofi)
+    Super + D / Space     Start menu
     Super + E             File manager (thunar)
     Super + B             Browser (Chromium)
     Super + V             Clipboard history

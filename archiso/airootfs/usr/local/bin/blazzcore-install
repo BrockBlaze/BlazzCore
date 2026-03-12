@@ -626,8 +626,11 @@ EOF
     printf "%s:%s\n" "$USERNAME" "$PASSWORD" | arch-chroot /mnt chpasswd
     printf "root:%s\n"  "$PASSWORD"          | arch-chroot /mnt chpasswd
 
-    # sudoers
-    printf "%%wheel ALL=(ALL:ALL) NOPASSWD: ALL\n" > /mnt/etc/sudoers.d/wheel
+    # sudoers (env_keep preserves WAYLAND_DISPLAY so GUI apps work under sudo)
+    cat > /mnt/etc/sudoers.d/wheel <<'EOF'
+%wheel ALL=(ALL:ALL) NOPASSWD: ALL
+Defaults env_keep += "WAYLAND_DISPLAY XDG_RUNTIME_DIR XDG_SESSION_TYPE DBUS_SESSION_BUS_ADDRESS DISPLAY"
+EOF
     chmod 440 /mnt/etc/sudoers.d/wheel
 
     # ------------------------------------------------------------------
@@ -683,6 +686,14 @@ EOF
     cp /usr/local/bin/blazzcore-* /mnt/usr/local/bin/ 2>/dev/null || true
     chmod 755 /mnt/usr/local/bin/blazzcore-* 2>/dev/null || true
 
+    # profile.d autostart (starts labwc on TTY1 login — required for desktop to boot)
+    mkdir -p /mnt/etc/profile.d
+    cp /etc/profile.d/blazzcore-sway-autostart.sh /mnt/etc/profile.d/
+    chmod 755 /mnt/etc/profile.d/blazzcore-sway-autostart.sh
+
+    # System-wide environment variables (Wayland backend for QT, Firefox, SDL, cursor)
+    [[ -f /etc/environment ]] && cp /etc/environment /mnt/etc/environment
+
     # Skel configs
     [[ -d /etc/skel/.config ]] && cp -rT /etc/skel/.config /mnt/etc/skel/.config 2>/dev/null || true
     [[ -d /etc/skel/.local  ]] && cp -rT /etc/skel/.local  /mnt/etc/skel/.local  2>/dev/null || true
@@ -716,9 +727,10 @@ EOF
     fi
 
     # Font config and zram config
-    [[ -f /etc/fonts/local.conf ]] && \
-        mkdir -p /mnt/etc/fonts && \
-        cp /etc/fonts/local.conf /mnt/etc/fonts/local.conf 2>/dev/null || true
+    if [[ -d /etc/fonts/conf.d ]]; then
+        mkdir -p /mnt/etc/fonts/conf.d
+        cp /etc/fonts/conf.d/99-blazzcore.conf /mnt/etc/fonts/conf.d/ 2>/dev/null || true
+    fi
 
     [[ -f /etc/systemd/zram-generator.conf ]] && \
         mkdir -p /mnt/etc/systemd && \

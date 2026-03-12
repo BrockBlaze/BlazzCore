@@ -1,8 +1,11 @@
 {
     "layer": "top",
     "position": "top",
-    "height": 36,
+    "height": 40,
     "spacing": 0,
+    "margin-top": 8,
+    "margin-left": 12,
+    "margin-right": 12,
     "modules-left": ["custom/menu", "wlr/taskbar"],
     "modules-center": ["mpris", "clock"],
     "modules-right": ["tray", "custom/notifications", "custom/updates", "cpu", "memory", "keyboard-state", "network", "pulseaudio", "backlight", "battery", "custom/nightlight", "custom/power"],
@@ -20,7 +23,7 @@
         "icon-theme": "Papirus-Dark",
         "tooltip-format": "{title}",
         "on-click": "activate",
-        "on-click-right": "close",
+        "on-click-right": "minimize",
         "ignore-list": ["waybar"]
     },
 
@@ -28,7 +31,7 @@
         "format": "{:%a %b %d  ·  %H:%M}",
         "format-alt": "{:%Y-%m-%d %H:%M:%S}",
         "tooltip-format": "<big>{:%B %Y}</big>\n<tt><small>{calendar}</small></tt>",
-        "interval": 1
+        "interval": 60
     },
 
     "mpris": {
@@ -146,7 +149,7 @@
 
     "custom/nightlight": {
         "exec": "pgrep -x wlsunset >/dev/null && echo '󰛨 On' || echo ' Off'",
-        "interval": 3,
+        "interval": 30,
         "on-click": "blazzcore-nightlight",
         "tooltip-format": "Toggle Night Light (Super+N)"
     },

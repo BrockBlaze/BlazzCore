@@ -30,8 +30,11 @@ systemctl enable blazzcore-firstboot.service
 passwd -d blazzcore
 passwd -d root
 
-# Add blazzcore to sudoers
-echo "%wheel ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/wheel
+# Add blazzcore to sudoers (env_keep preserves WAYLAND_DISPLAY so GUI apps work under sudo)
+cat > /etc/sudoers.d/wheel <<'EOF'
+%wheel ALL=(ALL:ALL) NOPASSWD: ALL
+Defaults env_keep += "WAYLAND_DISPLAY XDG_RUNTIME_DIR XDG_SESSION_TYPE DBUS_SESSION_BUS_ADDRESS DISPLAY"
+EOF
 
 # Generate default wallpapers
 mkdir -p /usr/share/backgrounds/blazzcore
