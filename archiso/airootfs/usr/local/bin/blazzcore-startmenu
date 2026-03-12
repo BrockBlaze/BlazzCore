@@ -281,6 +281,7 @@ class StartMenu(Gtk.Window):
         self.apps_list = Gtk.ListBox()
         self.apps_list.set_name("apps-list")
         self.apps_list.set_selection_mode(Gtk.SelectionMode.BROWSE)
+        self.apps_list.set_activate_on_single_click(True)
         self.apps_list.connect("row-activated", self._launch_row)
         scroll.add(self.apps_list)
         left.pack_start(scroll, True, True, 0)

@@ -1,0 +1,5 @@
+[Configuration]
+MiscSingleClick=TRUE
+MiscShowDeleteAction=TRUE
+MiscThumbnailMode=THUNAR_THUMBNAIL_MODE_ALWAYS
+LastSeparatorPosition=170
