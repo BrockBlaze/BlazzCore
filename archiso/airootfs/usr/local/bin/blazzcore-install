@@ -30,7 +30,7 @@ PACKAGES=(
     xdg-desktop-portal xdg-desktop-portal-wlr xdg-utils xorg-xwayland
     foot wofi grim slurp wob wlsunset wf-recorder
     # Seat / polkit
-    seatd polkit polkit-gnome
+    seatd polkit polkit-gnome cryptsetup
     # GPU
     mesa vulkan-icd-loader libva libva-mesa-driver libva-utils libvdpau vulkan-radeon vulkan-intel
     # Audio
@@ -301,6 +301,108 @@ step_timezone() {
 }
 
 # ---------------------------------------------------------------------------
+# Step 6b: Keyboard layout
+# ---------------------------------------------------------------------------
+step_keyboard() {
+    KEYMAP=$(zenity --list \
+        --title="Keyboard Layout" \
+        --text="Select your keyboard layout:" \
+        --column="Layout" \
+        --print-column=1 \
+        --width=400 --height=500 \
+        us gb de fr es it pt nl be ch \
+        se no dk fi pl cz sk hu ro bg \
+        hr lt lv et ru ua by tr ar il \
+        gr jp br \
+        2>/dev/null)
+
+    [[ -z "$KEYMAP" ]] && KEYMAP="us"
+}
+
+# ---------------------------------------------------------------------------
+# Step: Disk encryption (LUKS)
+# ---------------------------------------------------------------------------
+step_encryption() {
+    ENABLE_LUKS=false
+    LUKS_PASSPHRASE=""
+
+    zenity --question \
+        --title="Disk Encryption" \
+        --ok-label="Enable Encryption" \
+        --cancel-label="No Thanks" \
+        --text="<b>Enable full disk encryption?</b>\n\nAll data on ${DISK} will be encrypted. You will enter a passphrase on every boot.\n\n<i>Recommended for laptops — protects data if the device is lost or stolen.</i>" \
+        --width=500 \
+        2>/dev/null || return 0
+
+    while true; do
+        LUKS_PASSPHRASE=$(zenity --password \
+            --title="Set Encryption Passphrase" \
+            --text="Enter a passphrase (minimum 8 characters):" \
+            --width=460 2>/dev/null)
+
+        [[ $? -ne 0 ]] && return 0
+
+        if [[ ${#LUKS_PASSPHRASE} -lt 8 ]]; then
+            zenity --error --title="Passphrase Too Short" \
+                --text="Passphrase must be at least 8 characters." \
+                --width=380 2>/dev/null
+            continue
+        fi
+
+        local confirm
+        confirm=$(zenity --password \
+            --title="Confirm Passphrase" \
+            --text="Re-enter your passphrase to confirm:" \
+            --width=460 2>/dev/null)
+
+        [[ $? -ne 0 ]] && return 0
+
+        if [[ "$LUKS_PASSPHRASE" != "$confirm" ]]; then
+            zenity --error --title="Passphrases Do Not Match" \
+                --text="The passphrases do not match. Please try again." \
+                --width=380 2>/dev/null
+            continue
+        fi
+
+        break
+    done
+
+    ENABLE_LUKS=true
+}
+
+# ---------------------------------------------------------------------------
+# Step: Network connectivity check
+# ---------------------------------------------------------------------------
+step_network() {
+    if ping -c 1 -W 3 archlinux.org &>/dev/null; then
+        return 0
+    fi
+
+    zenity --question \
+        --title="No Internet Connection" \
+        --ok-label="Connect to Wi-Fi" \
+        --cancel-label="Continue Anyway" \
+        --text="No internet connection detected.\n\nAn internet connection is required to download packages.\n\nWould you like to connect to Wi-Fi now?" \
+        --width=480 \
+        2>/dev/null || return 0
+
+    foot -e nmtui 2>/dev/null
+    sleep 1
+
+    if ping -c 1 -W 3 archlinux.org &>/dev/null; then
+        zenity --info \
+            --title="Connected" \
+            --text="Internet connection established." \
+            --width=340 2>/dev/null
+    else
+        zenity --warning \
+            --title="Still Not Connected" \
+            --text="Could not verify internet connection.\n\nThe installation may fail when downloading packages.\nContinue only if you have a local mirror configured." \
+            --width=460 2>/dev/null
+    fi
+}
+
+# ---------------------------------------------------------------------------
 # Step 7: Summary / confirmation
 # ---------------------------------------------------------------------------
 step_summary() {
@@ -308,7 +410,7 @@ step_summary() {
         --title="Confirm Installation" \
         --ok-label="Install Now" \
         --cancel-label="Go Back" \
-        --text="Please review your installation settings:\n\n  <b>Disk:</b>      ${DISK}\n  <b>User:</b>      ${USERNAME} (${FULLNAME})\n  <b>Hostname:</b>  ${HOSTNAME}\n  <b>Timezone:</b>  ${TIMEZONE}\n\n⚠  <b>All data on ${DISK} will be permanently erased.</b>\n\nClick <b>Install Now</b> to begin, or <b>Go Back</b> to change settings." \
+        --text="Please review your installation settings:\n\n  <b>Disk:</b>        ${DISK}\n  <b>Encryption:</b>  $( [[ "$ENABLE_LUKS" == true ]] && echo 'Enabled ✓' || echo 'Disabled' )\n  <b>User:</b>        ${USERNAME} (${FULLNAME})\n  <b>Hostname:</b>    ${HOSTNAME}\n  <b>Keyboard:</b>    ${KEYMAP}\n  <b>Timezone:</b>    ${TIMEZONE}\n\n⚠  <b>All data on ${DISK} will be permanently erased.</b>\n\nClick <b>Install Now</b> to begin, or <b>Go Back</b> to change settings." \
         --width=520 \
         2>/dev/null
 }
@@ -413,10 +515,25 @@ do_install() {
 
     if [[ "$BOOT_MODE" == "uefi" ]]; then
         mkfs.fat -F32 -n EFI "$EFI_PART"
-        mkfs.ext4 -F -L BlazzCore "$ROOT_PART"
+        if [[ "$ENABLE_LUKS" == true ]]; then
+            LUKS_DEVICE="$ROOT_PART"
+            printf '%s' "$LUKS_PASSPHRASE" | cryptsetup luksFormat --type luks2 --batch-mode "$ROOT_PART" -
+            printf '%s' "$LUKS_PASSPHRASE" | cryptsetup open "$ROOT_PART" cryptroot -
+            mkfs.ext4 -F -L BlazzCore /dev/mapper/cryptroot
+        else
+            mkfs.ext4 -F -L BlazzCore "$ROOT_PART"
+        fi
     else
-        mkfs.ext4 -F -L BlazzCore "$BIOS_ROOT"
-        ROOT_PART="$BIOS_ROOT"
+        if [[ "$ENABLE_LUKS" == true ]]; then
+            LUKS_DEVICE="$BIOS_ROOT"
+            printf '%s' "$LUKS_PASSPHRASE" | cryptsetup luksFormat --type luks2 --batch-mode "$BIOS_ROOT" -
+            printf '%s' "$LUKS_PASSPHRASE" | cryptsetup open "$BIOS_ROOT" cryptroot -
+            mkfs.ext4 -F -L BlazzCore /dev/mapper/cryptroot
+            ROOT_PART=/dev/mapper/cryptroot
+        else
+            mkfs.ext4 -F -L BlazzCore "$BIOS_ROOT"
+            ROOT_PART="$BIOS_ROOT"
+        fi
     fi
 
     # ------------------------------------------------------------------
@@ -425,7 +542,11 @@ do_install() {
     progress 15 "Mounting partitions..."
 
     if [[ "$BOOT_MODE" == "uefi" ]]; then
-        mount "$ROOT_PART" /mnt
+        if [[ "$ENABLE_LUKS" == true ]]; then
+            mount /dev/mapper/cryptroot /mnt
+        else
+            mount "$ROOT_PART" /mnt
+        fi
         mkdir -p /mnt/boot/efi
         mount "$EFI_PART" /mnt/boot/efi
     else
@@ -460,6 +581,18 @@ do_install() {
     # ------------------------------------------------------------------
     progress 72 "Generating fstab..."
     genfstab -U /mnt >> /mnt/etc/fstab
+
+    # ------------------------------------------------------------------
+    # 73% — Swap file (sized to RAM, max 8 GB)
+    # ------------------------------------------------------------------
+    progress 73 "Creating swap file..."
+    local RAM_MB SWAP_MB
+    RAM_MB=$(free -m | awk '/Mem:/{print $2}')
+    SWAP_MB=$(( RAM_MB > 8192 ? 8192 : (RAM_MB < 512 ? 512 : RAM_MB) ))
+    dd if=/dev/zero of=/mnt/swapfile bs=1M count="$SWAP_MB" status=none
+    chmod 600 /mnt/swapfile
+    mkswap /mnt/swapfile
+    echo "/swapfile none swap defaults 0 0" >> /mnt/etc/fstab
 
     # ------------------------------------------------------------------
     # 74% — Timezone and locale
@@ -506,6 +639,17 @@ EOF
     arch-chroot /mnt systemctl enable seatd          2>/dev/null || true
     arch-chroot /mnt systemctl enable bluetooth      2>/dev/null || true
 
+    # Crypttab for LUKS
+    if [[ "$ENABLE_LUKS" == true ]]; then
+        local LUKS_UUID
+        LUKS_UUID=$(blkid -s UUID -o value "$LUKS_DEVICE")
+        echo "cryptroot UUID=${LUKS_UUID} none luks,discard" > /mnt/etc/crypttab
+    fi
+
+    # Keyboard layout
+    printf 'KEYMAP=%s\n' "$KEYMAP" > /mnt/etc/vconsole.conf
+    arch-chroot /mnt localectl set-x11-keymap "$KEYMAP" 2>/dev/null || true
+
     # ------------------------------------------------------------------
     # 82% — Plymouth
     # ------------------------------------------------------------------
@@ -517,10 +661,15 @@ EOF
         cp -r /usr/share/plymouth/themes/blazzcore/. /mnt/usr/share/plymouth/themes/blazzcore/
     fi
 
-    # Insert plymouth hook into mkinitcpio.conf
+    # Insert hooks into mkinitcpio.conf (encrypt hook must precede filesystems for LUKS)
     if [[ -f /mnt/etc/mkinitcpio.conf ]]; then
-        sed -i 's/^HOOKS=.*/HOOKS=(base udev autodetect modconf block filesystems keyboard plymouth fsck)/' \
-            /mnt/etc/mkinitcpio.conf
+        if [[ "$ENABLE_LUKS" == true ]]; then
+            sed -i 's/^HOOKS=.*/HOOKS=(base udev autodetect modconf block keyboard encrypt filesystems plymouth fsck)/' \
+                /mnt/etc/mkinitcpio.conf
+        else
+            sed -i 's/^HOOKS=.*/HOOKS=(base udev autodetect modconf block filesystems keyboard plymouth fsck)/' \
+                /mnt/etc/mkinitcpio.conf
+        fi
     fi
 
     arch-chroot /mnt plymouth-set-default-theme blazzcore 2>/dev/null || true
@@ -575,13 +724,6 @@ EOF
         mkdir -p /mnt/etc/systemd && \
         cp /etc/systemd/zram-generator.conf /mnt/etc/systemd/zram-generator.conf 2>/dev/null || true
 
-    # Profile autostart
-    if [[ -f /etc/profile.d/blazzcore-sway-autostart.sh ]]; then
-        mkdir -p /mnt/etc/profile.d
-        cp /etc/profile.d/blazzcore-sway-autostart.sh /mnt/etc/profile.d/
-        chmod 755 /mnt/etc/profile.d/blazzcore-sway-autostart.sh
-    fi
-
     # Fix ownership of user home
     local USER_UID USER_GID
     USER_UID=$(arch-chroot /mnt id -u "$USERNAME" 2>/dev/null || echo 1000)
@@ -605,10 +747,20 @@ EOF
     # ------------------------------------------------------------------
     progress 90 "Installing GRUB bootloader..."
 
-    # Set quiet splash in grub defaults
+    # Configure GRUB defaults
     if [[ -f /mnt/etc/default/grub ]]; then
-        sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"/' \
-            /mnt/etc/default/grub
+        if [[ "$ENABLE_LUKS" == true ]]; then
+            local LUKS_UUID
+            LUKS_UUID=$(blkid -s UUID -o value "$LUKS_DEVICE")
+            sed -i "s|^GRUB_CMDLINE_LINUX_DEFAULT=.*|GRUB_CMDLINE_LINUX_DEFAULT=\"quiet splash cryptdevice=UUID=${LUKS_UUID}:cryptroot root=/dev/mapper/cryptroot\"|" \
+                /mnt/etc/default/grub
+            echo "GRUB_ENABLE_CRYPTODISK=y" >> /mnt/etc/default/grub
+        else
+            sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT=.*/GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"/' \
+                /mnt/etc/default/grub
+        fi
+        printf 'GRUB_COLOR_NORMAL="light-gray/black"\nGRUB_COLOR_HIGHLIGHT="white/blue"\n' \
+            >> /mnt/etc/default/grub
     fi
 
     if [[ "$BOOT_MODE" == "uefi" ]]; then
@@ -636,12 +788,13 @@ EOF
     # ------------------------------------------------------------------
     progress 97 "Final cleanup..."
 
-    # XDG user dirs, icon cache, desktop database
-    arch-chroot /mnt /bin/bash -s -- "$USERNAME" <<'CHROOT_FINAL'
-U="$1"
+    # XDG user dirs, icon caches, desktop database
+    arch-chroot /mnt /bin/bash <<'CHROOT_FINAL'
 xdg-user-dirs-update 2>/dev/null || true
 update-desktop-database /usr/share/applications/ 2>/dev/null || true
-gtk-update-icon-cache /usr/share/icons/Papirus-Dark/ -f 2>/dev/null || true
+gtk-update-icon-cache -f /usr/share/icons/Papirus-Dark/ 2>/dev/null || true
+gtk-update-icon-cache -f /usr/share/icons/Papirus/ 2>/dev/null || true
+gtk-update-icon-cache -f /usr/share/icons/hicolor/ 2>/dev/null || true
 CHROOT_FINAL
 
     umount -R /mnt 2>/dev/null || true
@@ -681,33 +834,47 @@ main() {
     # Clear/start the log
     : > /tmp/blazzcore-install.log
 
-    # Step 1: Welcome (always shown once)
+    # Defaults for new options
+    KEYMAP="us"
+    ENABLE_LUKS=false
+    LUKS_PASSPHRASE=""
+    LUKS_DEVICE=""
+
+    # Step 1: Welcome
     step_welcome
 
-    # Steps 2–7 loop: allow going back from summary
+    # Step 2: Network check (once, before install loop)
+    step_network
+
+    # Steps 3–10 loop: allow going back from summary
     while true; do
-        # Step 2: Disk selection
+        # Step 3: Disk selection
         step_disk
 
-        # Step 3: Disk warning — loop back to disk selection if cancelled
+        # Step 4: Disk warning — loop back if cancelled
         if ! step_disk_warning; then
-            continue  # back to disk selection
+            continue
         fi
 
-        # Step 4: User setup
+        # Step 5: Encryption
+        step_encryption
+
+        # Step 6: User setup
         step_user_setup
 
-        # Step 5: Password
+        # Step 7: Password
         step_password
 
-        # Step 6: Timezone
+        # Step 8: Keyboard layout
+        step_keyboard
+
+        # Step 9: Timezone
         step_timezone
 
-        # Step 7: Summary — loop back to step 1 (restart flow) if cancelled
+        # Step 10: Summary
         if step_summary; then
-            break  # User clicked "Install Now"
+            break
         else
-            # Go back — restart from disk selection
             continue
         fi
     done

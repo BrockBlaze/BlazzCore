@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=About BlazzCore
+GenericName=System Information
+Comment=View BlazzCore version, hardware, and system info
+Exec=blazzcore-about
+Icon=help-about
+Categories=System;
+Terminal=false
+StartupNotify=false

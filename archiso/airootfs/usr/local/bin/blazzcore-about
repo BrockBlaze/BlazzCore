@@ -23,7 +23,11 @@ DISK_INFO=$(df -h / 2>/dev/null | awk 'NR==2 {print $3 " used / " $2 " total (" 
 GPU=$(lspci 2>/dev/null | grep -i 'vga\|3d\|display' | head -1 | sed 's/.*: //' | sed 's/ (.*)//' || echo "Unknown")
 
 # BlazzCore version (date of build)
-VERSION=$(cat /etc/blazzcore-version 2>/dev/null || date -r /usr/local/bin/blazzcore-install '+%Y.%m.%d' 2>/dev/null || echo "1.0")
+if [[ -f /etc/blazzcore-version ]]; then
+    VERSION=$(</etc/blazzcore-version)
+else
+    VERSION=$(date -r /usr/local/bin/blazzcore-install '+%Y.%m.%d' 2>/dev/null || echo "1.0")
+fi
 
 zenity --info \
     --title="About BlazzCore" \

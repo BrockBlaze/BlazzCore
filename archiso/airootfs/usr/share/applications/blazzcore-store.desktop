@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Software Center
+GenericName=Package Manager
+Comment=Search, install, and remove software packages
+Exec=blazzcore-store
+Icon=system-software-install
+Categories=System;PackageManager;
+Terminal=false
+StartupNotify=false

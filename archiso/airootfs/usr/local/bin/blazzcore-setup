@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # ============================================
-# BlazzCore — First-Boot / Install Helper
+# BlazzCore — First-Boot / Install Helper (DEPRECATED)
 # ============================================
-# Run this script to install BlazzCore to disk.
+# DEPRECATED: Use blazzcore-install instead, which provides a full
+# graphical installer with Zenity dialogs and real-time progress.
+# This TUI installer is kept for headless/fallback use only.
 # Usage: sudo blazzcore-setup
 
 set -euo pipefail

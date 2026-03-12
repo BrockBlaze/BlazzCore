@@ -75,3 +75,8 @@ gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark' 2>/dev/null
 gsettings set org.gnome.desktop.interface icon-theme 'Papirus-Dark' 2>/dev/null || true
 gsettings set org.gnome.desktop.interface cursor-theme 'Adwaita' 2>/dev/null || true
 gsettings set org.gnome.desktop.interface cursor-size 24 2>/dev/null || true
+
+# Auto-launch installer if booted via "Install BlazzCore" GRUB entry
+if grep -qw 'blazzcore_install' /proc/cmdline; then
+    (sleep 4 && foot -e sudo blazzcore-install) &
+fi

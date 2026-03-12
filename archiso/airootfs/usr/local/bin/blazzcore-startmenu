@@ -164,6 +164,10 @@ def _dock_pinned():
         return []
     return [l.strip() for l in open(DOCK_PINNED) if l.strip()]
 
+def _dock_restart():
+    subprocess.Popen(['pkill', 'nwg-dock'])
+    subprocess.Popen(['bash', '-c', f'sleep 0.4; {DOCK_CMD}'])
+
 def _dock_add(desktop_name):
     pinned = _dock_pinned()
     if desktop_name in pinned:
@@ -171,13 +175,13 @@ def _dock_add(desktop_name):
     pinned.append(desktop_name)
     os.makedirs(os.path.dirname(DOCK_PINNED), exist_ok=True)
     open(DOCK_PINNED, "w").write("\n".join(pinned) + "\n")
-    subprocess.Popen(f"pkill nwg-dock; sleep 0.4; {DOCK_CMD} &", shell=True)
+    _dock_restart()
     return True
 
 def _dock_remove(desktop_name):
     pinned = [p for p in _dock_pinned() if p != desktop_name]
     open(DOCK_PINNED, "w").write("\n".join(pinned) + "\n")
-    subprocess.Popen(f"pkill nwg-dock; sleep 0.4; {DOCK_CMD} &", shell=True)
+    _dock_restart()
 
 def _is_dock_pinned(desktop_name):
     return desktop_name in _dock_pinned()

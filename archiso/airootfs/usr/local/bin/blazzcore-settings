@@ -3,8 +3,8 @@
 
 import gi
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, Gdk
-import subprocess, os, re
+from gi.repository import Gtk, Gdk, GLib
+import subprocess, os, re, threading
 
 HOME      = os.path.expanduser('~')
 AUTOSTART = f'{HOME}/.config/labwc/autostart'
@@ -101,11 +101,23 @@ label { color: #e0e0f0; }
 """
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
-def run_bg(cmd):
-    subprocess.Popen(cmd, shell=isinstance(cmd, str))
+def run_bg(cmd, status_lbl=None):
+    """Launch a background process. Shows feedback in status_lbl if provided."""
+    if status_lbl:
+        status_lbl.set_text('Launching…')
+        GLib.timeout_add(3000, lambda: status_lbl.set_text('') or False)
+    try:
+        subprocess.Popen(cmd, shell=isinstance(cmd, str))
+    except FileNotFoundError:
+        if status_lbl:
+            status_lbl.set_text(f'Error: command not found — {cmd}')
+        else:
+            subprocess.Popen(['notify-send', '-u', 'critical', 'Settings',
+                              f'Command not found: {cmd}'])
 
-def run_term(title, cmd):
-    run_bg(f"foot --title='{title}' -e bash -c '{cmd}; echo; echo \"Press Enter to close...\"; read'")
+def run_term(title, cmd, status_lbl=None):
+    run_bg(f"foot --title='{title}' -e bash -c '{cmd}; echo; echo \"Press Enter to close...\"; read'",
+           status_lbl)
 
 def conf_get(path, key, default=''):
     try:
@@ -237,32 +249,51 @@ def page_display():
     s, b = page_box()
     b.pack_start(page_title('Display & Monitors',
         'Configure resolution, refresh rate, and monitor layout'), False, False, 0)
+    st = status_label()
     c = card()
     c.pack_start(row('Display Configuration',
         'Arrange monitors, set resolution and refresh rate',
-        btn('Open', lambda: run_bg('wdisplays'))), False, False, 0)
+        btn('Open', lambda: run_bg('wdisplays', st))), False, False, 0)
     b.pack_start(c, False, False, 0)
+    b.pack_start(st, False, False, 0)
     return s
 
 def page_appearance():
     s, b = page_box()
     b.pack_start(page_title('Appearance', 'Colors, wallpaper, theme, icons, and fonts'), False, False, 0)
+    st = status_label()
     c1 = card()
     c1.pack_start(row('Accent Color', 'Window border and highlight color',
-        btn('Change', lambda: run_bg('blazzcore-accent'))), False, False, 0)
+        btn('Change', lambda: run_bg('blazzcore-accent', st))), False, False, 0)
     c1.pack_start(hsep(), False, False, 0)
     c1.pack_start(row('Wallpaper', 'Set the desktop background image',
-        btn('Choose', lambda: run_bg('blazzcore-wallpaper'))), False, False, 0)
+        btn('Choose', lambda: run_bg('blazzcore-wallpaper', st))), False, False, 0)
     b.pack_start(c1, False, False, 0)
     c2 = card()
     c2.pack_start(row('GTK Theme & Icons', 'Application theme, icon pack, cursor, and fonts',
-        btn('Open', lambda: run_bg('nwg-look'))), False, False, 0)
+        btn('Open', lambda: run_bg('nwg-look', st))), False, False, 0)
     b.pack_start(c2, False, False, 0)
+    b.pack_start(st, False, False, 0)
     return s
 
 def page_dock():
     s, b = page_box()
     b.pack_start(page_title('Dock', 'Set the position of the application dock'), False, False, 0)
+    st = status_label()
+
+    def set_dock(pos):
+        # Kill existing dock and restart at new position (mirrors blazzcore-dock logic)
+        subprocess.run(['pkill', 'nwg-dock'], capture_output=True)
+        for _ in range(20):
+            if subprocess.run(['pgrep', '-x', 'nwg-dock'], capture_output=True).returncode != 0:
+                break
+            import time; time.sleep(0.1)
+        margin_flag = {
+            'bottom': '-mb', 'left': '-ml', 'right': '-mr', 'top': '-mt'
+        }[pos]
+        subprocess.Popen(['nwg-dock', '-p', pos, '-a', 'center', '-i', '38', margin_flag, '0', '-f'])
+        st.set_text(f'✓  Dock moved to {pos}.')
+
     c = card()
     positions = [
         ('Bottom', 'Place the dock at the bottom of the screen', 'bottom'),
@@ -272,37 +303,44 @@ def page_dock():
     ]
     for i, (label, desc, pos) in enumerate(positions):
         c.pack_start(row(label, desc,
-            btn('Set', (lambda p: lambda: run_bg(f'blazzcore-dock {p}'))(pos))), False, False, 0)
+            btn('Set', (lambda p: lambda: set_dock(p))(pos))), False, False, 0)
         if i < len(positions) - 1:
             c.pack_start(hsep(), False, False, 0)
     b.pack_start(c, False, False, 0)
+    b.pack_start(st, False, False, 0)
     return s
 
 def page_sound():
     s, b = page_box()
     b.pack_start(page_title('Sound', 'Volume, audio devices, and mixer'), False, False, 0)
+    st = status_label()
     c = card()
     c.pack_start(row('Audio Mixer', 'Adjust per-application volume and output devices',
-        btn('Open Mixer', lambda: run_bg('pavucontrol'))), False, False, 0)
+        btn('Open Mixer', lambda: run_bg('pavucontrol', st))), False, False, 0)
     b.pack_start(c, False, False, 0)
+    b.pack_start(st, False, False, 0)
     return s
 
 def page_bluetooth():
     s, b = page_box()
     b.pack_start(page_title('Bluetooth', 'Pair and manage Bluetooth peripherals'), False, False, 0)
+    st = status_label()
     c = card()
     c.pack_start(row('Bluetooth Devices', 'Connect headphones, keyboards, mice, and more',
-        btn('Open', lambda: run_bg('blueman-manager'))), False, False, 0)
+        btn('Open', lambda: run_bg('blueman-manager', st))), False, False, 0)
     b.pack_start(c, False, False, 0)
+    b.pack_start(st, False, False, 0)
     return s
 
 def page_network():
     s, b = page_box()
     b.pack_start(page_title('Network', 'Wi-Fi and wired network connections'), False, False, 0)
+    st = status_label()
     c = card()
     c.pack_start(row('Network Manager', 'Connect to Wi-Fi, configure VPN and wired connections',
-        btn('Open', lambda: run_term('Network', 'nmtui'))), False, False, 0)
+        btn('Open', lambda: run_term('Network', 'nmtui', st))), False, False, 0)
     b.pack_start(c, False, False, 0)
+    b.pack_start(st, False, False, 0)
     return s
 
 def page_nightlight():
@@ -346,19 +384,22 @@ def page_keyboard():
     s, b = page_box()
     b.pack_start(page_title('Keyboard', 'Set your keyboard input layout'), False, False, 0)
 
-    cur_layout = _shell(['localectl', 'get-keymap']) or 'us'
+    # Parse current layout from localectl status (not the non-existent get-keymap subcommand)
+    m = re.search(r'VC Keymap:\s+(\S+)', _shell(['localectl', 'status']))
+    cur_layout = m.group(1) if m else 'us'
 
     cur_lbl = Gtk.Label(label=f'Current layout:  {cur_layout}', xalign=0)
     cur_lbl.get_style_context().add_class('dim')
     cur_lbl.set_margin_bottom(12)
     b.pack_start(cur_lbl, False, False, 0)
 
-    try:
-        keymaps = _shell(['localectl', 'list-keymaps']).splitlines()
-    except Exception:
-        keymaps = ['us', 'uk', 'de', 'fr', 'es']
+    st = status_label('Loading keyboard layouts…')
 
-    st = status_label('Double-click a layout to apply it.')
+    # Placeholder while loading
+    placeholder = Gtk.Label(label='Loading…', xalign=0)
+    placeholder.get_style_context().add_class('dim')
+    b.pack_start(placeholder, False, False, 0)
+    b.pack_start(st, False, False, 0)
 
     def apply_layout(layout):
         result = subprocess.run(['sudo', 'localectl', 'set-keymap', layout],
@@ -369,8 +410,18 @@ def page_keyboard():
         else:
             st.set_text(f'Failed: {result.stderr.strip()}')
 
-    b.pack_start(searchable_list(keymaps, apply_layout), True, True, 0)
-    b.pack_start(st, False, False, 0)
+    def load_keymaps():
+        keymaps = _shell(['localectl', 'list-keymaps']).splitlines() or ['us', 'uk', 'de', 'fr', 'es']
+        def populate():
+            b.remove(placeholder)
+            b.pack_start(searchable_list(keymaps, apply_layout), True, True, 0)
+            b.reorder_child(st, -1)  # keep status at bottom
+            b.show_all()
+            st.set_text('Double-click a layout to apply it.')
+            return False
+        GLib.idle_add(populate)
+
+    threading.Thread(target=load_keymaps, daemon=True).start()
     return s
 
 def page_power():
@@ -416,15 +467,17 @@ def page_datetime():
     cur_lbl.set_margin_bottom(12)
     b.pack_start(cur_lbl, False, False, 0)
 
-    try:
-        tzones = _shell(['timedatectl', 'list-timezones']).splitlines()
-    except Exception:
-        tzones = ['UTC', 'America/New_York', 'Europe/London']
+    st = status_label('Loading timezones…')
+    placeholder = Gtk.Label(label='Loading…', xalign=0)
+    placeholder.get_style_context().add_class('dim')
+    b.pack_start(placeholder, False, False, 0)
+    b.pack_start(st, False, False, 0)
 
-    st = status_label('Double-click a timezone to apply it.')
+    # tzones set is populated in background thread; used for O(1) validation
+    tzones_set = set()
 
     def apply_tz(tz):
-        if tz not in _shell(['timedatectl', 'list-timezones']).splitlines():
+        if tzones_set and tz not in tzones_set:
             st.set_text(f'Invalid timezone: {tz}'); return
         result = subprocess.run(['sudo', 'timedatectl', 'set-timezone', tz],
                                 capture_output=True, text=True)
@@ -434,35 +487,53 @@ def page_datetime():
         else:
             st.set_text(f'Failed: {result.stderr.strip()}')
 
-    b.pack_start(searchable_list(tzones, apply_tz), True, True, 0)
-    b.pack_start(st, False, False, 0)
+    def load_tzones():
+        tzones = _shell(['timedatectl', 'list-timezones']).splitlines() \
+                 or ['UTC', 'America/New_York', 'Europe/London']
+        tzones_set.update(tzones)
+        def populate():
+            b.remove(placeholder)
+            b.pack_start(searchable_list(tzones, apply_tz), True, True, 0)
+            b.reorder_child(st, -1)
+            b.show_all()
+            st.set_text('Double-click a timezone to apply it.')
+            return False
+        GLib.idle_add(populate)
+
+    threading.Thread(target=load_tzones, daemon=True).start()
     return s
 
 def page_updates():
     s, b = page_box()
     b.pack_start(page_title('System Updates', 'Install available package updates'), False, False, 0)
+    st = status_label()
     c = card()
     c.pack_start(row('Update All Packages', 'Install latest updates from Arch Linux repositories',
-        btn('Update Now', lambda: run_term('System Update', 'sudo pacman -Syu'))), False, False, 0)
+        btn('Update Now', lambda: run_term('System Update', 'sudo pacman -Syu', st))), False, False, 0)
     b.pack_start(c, False, False, 0)
+    b.pack_start(st, False, False, 0)
     return s
 
 def page_drivers():
     s, b = page_box()
     b.pack_start(page_title('Driver Manager', 'Detect and install hardware drivers'), False, False, 0)
+    st = status_label()
     c = card()
     c.pack_start(row('Hardware Drivers', 'Scan for GPU, WiFi, and other hardware and install drivers',
-        btn('Scan Hardware', lambda: run_bg('blazzcore-drivers'))), False, False, 0)
+        btn('Scan Hardware', lambda: run_bg('blazzcore-drivers', st))), False, False, 0)
     b.pack_start(c, False, False, 0)
+    b.pack_start(st, False, False, 0)
     return s
 
 def page_software():
     s, b = page_box()
     b.pack_start(page_title('Software Center', 'Browse and install applications'), False, False, 0)
+    st = status_label()
     c = card()
     c.pack_start(row('Install Applications', 'Browse available packages and install software',
-        btn('Open', lambda: run_bg('blazzcore-store'))), False, False, 0)
+        btn('Open', lambda: run_bg('blazzcore-store', st))), False, False, 0)
     b.pack_start(c, False, False, 0)
+    b.pack_start(st, False, False, 0)
     return s
 
 def page_about():

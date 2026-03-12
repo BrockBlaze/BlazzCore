@@ -23,6 +23,7 @@ fi
 # Enable services
 systemctl enable NetworkManager
 systemctl enable seatd
+systemctl enable bluetooth
 systemctl enable blazzcore-firstboot.service
 
 # Set empty passwords for live session (passwd -d is safe and explicit)
@@ -41,11 +42,15 @@ fi
 # Write version file for blazzcore-about
 echo "1.0 ($(date +%Y.%m.%d))" > /etc/blazzcore-version
 
-# Update desktop database so app icons resolve in dock/launcher
+# Update desktop database and icon caches
 update-desktop-database /usr/share/applications/ || true
+gtk-update-icon-cache -f /usr/share/icons/Papirus-Dark/ 2>/dev/null || true
+gtk-update-icon-cache -f /usr/share/icons/Papirus/ 2>/dev/null || true
+gtk-update-icon-cache -f /usr/share/icons/hicolor/ 2>/dev/null || true
 
 # Create home directory and standard folders
 mkdir -p /home/blazzcore
 cp -rT /etc/skel /home/blazzcore
 mkdir -p /home/blazzcore/{Desktop,Downloads,Pictures,Documents}
+chmod +x /home/blazzcore/Desktop/*.desktop 2>/dev/null || true
 chown -R 1000:1000 /home/blazzcore
