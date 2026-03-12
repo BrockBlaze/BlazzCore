@@ -33,17 +33,6 @@ fi
 # Status bar
 waybar &
 
-# Application dock (restores last-used position)
-_DOCK_CONF="$HOME/.config/blazzcore/dock.conf"
-_DOCK_POS=$(grep '^DOCK_POSITION=' "$_DOCK_CONF" 2>/dev/null | cut -d= -f2)
-case "$_DOCK_POS" in
-    left)  nwg-dock -p left  -a center -i 38 -ml 0 -f & ;;
-    right) nwg-dock -p right -a center -i 38 -mr 0 -f & ;;
-    top)   nwg-dock -p top   -a center -i 38 -mt 0 -f & ;;
-    *)     nwg-dock -p bottom -a center -i 38 -mb 0 -f & ;;
-esac
-unset _DOCK_CONF _DOCK_POS
-
 # Desktop icons
 pcmanfm --desktop &
 
