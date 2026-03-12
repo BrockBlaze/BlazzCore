@@ -216,7 +216,8 @@
   <mouse>
     <default/>
     <context name="Titlebar">
-      <mousebind button="Left" action="DoubleClick">
+      <!-- Single click on titlebar maximizes/restores the window -->
+      <mousebind button="Left" action="Click">
         <action name="ToggleMaximize"/>
       </mousebind>
       <mousebind button="Left" action="Drag">
@@ -233,8 +234,10 @@
       </mousebind>
     </context>
     <context name="Desktop">
-      <!-- Suppress default left-click menu from <default/> -->
-      <mousebind button="Left" action="Click"/>
+      <!-- Left click does nothing; right click opens context menu -->
+      <mousebind button="Left" action="Click">
+        <action name="Focus"/>
+      </mousebind>
       <mousebind button="Right" action="Click">
         <action name="ShowMenu"><menu>root-menu</menu></action>
       </mousebind>
