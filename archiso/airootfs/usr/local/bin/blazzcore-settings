@@ -772,14 +772,15 @@ class SettingsApp(Gtk.Window):
         sidebar.set_stack(stack)
 
         # StackSidebar wraps a ListBox internally — make it single-click
-        def _fix_single_click(widget):
+        # Use "realize" signal so the internal ListBox exists before we traverse
+        def _fix_single_click(widget, *_):
             if isinstance(widget, Gtk.ListBox):
                 widget.set_activate_on_single_click(True)
                 return
             if hasattr(widget, 'get_children'):
                 for child in widget.get_children():
                     _fix_single_click(child)
-        GLib.idle_add(lambda: _fix_single_click(sidebar) or False)
+        sidebar.connect("realize", _fix_single_click)
 
         pages = [
             ('display',    '  Display',      page_display),

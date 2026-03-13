@@ -26,7 +26,7 @@ window#waybar {
     border-radius: 0;
     margin: 0;
     border-right: 1px solid rgba(70, 70, 130, 0.4);
-    background-image: url("flame.png");
+    background-image: url("file:///home/blazzcore/.config/waybar/flame.png");
     background-size: 20px 20px;
     background-repeat: no-repeat;
     background-position: center;
