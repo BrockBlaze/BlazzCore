@@ -23,7 +23,7 @@ export XCURSOR_SIZE=24
 
 # Wallpaper (fall back to solid color if image is missing)
 # blazzcore-wallpaper updates the WALLPAPER= line below to persist changes
-WALLPAPER=/usr/share/backgrounds/blazzcore/default.png
+WALLPAPER=/usr/share/backgrounds/blazzcore/stars.jpg
 if [[ -f "$WALLPAPER" ]]; then
     swaybg -i "$WALLPAPER" -m fill &
 else
@@ -90,6 +90,7 @@ if [[ ! -f "$_GTK_FLAG" ]]; then
     gsettings set org.gnome.desktop.interface icon-theme 'Papirus-Dark' 2>/dev/null || true
     gsettings set org.gnome.desktop.interface cursor-theme 'Adwaita' 2>/dev/null || true
     gsettings set org.gnome.desktop.interface cursor-size 24 2>/dev/null || true
+    gsettings set org.gnome.desktop.interface enable-animations true 2>/dev/null || true
 fi
 unset _GTK_FLAG
 
