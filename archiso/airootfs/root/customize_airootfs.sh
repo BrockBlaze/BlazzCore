@@ -45,6 +45,19 @@ fi
 # Write version file for blazzcore-about
 echo "1.0 ($(date +%Y.%m.%d))" > /etc/blazzcore-version
 
+# Hide technical/clutter apps from the app launcher
+_nodisplay() {
+    local f="/usr/share/applications/$1.desktop"
+    [[ -f "$f" ]] && sed -i '/^\[Desktop Entry\]/a NoDisplay=true' "$f" 2>/dev/null || true
+}
+for _app in vim avahi-discover bssh bvnc foot-server nm-connection-editor \
+            qv4l2 qvidcap mpv org.pwmt.zathura btop htop nvtop \
+            python python3 xterm uxterm cmake-gui ipython ipython3 \
+            lstopo hwloc-ls pacman wofi-launcher; do
+    _nodisplay "$_app"
+done
+unset -f _nodisplay
+
 # Update desktop database and icon caches
 update-desktop-database /usr/share/applications/ || true
 gtk-update-icon-cache -f /usr/share/icons/Papirus-Dark/ 2>/dev/null || true
