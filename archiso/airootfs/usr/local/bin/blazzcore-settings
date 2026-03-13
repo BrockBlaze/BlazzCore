@@ -277,6 +277,7 @@ def searchable_list(items, on_activate):
 
     lb = Gtk.ListBox()
     lb.set_selection_mode(Gtk.SelectionMode.SINGLE)
+    lb.set_activate_on_single_click(True)
     for item in items:
         r = Gtk.ListBoxRow()
         l = Gtk.Label(label=item, xalign=0)
@@ -301,13 +302,84 @@ def searchable_list(items, on_activate):
 def page_display():
     s, b = page_box()
     b.pack_start(page_title('Display & Monitors',
-        'Configure resolution, refresh rate, and monitor layout'), False, False, 0)
+        'Configure resolution and refresh rate'), False, False, 0)
     st = status_label()
-    c = card()
-    c.pack_start(row('Display Configuration',
-        'Arrange monitors, set resolution and refresh rate',
-        btn('Open', lambda: run_bg('wdisplays', st))), False, False, 0)
-    b.pack_start(c, False, False, 0)
+
+    def get_display_info():
+        raw = _shell(['wlr-randr'])
+        outputs = []
+        cur = None
+        for line in raw.splitlines():
+            # Output header: starts without leading whitespace and contains a name token
+            if line and not line[0].isspace():
+                name = line.split()[0]
+                cur = {'name': name, 'modes': [], 'current': None}
+                outputs.append(cur)
+            elif cur is not None:
+                m = re.match(r'\s+(\d+x\d+)\s+px,\s+([\d.]+)\s+Hz(.*)', line)
+                if m:
+                    res, hz, flags = m.group(1), float(m.group(2)), m.group(3)
+                    mode = {'res': res, 'hz': hz, 'label': f'{res} @ {hz:.0f} Hz'}
+                    if 'current' in flags:
+                        cur['current'] = mode
+                    cur['modes'].append(mode)
+        return outputs
+
+    outputs = get_display_info()
+
+    if not outputs:
+        c = card()
+        c.pack_start(row('No displays detected',
+            'wlr-randr found no connected outputs — are you running a Wayland session?'), False, False, 0)
+        b.pack_start(c, False, False, 0)
+        b.pack_start(st, False, False, 0)
+        return s
+
+    for output in outputs:
+        c = card()
+        name_lbl = Gtk.Label(label=output['name'], xalign=0)
+        name_lbl.get_style_context().add_class('page-title')
+        name_lbl.set_margin_bottom(6)
+        c.pack_start(name_lbl, False, False, 0)
+
+        modes = output['modes']
+        if modes:
+            combo = Gtk.ComboBoxText()
+            cur_idx = 0
+            for i, mode in enumerate(modes):
+                combo.append_text(mode['label'])
+                if output['current'] and mode['label'] == output['current']['label']:
+                    cur_idx = i
+            combo.set_active(cur_idx)
+
+            def _apply(combo=combo, out=output, modes=modes):
+                idx = combo.get_active()
+                if idx < 0:
+                    return
+                mode = modes[idx]
+                result = subprocess.run(
+                    ['wlr-randr', '--output', out['name'],
+                     '--mode', f"{mode['res']}@{mode['hz']:.6f}Hz"],
+                    capture_output=True, text=True)
+                if result.returncode == 0:
+                    st.set_text(f"✓  {out['name']} set to {mode['label']}")
+                else:
+                    err = result.stderr.strip() or f"exit {result.returncode}"
+                    st.set_text(f"Failed: {err}")
+                GLib.timeout_add(3000, lambda: st.set_text('') or False)
+
+            hb = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+            hb.pack_start(combo, True, True, 0)
+            hb.pack_start(btn('Apply', _apply), False, False, 0)
+            c.pack_start(row('Resolution & Refresh Rate',
+                'Select from available modes for this display', None), False, False, 0)
+            c.pack_start(hb, False, False, 6)
+        else:
+            c.pack_start(row('No modes available',
+                'This output reported no supported modes'), False, False, 0)
+
+        b.pack_start(c, False, False, 0)
+
     b.pack_start(st, False, False, 0)
     return s
 
@@ -510,7 +582,7 @@ def page_keyboard():
             b.pack_start(searchable_list(keymaps, apply_layout), True, True, 0)
             b.reorder_child(st, -1)  # keep status at bottom
             b.show_all()
-            st.set_text('Double-click a layout to apply it.')
+            st.set_text('Click a layout to apply it.')
             return False
         GLib.idle_add(populate)
 
@@ -605,7 +677,7 @@ def page_datetime():
             b.pack_start(searchable_list(tzones, apply_tz), True, True, 0)
             b.reorder_child(st, -1)
             b.show_all()
-            st.set_text('Double-click a timezone to apply it.')
+            st.set_text('Click a timezone to apply it.')
             return False
         GLib.idle_add(populate)
 
@@ -698,6 +770,16 @@ class SettingsApp(Gtk.Window):
 
         sidebar = Gtk.StackSidebar()
         sidebar.set_stack(stack)
+
+        # StackSidebar wraps a ListBox internally — make it single-click
+        def _fix_single_click(widget):
+            if isinstance(widget, Gtk.ListBox):
+                widget.set_activate_on_single_click(True)
+                return
+            if hasattr(widget, 'get_children'):
+                for child in widget.get_children():
+                    _fix_single_click(child)
+        GLib.idle_add(lambda: _fix_single_click(sidebar) or False)
 
         pages = [
             ('display',    '  Display',      page_display),
