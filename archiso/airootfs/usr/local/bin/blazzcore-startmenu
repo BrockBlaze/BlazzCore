@@ -31,7 +31,7 @@ def _dock_cmd():
     except FileNotFoundError:
         pass
     margin = _DOCK_MARGINS.get(pos, '-mb')
-    return f"nwg-dock -p {pos} -a center -i 38 {margin} 0 -f"
+    return f"nwg-dock -p {pos} -a center -i 42 {margin} 0 -f"
 
 # ---- Built-in shortcuts (always in Quick Access) -----------
 BUILTIN = [
@@ -45,105 +45,136 @@ BUILTIN = [
 
 # ---- Stylesheet --------------------------------------------
 CSS = b"""
-/* GTK does not support box-sizing; omitted */
-
 window {
-    background-color: rgba(10, 10, 22, 0.97);
-    border: 1px solid rgba(80, 80, 160, 0.35);
+    background-color: #0c0c1a;
+    border: 1px solid rgba(80, 80, 160, 0.45);
     border-bottom: none;
     border-radius: 0;
 }
 
-/* Search */
-#search-row { padding: 18px 16px 10px 16px; }
+/* Search bar */
+#search-row {
+    padding: 14px 12px 10px 12px;
+    background-color: #0c0c1a;
+    border-bottom: 1px solid rgba(55, 55, 110, 0.4);
+}
 #search-entry {
-    background-color: rgba(28, 28, 52, 0.9);
-    color: #e0e0f0;
-    border: 1px solid rgba(90, 90, 160, 0.5);
-    border-radius: 8px;
-    padding: 9px 16px;
+    background-color: #181828;
+    color: #dcdcf8;
+    border: 1px solid rgba(80, 80, 150, 0.55);
+    border-radius: 6px;
+    padding: 8px 14px;
     font-size: 14px;
-    caret-color: #8080c8;
+    caret-color: #8888cc;
 }
-#search-entry:focus {
-    border-color: rgba(128, 128, 200, 0.85);
-    box-shadow: 0 0 0 2px rgba(128, 128, 200, 0.18);
-}
+#search-entry:focus { border-color: #6060b8; }
 
-/* Column headers */
+/* Section headers */
 .col-header {
-    color: rgba(120, 120, 180, 0.8);
+    color: rgba(100, 100, 160, 0.9);
     font-size: 10px;
     font-weight: bold;
-    padding: 4px 12px 8px 12px;
+    padding: 10px 14px 5px 14px;
     letter-spacing: 1px;
-}
-
-/* Left: apps */
-#apps-panel { background: transparent; min-width: 350px; padding: 0 0 8px 0; }
-#apps-list row {
-    background: transparent;
-    border-radius: 7px;
-    margin: 1px 8px;
-}
-#apps-list row:hover    { background-color: rgba(255,255,255,0.055); }
-#apps-list row:selected { background-color: rgba(90,90,195,0.32); }
-.app-box  { padding: 6px 10px; }
-.app-label { color: #c8c8e8; font-size: 13px; padding-left: 10px; }
-#apps-list row:selected .app-label { color: #ffffff; font-weight: bold; }
-
-/* Divider */
-#col-sep { background-color: rgba(70,70,130,0.25); min-width: 1px; margin: 8px 0; }
-
-/* Right: shortcuts */
-#shortcuts-panel {
-    background-color: rgba(7,7,17,0.55);
-    min-width: 210px;
-    padding: 0 0 8px 0;
-    border-radius: 0;
-}
-.sc-header-box { padding: 4px 12px 2px 12px; }
-
-/* Shortcut button */
-.shortcut-btn {
     background: transparent;
     border: none;
-    border-radius: 7px;
-    padding: 7px 12px;
-    margin: 1px 8px;
 }
-.shortcut-btn:hover  { background-color: rgba(255,255,255,0.07); }
-.shortcut-btn:active { background-color: rgba(90,90,195,0.3); }
-.shortcut-label { color: #c0c0e2; font-size: 13px; padding-left: 10px; }
+
+/* ── Left: app list ─────────────────────────── */
+#apps-panel {
+    background-color: #0c0c1a;
+    min-width: 310px;
+    padding: 0 0 8px 0;
+}
+
+/* Override GTK default white background on listbox */
+list, listbox, #apps-list {
+    background-color: transparent;
+    background: transparent;
+}
+#apps-list row,
+list row {
+    background-color: transparent;
+    background: transparent;
+    border-radius: 5px;
+    margin: 1px 6px;
+    min-height: 0;
+}
+#apps-list row:hover    { background-color: rgba(255, 255, 255, 0.055); }
+#apps-list row:selected { background-color: rgba(75, 75, 170, 0.38); }
+#apps-list row:selected .app-label { color: #ffffff; }
+
+.app-box   { padding: 5px 8px; }
+.app-label { color: #c2c2e2; font-size: 13px; padding-left: 10px; }
+
+/* ── Divider ────────────────────────────────── */
+#col-sep {
+    background-color: rgba(60, 60, 120, 0.35);
+    min-width: 1px;
+}
+
+/* ── Right: quick access ────────────────────── */
+#shortcuts-panel {
+    background-color: #0a0a16;
+    min-width: 196px;
+    padding: 0 0 8px 0;
+    border-left: 1px solid rgba(55, 55, 110, 0.3);
+}
+.sc-header-box { padding: 0 10px 2px 10px; }
+
+/* Shortcut buttons */
+.shortcut-btn {
+    background-color: transparent;
+    background: transparent;
+    border: none;
+    border-radius: 5px;
+    padding: 6px 10px;
+    margin: 1px 6px;
+}
+.shortcut-btn:hover  { background-color: rgba(255, 255, 255, 0.065); }
+.shortcut-btn:active { background-color: rgba(75, 75, 170, 0.35); }
+.shortcut-label {
+    color: #b4b4d4;
+    font-size: 13px;
+    padding-left: 10px;
+}
+.shortcut-btn:hover .shortcut-label { color: #dcdcf8; }
 
 /* User-pinned indicator */
-.pinned-dot { color: rgba(128,128,200,0.6); font-size: 8px; padding-left: 4px; }
+.pinned-dot { color: rgba(110, 110, 180, 0.55); font-size: 8px; padding-left: 4px; }
 
 /* Power button */
 .power-btn {
-    background: transparent; border: none;
-    border-radius: 7px; padding: 7px 12px; margin: 4px 8px 8px 8px;
+    background-color: transparent;
+    background: transparent;
+    border: none;
+    border-radius: 5px;
+    padding: 6px 10px;
+    margin: 4px 6px 8px 6px;
 }
-.power-btn:hover { background-color: rgba(160,30,30,0.25); }
-.power-btn .shortcut-label { color: #cc6666; }
+.power-btn:hover { background-color: rgba(150, 25, 25, 0.28); }
+.power-btn .shortcut-label { color: #a84444; }
+.power-btn:hover .shortcut-label { color: #dd6666; }
 
 /* Context menus */
 menu, menuitem {
-    background-color: #0e0e1e;
+    background-color: #111122;
     color: #c8c8e8;
-    border: 1px solid rgba(80,80,160,0.4);
+    border: 1px solid rgba(70, 70, 150, 0.5);
     border-radius: 6px;
 }
-menuitem:hover { background-color: rgba(90,90,195,0.3); color: #ffffff; }
+menuitem:hover { background-color: rgba(75, 75, 170, 0.38); color: #ffffff; }
 menuitem label { padding: 4px 12px; }
 
 /* Scrollbar */
-scrollbar { background: transparent; min-width: 6px; }
+scrollbar { background: transparent; min-width: 5px; }
 scrollbar slider {
-    background-color: rgba(90,90,150,0.35);
-    border-radius: 3px; min-width: 6px; min-height: 30px;
+    background-color: rgba(75, 75, 135, 0.4);
+    border-radius: 3px;
+    min-width: 5px;
+    min-height: 24px;
 }
-scrollbar slider:hover { background-color: rgba(110,110,180,0.55); }
+scrollbar slider:hover { background-color: rgba(95, 95, 165, 0.55); }
 """
 
 # ---- Pinned Quick Access helpers ---------------------------
@@ -215,7 +246,7 @@ class StartMenu(Gtk.Window):
         GtkLayerShell.set_keyboard_mode(self, GtkLayerShell.KeyboardMode.ON_DEMAND)
         GtkLayerShell.set_exclusive_zone(self, 0)
 
-        self.set_default_size(580, 560)
+        self.set_default_size(560, 580)
         self._menu_active = False
         self._load_css()
         self._build_ui()
@@ -421,7 +452,7 @@ class StartMenu(Gtk.Window):
             img = None
             if gicon:
                 try:
-                    pb = theme.load_icon(gicon.to_string(), 22,
+                    pb = theme.load_icon(gicon.to_string(), 24,
                                          Gtk.IconLookupFlags.FORCE_SIZE)
                     img = Gtk.Image.new_from_pixbuf(pb)
                 except Exception:
