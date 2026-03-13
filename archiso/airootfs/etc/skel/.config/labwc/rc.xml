@@ -68,10 +68,10 @@
       <action name="Execute"><command>blazzcore-browser</command></action>
     </keybind>
     <keybind key="Super+d">
-      <action name="Execute"><command>blazzcore-startmenu</command></action>
+      <action name="Execute"><command>sh -c "pkill -f 'python3.*blazzcore-startmenu' || blazzcore-startmenu"</command></action>
     </keybind>
     <keybind key="Super+space">
-      <action name="Execute"><command>blazzcore-startmenu</command></action>
+      <action name="Execute"><command>sh -c "pkill -f 'python3.*blazzcore-startmenu' || blazzcore-startmenu"</command></action>
     </keybind>
     <keybind key="Super+e">
       <action name="Execute"><command>thunar</command></action>
@@ -223,55 +223,8 @@
   </keyboard>
 
   <mouse>
-    <!-- No <default/> — defined explicitly so Desktop left-click cannot show a menu -->
-
-    <!-- Move/resize any window with Alt+drag (works without a visible titlebar) -->
-    <context name="Frame">
-      <mousebind button="A-Left" action="Drag">
-        <action name="Move"/>
-      </mousebind>
-      <mousebind button="A-Right" action="Drag">
-        <action name="Resize"/>
-      </mousebind>
-    </context>
-
-    <context name="Titlebar">
-      <!-- Click focuses; double-click maximizes/restores; drag moves -->
-      <mousebind button="Left" action="Press">
-        <action name="Focus"/>
-        <action name="Raise"/>
-      </mousebind>
-      <mousebind button="Left" action="DoubleClick">
-        <action name="ToggleMaximize"/>
-      </mousebind>
-      <mousebind button="Left" action="Drag">
-        <action name="Move"/>
-      </mousebind>
-      <mousebind button="Middle" action="Click">
-        <action name="Lower"/>
-      </mousebind>
-      <mousebind button="Right" action="Click">
-        <action name="Focus"/>
-        <action name="Raise"/>
-      </mousebind>
-    </context>
-
-    <!-- Ensure titlebar buttons use their built-in actions -->
-    <context name="TitlebarButton.Close">
-      <mousebind button="Left" action="Click">
-        <action name="Close"/>
-      </mousebind>
-    </context>
-    <context name="TitlebarButton.Maximize">
-      <mousebind button="Left" action="Click">
-        <action name="ToggleMaximize"/>
-      </mousebind>
-    </context>
-    <context name="TitlebarButton.Minimize">
-      <mousebind button="Left" action="Click">
-        <action name="Iconify"/>
-      </mousebind>
-    </context>
+    <!-- Use labwc defaults — this properly handles close/maximize/minimize buttons -->
+    <default/>
 
     <context name="Desktop">
       <!-- Right-click only shows context menu; left-click does nothing -->

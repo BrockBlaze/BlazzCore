@@ -12,7 +12,7 @@
 
     "custom/menu": {
         "format": "󰈸",
-        "on-click": "pkill -f blazzcore-startmenu || blazzcore-startmenu",
+        "on-click": "pkill -f 'python3.*blazzcore-startmenu' || blazzcore-startmenu",
         "tooltip-format": "Start Menu  (Super+Space)",
         "tooltip": true
     },
