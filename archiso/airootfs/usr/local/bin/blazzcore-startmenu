@@ -51,7 +51,7 @@ window {
     background-color: rgba(10, 10, 22, 0.97);
     border: 1px solid rgba(80, 80, 160, 0.35);
     border-bottom: none;
-    border-radius: 14px 14px 0 0;
+    border-radius: 0;
 }
 
 /* Search */
@@ -100,7 +100,7 @@ window {
     background-color: rgba(7,7,17,0.55);
     min-width: 210px;
     padding: 0 0 8px 0;
-    border-radius: 0 14px 0 0;
+    border-radius: 0;
 }
 .sc-header-box { padding: 4px 12px 2px 12px; }
 
@@ -210,7 +210,7 @@ class StartMenu(Gtk.Window):
         GtkLayerShell.set_layer(self, GtkLayerShell.Layer.TOP)
         GtkLayerShell.set_anchor(self, GtkLayerShell.Edge.BOTTOM, True)
         GtkLayerShell.set_anchor(self, GtkLayerShell.Edge.LEFT, True)
-        GtkLayerShell.set_margin(self, GtkLayerShell.Edge.BOTTOM, 40)
+        GtkLayerShell.set_margin(self, GtkLayerShell.Edge.BOTTOM, 0)
         GtkLayerShell.set_margin(self, GtkLayerShell.Edge.LEFT, 0)
         GtkLayerShell.set_keyboard_mode(self, GtkLayerShell.KeyboardMode.ON_DEMAND)
         GtkLayerShell.set_exclusive_zone(self, 0)

@@ -21,19 +21,20 @@ window#waybar {
 
 /* ── Start button ────────────────────────────────────────────────────────── */
 #custom-menu {
-    padding: 0 18px;
-    color: #7878c8;
-    font-size: 16px;
-    border-radius: 10px 0 0 10px;
-    margin: 4px 0 4px 4px;
+    padding: 0 20px;
+    color: #9090d8;
+    font-size: 15px;
+    border-radius: 0;
+    margin: 0;
+    border-right: 1px solid rgba(70, 70, 130, 0.4);
     transition: all 150ms ease;
 }
 #custom-menu:hover {
-    background: rgba(100, 100, 210, 0.18);
-    color: #a8a8ff;
+    background: rgba(100, 100, 210, 0.2);
+    color: #b8b8ff;
 }
 #custom-menu:active {
-    background: rgba(100, 100, 210, 0.32);
+    background: rgba(100, 100, 210, 0.38);
     color: #ffffff;
 }
 
