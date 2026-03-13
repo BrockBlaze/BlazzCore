@@ -11,7 +11,7 @@
     "modules-right": ["tray", "custom/notifications", "custom/updates", "cpu", "memory", "keyboard-state", "network", "pulseaudio", "backlight", "battery", "clock"],
 
     "custom/menu": {
-        "format": "⊞",
+        "format": "",
         "on-click": "blazzcore-startmenu",
         "tooltip-format": "Start Menu  (Super+Space)",
         "tooltip": true

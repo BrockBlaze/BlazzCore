@@ -2,7 +2,7 @@
 Name=Driver Manager
 Comment=Detect and install hardware drivers
 Exec=blazzcore-drivers
-Icon=preferences-system
+Icon=system-run
 Type=Application
 Categories=Settings;System;
 Keywords=driver;gpu;wifi;hardware;nvidia;amd;intel;install;

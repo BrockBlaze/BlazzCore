@@ -39,5 +39,6 @@ exec chromium \
     --enable-accelerated-video-decode \
     --disable-gpu-driver-bug-workarounds \
     --enable-wayland-ime \
+    --load-extension=/usr/share/blazzcore/chromium-theme \
     "$@" \
     2>>"$LOG_DIR/chromium-gpu.log"

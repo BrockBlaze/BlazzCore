@@ -1,0 +1,32 @@
+{
+  "manifest_version": 2,
+  "version": "1.0",
+  "name": "BlazzCore",
+  "description": "BlazzCore dark navy theme",
+  "theme": {
+    "colors": {
+      "frame":                  [11,  11,  22],
+      "frame_inactive":         [8,   8,  16],
+      "toolbar":                [14,  14,  28],
+      "tab_text":               [220, 220, 255],
+      "tab_background_text":    [110, 110, 170],
+      "background_tab":         [10,  10,  20],
+      "bookmark_text":          [170, 170, 215],
+      "ntp_background":         [12,  12,  24],
+      "ntp_text":               [200, 200, 240],
+      "ntp_link":               [96,  96,  184],
+      "omnibox_background":     [18,  18,  36],
+      "omnibox_text":           [220, 220, 255]
+    },
+    "tints": {
+      "buttons":   [0.61, 0.50, 0.85],
+      "frame":     [-1,   -1,   -1],
+      "background_tab": [-1, -1, -1]
+    },
+    "properties": {
+      "ntp_background_alignment": "center",
+      "ntp_background_repeat":    "no-repeat",
+      "ntp_logo_alternate":       1
+    }
+  }
+}
