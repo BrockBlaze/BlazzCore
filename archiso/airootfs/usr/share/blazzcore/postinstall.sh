@@ -55,14 +55,9 @@ cp -rT "$LIVE_SKEL/.config" "$USER_HOME/.config" 2>/dev/null || true
 cp -rT "$LIVE_SKEL/.local"  "$USER_HOME/.local"  2>/dev/null || true
 mkdir -p "$USER_HOME"/{Desktop,Downloads,Pictures,Documents}
 
-# Set ownership — use getent for robust UID/GID detection
-INSTALL_UID=$(getent passwd -s files "$INSTALL_USER" 2>/dev/null | cut -d: -f3)
-INSTALL_GID=$(getent passwd -s files "$INSTALL_USER" 2>/dev/null | cut -d: -f4)
-# Fallback: read directly from target passwd
-if [[ -z "$INSTALL_UID" ]]; then
-    INSTALL_UID=$(awk -F: -v u="$INSTALL_USER" '$1==u{print $3}' "$MOUNT/etc/passwd" 2>/dev/null)
-    INSTALL_GID=$(awk -F: -v u="$INSTALL_USER" '$1==u{print $4}' "$MOUNT/etc/passwd" 2>/dev/null)
-fi
+# Read UID/GID directly from the installed system's passwd file
+INSTALL_UID=$(awk -F: -v u="$INSTALL_USER" '$1==u{print $3}' "$MOUNT/etc/passwd" 2>/dev/null)
+INSTALL_GID=$(awk -F: -v u="$INSTALL_USER" '$1==u{print $4}' "$MOUNT/etc/passwd" 2>/dev/null)
 INSTALL_UID=${INSTALL_UID:-1000}
 INSTALL_GID=${INSTALL_GID:-1000}
 chown -R "$INSTALL_UID:$INSTALL_GID" "$USER_HOME"

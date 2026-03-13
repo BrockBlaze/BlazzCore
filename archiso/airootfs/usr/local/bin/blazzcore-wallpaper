@@ -20,9 +20,10 @@ if [[ -n "$IMG" ]]; then
     # Persist across reboots — update the WALLPAPER variable in autostart
     AUTOSTART="$HOME/.config/labwc/autostart"
     # Escape characters special in sed replacement (& \ |)
-    ESCAPED_IMG=$(printf '%s' "$IMG" | sed 's/[&\|]/\\&/g')
+    # Escape characters special in sed replacement strings
+    ESCAPED_IMG=$(printf '%s' "$IMG" | sed 's/[&\]/\\&/g; s/|/\\|/g')
     if grep -q '^WALLPAPER=' "$AUTOSTART"; then
-        sed -i "s|^WALLPAPER=.*|WALLPAPER=$ESCAPED_IMG|" "$AUTOSTART"
+        sed -i "s|^WALLPAPER=.*|WALLPAPER=\"$ESCAPED_IMG\"|" "$AUTOSTART"
     else
         # Fallback: update the swaybg line directly if WALLPAPER var not present
         sed -i "s|swaybg -i .* -m fill|swaybg -i \"$ESCAPED_IMG\" -m fill|" "$AUTOSTART"

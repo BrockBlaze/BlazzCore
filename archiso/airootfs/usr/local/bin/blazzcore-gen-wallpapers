@@ -9,7 +9,7 @@ Resolution priority:
   3. wlr-randr/wdisplays detection
   4. Fallback: 1920x1080
 """
-import struct, zlib, math, os, subprocess, sys
+import struct, zlib, math, os, re, subprocess, sys
 
 def detect_resolution():
     """Try to detect the primary display resolution from the running compositor."""
@@ -20,7 +20,7 @@ def detect_resolution():
             if 'current' in line.lower():
                 parts = line.split()
                 for p in parts:
-                    if 'x' in p and p.replace('x', '').replace('0123456789', '').strip() == '':
+                    if re.match(r'^\d+x\d+$', p):
                         w, h = p.split('x')
                         return int(w), int(h)
     except Exception:

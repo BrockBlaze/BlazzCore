@@ -24,10 +24,11 @@ _DOCK_MARGINS  = {'bottom': '-mb', 'left': '-ml', 'right': '-mr', 'top': '-mt'}
 def _dock_cmd():
     pos = 'bottom'
     try:
-        for line in open(DOCK_CONF):
-            if line.startswith('DOCK_POSITION='):
-                pos = line.split('=', 1)[1].strip()
-                break
+        with open(DOCK_CONF) as f:
+            for line in f:
+                if line.startswith('DOCK_POSITION='):
+                    pos = line.split('=', 1)[1].strip()
+                    break
     except FileNotFoundError:
         pass
     margin = _DOCK_MARGINS.get(pos, '-mb')
@@ -181,14 +182,16 @@ scrollbar slider:hover { background-color: rgba(95, 95, 165, 0.55); }
 def _load_user_pinned():
     if os.path.exists(PINNED_QA_FILE):
         try:
-            return json.load(open(PINNED_QA_FILE))
+            with open(PINNED_QA_FILE) as f:
+                return json.load(f)
         except Exception:
             pass
     return []
 
 def _save_user_pinned(items):
     os.makedirs(CFG_DIR, exist_ok=True)
-    json.dump(items, open(PINNED_QA_FILE, "w"), indent=2)
+    with open(PINNED_QA_FILE, "w") as f:
+        json.dump(items, f, indent=2)
 
 def _add_to_qa(name, exec_cmd, icon):
     items = _load_user_pinned()
@@ -207,7 +210,8 @@ def _remove_from_qa(exec_cmd):
 def _dock_pinned():
     if not os.path.exists(DOCK_PINNED):
         return []
-    return [l.strip() for l in open(DOCK_PINNED) if l.strip()]
+    with open(DOCK_PINNED) as f:
+        return [l.strip() for l in f if l.strip()]
 
 def _dock_restart():
     subprocess.Popen(['pkill', 'nwg-dock'])
@@ -219,13 +223,15 @@ def _dock_add(desktop_name):
         return False
     pinned.append(desktop_name)
     os.makedirs(os.path.dirname(DOCK_PINNED), exist_ok=True)
-    open(DOCK_PINNED, "w").write("\n".join(pinned) + "\n")
+    with open(DOCK_PINNED, "w") as f:
+        f.write("\n".join(pinned) + "\n")
     _dock_restart()
     return True
 
 def _dock_remove(desktop_name):
     pinned = [p for p in _dock_pinned() if p != desktop_name]
-    open(DOCK_PINNED, "w").write("\n".join(pinned) + "\n")
+    with open(DOCK_PINNED, "w") as f:
+        f.write("\n".join(pinned) + "\n")
     _dock_restart()
 
 def _is_dock_pinned(desktop_name):

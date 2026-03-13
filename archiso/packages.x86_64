@@ -6,6 +6,7 @@
 base
 base-devel
 archinstall
+arch-install-scripts
 linux
 linux-firmware
 linux-headers
@@ -17,6 +18,8 @@ syslinux
 dosfstools
 e2fsprogs
 btrfs-progs
+parted
+cryptsetup
 networkmanager
 iwd
 iw
@@ -37,6 +40,7 @@ curl
 
 # --- Wayland / Display ---
 labwc
+wlr-randr
 swaybg
 swayidle
 swaylock
