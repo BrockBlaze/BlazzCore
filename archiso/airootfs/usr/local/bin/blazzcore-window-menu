@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
 # BlazzCore — Taskbar right-click context menu
 # Called by waybar with: blazzcore-window-menu {app_id}
-# Waybar substitutes {app_id} with the actual window app_id.
 
 APP_ID="${1:-}"
 
-# Show menu with wofi dmenu (installed) — small floating list
+# Show menu with wofi dmenu — small floating list
 CHOICE=$(printf 'Restore / Show\nMinimize\nMaximize\nClose' \
     | wofi --show dmenu \
            --width=200 --height=158 \
@@ -17,19 +16,38 @@ CHOICE=$(printf 'Restore / Show\nMinimize\nMaximize\nClose' \
 
 [[ -z "$CHOICE" ]] && exit 0
 
-# Map choice to wlrctl action
-case "$CHOICE" in
-    "Restore / Show") ACTION="focus"    ;;
-    "Minimize")       ACTION="minimize" ;;
-    "Maximize")       ACTION="maximize" ;;
-    "Close")          ACTION="close"    ;;
-    *)                exit 0            ;;
-esac
+# Helper: send an action to labwc via its IPC socket
+# labwc IPC: 4-byte LE length prefix + JSON payload
+_labwc_action() {
+    local action="$1"
+    local socket="${XDG_RUNTIME_DIR:-/run/user/1000}/labwc.socket"
+    [[ -S "$socket" ]] || return 1
+    python3 - "$socket" "$action" <<'PYEOF'
+import socket, struct, json, sys
+sock_path, action = sys.argv[1], sys.argv[2]
+try:
+    s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    s.connect(sock_path)
+    msg = json.dumps({"action": action}).encode()
+    s.send(struct.pack("<I", len(msg)) + msg)
+    s.recv(4096)
+except Exception:
+    pass
+PYEOF
+}
 
-# Act on the window via wlrctl
-if [[ -n "$APP_ID" ]] && command -v wlrctl &>/dev/null; then
-    wlrctl window "$ACTION" app_id:"$APP_ID" 2>/dev/null || \
-    wlrctl window "$ACTION" 2>/dev/null
-elif command -v wlrctl &>/dev/null; then
-    wlrctl window "$ACTION" 2>/dev/null
-fi
+case "$CHOICE" in
+    "Close")
+        # Kill by app_id — works for most Wayland apps
+        pkill -x "$APP_ID" 2>/dev/null || pkill -f "$APP_ID" 2>/dev/null
+        ;;
+    "Restore / Show")
+        _labwc_action "focus"
+        ;;
+    "Minimize")
+        _labwc_action "Iconify"
+        ;;
+    "Maximize")
+        _labwc_action "ToggleMaximize"
+        ;;
+esac
