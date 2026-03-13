@@ -26,8 +26,8 @@ DOCK_CONF="$HOME/.config/blazzcore/dock.conf"
 mkdir -p "$(dirname "$DOCK_CONF")"
 
 case "$POSITION" in
-    "Bottom (default)") nwg-dock -p bottom -a center -i 38 -mb 0 -f &; echo "DOCK_POSITION=bottom" > "$DOCK_CONF" ;;
-    "Left")             nwg-dock -p left   -a center -i 38 -ml 0 -f &; echo "DOCK_POSITION=left"   > "$DOCK_CONF" ;;
-    "Right")            nwg-dock -p right  -a center -i 38 -mr 0 -f &; echo "DOCK_POSITION=right"  > "$DOCK_CONF" ;;
-    "Top")              nwg-dock -p top    -a center -i 38 -mt 0 -f &; echo "DOCK_POSITION=top"    > "$DOCK_CONF" ;;
+    "Bottom (default)") nwg-dock -p bottom -a center -i 42 -mb 0 -f &; echo "DOCK_POSITION=bottom" > "$DOCK_CONF" ;;
+    "Left")             nwg-dock -p left   -a center -i 42 -ml 0 -f &; echo "DOCK_POSITION=left"   > "$DOCK_CONF" ;;
+    "Right")            nwg-dock -p right  -a center -i 42 -mr 0 -f &; echo "DOCK_POSITION=right"  > "$DOCK_CONF" ;;
+    "Top")              nwg-dock -p top    -a center -i 42 -mt 0 -f &; echo "DOCK_POSITION=top"    > "$DOCK_CONF" ;;
 esac

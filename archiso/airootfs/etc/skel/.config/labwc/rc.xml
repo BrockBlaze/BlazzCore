@@ -43,6 +43,15 @@
     <popupShow>Never</popupShow>
   </resize>
 
+  <animations>
+    <!-- Fade windows in/out on open and close -->
+    <animation name="fade" trigger="openclose">
+      <enabled>yes</enabled>
+      <duration>120</duration>
+      <easing>ease-out</easing>
+    </animation>
+  </animations>
+
   <focus>
     <followMouse>no</followMouse>
     <raiseOnFocus>no</raiseOnFocus>
@@ -214,32 +223,52 @@
   </keyboard>
 
   <mouse>
-    <default/>
+    <!-- No <default/> — defined explicitly so Desktop left-click cannot show a menu -->
+
+    <!-- Move/resize any window with Alt+drag (works without a visible titlebar) -->
+    <context name="Frame">
+      <mousebind button="A-Left" action="Drag">
+        <action name="Move"/>
+      </mousebind>
+      <mousebind button="A-Right" action="Drag">
+        <action name="Resize"/>
+      </mousebind>
+      <mousebind button="Left" action="Drag">
+        <action name="Resize"/>
+      </mousebind>
+    </context>
+
     <context name="Titlebar">
-      <!-- Single click on titlebar maximizes/restores the window -->
+      <!-- Single left-click maximizes/restores; drag moves -->
+      <mousebind button="Left" action="Press">
+        <action name="Focus"/>
+        <action name="Raise"/>
+      </mousebind>
       <mousebind button="Left" action="Click">
         <action name="ToggleMaximize"/>
       </mousebind>
       <mousebind button="Left" action="Drag">
         <action name="Move"/>
       </mousebind>
+      <mousebind button="Middle" action="Click">
+        <action name="Lower"/>
+      </mousebind>
       <mousebind button="Right" action="Click">
         <action name="Focus"/>
         <action name="Raise"/>
       </mousebind>
     </context>
-    <context name="Frame">
-      <mousebind button="Left" action="Drag">
-        <action name="Resize"/>
-      </mousebind>
-    </context>
+
     <context name="Desktop">
-      <!-- Left click does nothing; right click opens context menu -->
-      <mousebind button="Left" action="Click">
-        <action name="Focus"/>
-      </mousebind>
+      <!-- Right-click only shows context menu; left-click does nothing -->
       <mousebind button="Right" action="Click">
         <action name="ShowMenu"><menu>root-menu</menu></action>
+      </mousebind>
+      <mousebind button="Up" action="Scroll">
+        <action name="GoToDesktop"><to>previous</to><wrap>yes</wrap></action>
+      </mousebind>
+      <mousebind button="Down" action="Scroll">
+        <action name="GoToDesktop"><to>next</to><wrap>yes</wrap></action>
       </mousebind>
     </context>
   </mouse>

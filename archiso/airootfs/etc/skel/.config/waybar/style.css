@@ -1,5 +1,5 @@
 /* ============================================
-   BlazzCore — Waybar Style  (Floating Island)
+   BlazzCore — Waybar Style
    ============================================ */
 
 * {
@@ -46,7 +46,7 @@ window#waybar {
     padding: 2px 10px;
     color: #6868a0;
     background: transparent;
-    border-radius: 7px;
+    border-radius: 0;
     margin: 2px 1px;
     transition: all 120ms ease;
 }
@@ -60,14 +60,6 @@ window#waybar {
     color: #c0c0f0;
 }
 
-/* ── Clock ───────────────────────────────────────────────────────────────── */
-#clock {
-    padding: 0 22px;
-    color: #d8d8f8;
-    font-weight: 600;
-    letter-spacing: 0.4px;
-}
-
 /* ── MPRIS media ─────────────────────────────────────────────────────────── */
 #mpris {
     padding: 0 14px;
@@ -78,7 +70,6 @@ window#waybar {
 #mpris:hover {
     color: #c0c0f0;
     background: rgba(255, 255, 255, 0.04);
-    border-radius: 6px;
 }
 
 /* ── Right-side modules ──────────────────────────────────────────────────── */
@@ -92,8 +83,7 @@ window#waybar {
 #battery,
 #custom-updates,
 #custom-notifications,
-#custom-nightlight,
-#custom-power {
+#clock {
     padding: 0 11px;
     color: #9090b8;
     transition: all 120ms ease;
@@ -108,18 +98,16 @@ window#waybar {
 #backlight:hover,
 #battery:hover,
 #custom-updates:hover,
-#custom-notifications:hover,
-#custom-nightlight:hover {
+#custom-notifications:hover {
     color: #e0e0ff;
     background: rgba(255, 255, 255, 0.06);
-    border-radius: 7px;
 }
 
 /* Subtle left separators between module groups */
-#cpu              { border-left: 1px solid rgba(80, 80, 140, 0.25); }
-#network          { border-left: 1px solid rgba(80, 80, 140, 0.25); }
-#pulseaudio       { border-left: 1px solid rgba(80, 80, 140, 0.25); }
-#custom-nightlight { border-left: 1px solid rgba(80, 80, 140, 0.25); }
+#cpu        { border-left: 1px solid rgba(80, 80, 140, 0.25); }
+#network    { border-left: 1px solid rgba(80, 80, 140, 0.25); }
+#pulseaudio { border-left: 1px solid rgba(80, 80, 140, 0.25); }
+#clock      { border-left: 1px solid rgba(80, 80, 140, 0.25); }
 
 /* Per-module accent colors */
 #cpu        { color: #6a9fd8; }
@@ -128,8 +116,16 @@ window#waybar {
 #pulseaudio { color: #9898c8; }
 #battery    { color: #9898c8; }
 #backlight  { color: #c8b86a; }
-#cpu:hover  { color: #90c0f8; }
+#cpu:hover    { color: #90c0f8; }
 #memory:hover { color: #90e8c0; }
+
+/* ── Clock (rightmost) ───────────────────────────────────────────────────── */
+#clock {
+    padding: 0 20px 0 14px;
+    color: #d8d8f8;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+}
 
 /* ── Update indicator ────────────────────────────────────────────────────── */
 #custom-updates {
@@ -137,30 +133,12 @@ window#waybar {
     font-weight: bold;
 }
 
-/* ── Night light ─────────────────────────────────────────────────────────── */
-#custom-nightlight       { color: #7070a0; }
-#custom-nightlight:hover { color: #d4ac0d; background: rgba(212, 172, 13, 0.1); border-radius: 7px; }
-
 /* ── Notification bell ───────────────────────────────────────────────────── */
 #custom-notifications { color: #7070a0; }
 #custom-notifications:hover { color: #d0d0ff; }
 #custom-notifications.notification     { color: #d4ac0d; }
 #custom-notifications.dnd-none,
 #custom-notifications.dnd-notification { color: #404058; }
-
-/* ── Power button ────────────────────────────────────────────────────────── */
-#custom-power {
-    padding: 0 14px;
-    color: #707088;
-    font-size: 14px;
-    margin: 4px 4px 4px 0;
-    border-radius: 0 10px 10px 0;
-    transition: all 150ms ease;
-}
-#custom-power:hover {
-    background: rgba(200, 50, 50, 0.2);
-    color: #e06060;
-}
 
 /* ── Battery states ──────────────────────────────────────────────────────── */
 #battery.warning          { color: #d4ac0d; }
@@ -181,7 +159,7 @@ window#waybar {
 tooltip {
     background: rgba(8, 8, 18, 0.97);
     border: 1px solid rgba(80, 80, 160, 0.45);
-    border-radius: 8px;
+    border-radius: 0;
     color: #d0d0f0;
     padding: 2px 6px;
 }
@@ -189,3 +167,13 @@ tooltip label { color: #d0d0f0; }
 
 /* ── Animation ───────────────────────────────────────────────────────────── */
 @keyframes blink { to { color: #ffffff; } }
+
+/* Pulse the notification bell when there are unread notifications */
+@keyframes bell-pulse {
+    0%   { color: #d4ac0d; }
+    50%  { color: #f0d060; }
+    100% { color: #d4ac0d; }
+}
+#custom-notifications.notification {
+    animation: bell-pulse 2s ease-in-out infinite;
+}

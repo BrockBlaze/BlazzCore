@@ -1,5 +1,5 @@
 /* ============================================
-   BlazzCore Dock — Windows 11 Taskbar Style
+   BlazzCore Dock
    ============================================ */
 
 * {
@@ -8,56 +8,62 @@
 }
 
 window {
-    background-color: rgba(11, 11, 22, 0.93);
-    border-top: 1px solid rgba(80, 80, 150, 0.22);
+    background-color: rgba(9, 9, 18, 0.93);
+    border-top: 1px solid rgba(70, 70, 140, 0.30);
 }
 
 #box {
-    padding: 0 6px;
+    padding: 0 8px;
     background: transparent;
 }
 
 /* ---- Each app button ---- */
 button {
-    border-radius: 5px 5px 3px 3px;
+    border-radius: 0;
     padding: 5px 10px;
     margin: 5px 2px;
     background: transparent;
     border: none;
-    border-bottom: 3px solid transparent;
-    min-width: 46px;
-    min-height: 38px;
-    transition: all 120ms ease;
+    border-bottom: 2px solid transparent;
+    min-width: 48px;
+    min-height: 40px;
+    transition: background 110ms ease, border-color 110ms ease, transform 110ms ease;
 }
 
 button:hover {
-    background-color: rgba(255, 255, 255, 0.08);
-    border-bottom: 3px solid rgba(128, 128, 200, 0.4);
+    background-color: rgba(255, 255, 255, 0.07);
+    border-bottom: 2px solid rgba(110, 110, 190, 0.45);
+    transform: translateY(-3px);
 }
 
-/* Active (running + focused) */
+/* Active — running and focused */
 button.active {
-    background-color: rgba(128, 128, 200, 0.15);
-    border-bottom: 3px solid #8080c8;
-    border-radius: 5px 5px 2px 2px;
+    background-color: rgba(90, 90, 180, 0.16);
+    border-bottom: 2px solid #8888cc;
 }
 
 button.active:hover {
-    background-color: rgba(128, 128, 200, 0.24);
+    background-color: rgba(90, 90, 180, 0.26);
+    border-bottom: 2px solid #a0a0e0;
 }
 
-/* Running but not focused — subtle dot indicator */
+/* Running but not focused */
 button.open {
-    border-bottom: 3px solid rgba(128, 128, 200, 0.5);
+    border-bottom: 2px solid rgba(100, 100, 170, 0.45);
+}
+
+button.open:hover {
+    background-color: rgba(255, 255, 255, 0.07);
+    border-bottom: 2px solid rgba(120, 120, 200, 0.65);
 }
 
 image {
-    padding: 0 2px;
+    padding: 0 3px;
 }
 
 /* Separator between pinned and running sections */
 separator {
-    background-color: rgba(80, 80, 150, 0.2);
+    background-color: rgba(80, 80, 150, 0.22);
     min-width: 1px;
-    margin: 10px 6px;
+    margin: 10px 8px;
 }

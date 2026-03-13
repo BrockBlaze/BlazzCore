@@ -7,8 +7,8 @@
     "margin-left": 0,
     "margin-right": 0,
     "modules-left": ["custom/menu", "wlr/taskbar"],
-    "modules-center": ["mpris", "clock"],
-    "modules-right": ["tray", "custom/notifications", "custom/updates", "cpu", "memory", "keyboard-state", "network", "pulseaudio", "backlight", "battery", "custom/nightlight", "custom/power"],
+    "modules-center": ["mpris"],
+    "modules-right": ["tray", "custom/notifications", "custom/updates", "cpu", "memory", "keyboard-state", "network", "pulseaudio", "backlight", "battery", "clock"],
 
     "custom/menu": {
         "format": "⊞",
