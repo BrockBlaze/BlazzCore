@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# BlazzCore — Taskbar right-click context menu
+# Called by waybar with: blazzcore-window-menu {app_id}
+# Waybar substitutes {app_id} with the actual window app_id.
+
+APP_ID="${1:-}"
+
+# Show menu with wofi dmenu (installed) — small floating list
+CHOICE=$(printf 'Restore / Show\nMinimize\nMaximize\nClose' \
+    | wofi --show dmenu \
+           --width=200 --height=158 \
+           --prompt="" \
+           --no-actions \
+           --insensitive \
+           --style="" \
+    2>/dev/null)
+
+[[ -z "$CHOICE" ]] && exit 0
+
+# Map choice to wlrctl action
+case "$CHOICE" in
+    "Restore / Show") ACTION="focus"    ;;
+    "Minimize")       ACTION="minimize" ;;
+    "Maximize")       ACTION="maximize" ;;
+    "Close")          ACTION="close"    ;;
+    *)                exit 0            ;;
+esac
+
+# Act on the window via wlrctl
+if [[ -n "$APP_ID" ]] && command -v wlrctl &>/dev/null; then
+    wlrctl window "$ACTION" app_id:"$APP_ID" 2>/dev/null || \
+    wlrctl window "$ACTION" 2>/dev/null
+elif command -v wlrctl &>/dev/null; then
+    wlrctl window "$ACTION" 2>/dev/null
+fi

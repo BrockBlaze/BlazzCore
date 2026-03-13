@@ -50,6 +50,7 @@ xdg-utils
 xorg-xwayland
 foot
 wofi
+wlrctl
 grim
 slurp
 

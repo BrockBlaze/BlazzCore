@@ -12,7 +12,7 @@
 
     "custom/menu": {
         "format": "",
-        "on-click": "blazzcore-startmenu",
+        "on-click": "pkill -f blazzcore-startmenu || blazzcore-startmenu",
         "tooltip-format": "Start Menu  (Super+Space)",
         "tooltip": true
     },
@@ -23,7 +23,8 @@
         "icon-theme": "Papirus-Dark",
         "tooltip-format": "{title}",
         "on-click": "activate",
-        "on-click-right": "minimize",
+        "on-click-right": "blazzcore-window-menu {app_id}",
+        "on-click-middle": "minimize-raise",
         "ignore-list": ["waybar"]
     },
 
