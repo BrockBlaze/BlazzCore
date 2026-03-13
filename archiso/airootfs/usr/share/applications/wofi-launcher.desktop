@@ -7,3 +7,4 @@ Type=Application
 Categories=Utility;
 Keywords=launcher;app;menu;run;search;wofi;
 StartupNotify=false
+NoDisplay=true
