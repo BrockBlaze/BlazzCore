@@ -29,10 +29,9 @@ window#waybar {
     font-size: 18px;
     color: #ff6a30;
     transition: background-color 150ms ease;
-    cursor: default;
 }
-#custom-menu:hover  { background-color: rgba(100, 100, 210, 0.22); cursor: default; }
-#custom-menu:active { background-color: rgba(100, 100, 210, 0.42); cursor: default; }
+#custom-menu:hover  { background-color: rgba(100, 100, 210, 0.22); }
+#custom-menu:active { background-color: rgba(100, 100, 210, 0.42); }
 
 /* ── Taskbar ─────────────────────────────────────────────────────────────── */
 #taskbar { margin: 4px 4px; }
