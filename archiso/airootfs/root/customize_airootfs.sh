@@ -25,10 +25,18 @@ systemctl enable NetworkManager
 systemctl enable seatd
 systemctl enable bluetooth
 systemctl enable blazzcore-firstboot.service
+systemctl enable sshd
 
 # Set empty passwords for live session (passwd -d is safe and explicit)
 passwd -d blazzcore
 passwd -d root
+# Allow SSH password login for live debugging (password: live)
+echo "blazzcore:live" | chpasswd
+echo "root:live" | chpasswd
+# Allow SSH with empty password and root login for live session
+sed -i 's/^#PermitEmptyPasswords.*/PermitEmptyPasswords yes/' /etc/ssh/sshd_config
+sed -i 's/^#PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
+sed -i 's/^#PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config
 
 # Add blazzcore to sudoers (env_keep preserves WAYLAND_DISPLAY so GUI apps work under sudo)
 cat > /etc/sudoers.d/wheel <<'EOF'

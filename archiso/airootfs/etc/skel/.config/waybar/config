@@ -12,7 +12,7 @@
 
     "custom/menu": {
         "format": "󰈸",
-        "on-click": "bash -c '/usr/local/bin/blazzcore-startmenu-toggle >> /tmp/blazzcore-startmenu.log 2>&1 &'",
+        "on-click": "/usr/local/bin/blazzcore-startmenu-toggle",
         "tooltip-format": "Start Menu  (Super+Space)",
         "tooltip": true
     },

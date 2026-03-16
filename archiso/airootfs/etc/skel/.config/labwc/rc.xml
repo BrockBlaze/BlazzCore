@@ -11,6 +11,10 @@
   <theme>
     <name>BlazzCore</name>
     <cornerRadius>0</cornerRadius>
+    <cursor>
+      <theme>Vanilla-DMZ</theme>
+      <size>24</size>
+    </cursor>
     <font place="ActiveWindow">
       <name>Noto Sans</name>
       <size>10</size>

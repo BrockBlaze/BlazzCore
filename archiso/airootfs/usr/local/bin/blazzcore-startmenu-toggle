@@ -1,29 +1,41 @@
 #!/usr/bin/env bash
 # BlazzCore — start menu toggle
 # Uses a PID file to reliably track whether the menu is running.
-# Every action is logged to /tmp/blazzcore-startmenu.log for debugging.
+# Every action is logged to /tmp/blazzcore-startmenu.log and serial console.
 
 PIDFILE=/tmp/blazzcore-startmenu.pid
 LOG=/tmp/blazzcore-startmenu.log
 
-echo "[$(date +%H:%M:%S)] toggle called (args: $*)" >> "$LOG"
+# Ensure Wayland environment is set (waybar inherits these, but be explicit)
+export GDK_BACKEND="${GDK_BACKEND:-wayland}"
+export WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-wayland-1}"
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/1000}"
+export DBUS_SESSION_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS:-unix:path=/run/user/1000/bus}"
+
+_log() {
+    local msg="[$(date +%H:%M:%S)] $*"
+    echo "$msg" >> "$LOG"
+    echo "$msg" > /dev/ttyS0 2>/dev/null || true
+}
+
+_log "toggle called (WAYLAND_DISPLAY=$WAYLAND_DISPLAY XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR GDK_BACKEND=$GDK_BACKEND)"
 
 # Check if already running via PID file
 if [[ -f "$PIDFILE" ]]; then
     PID=$(cat "$PIDFILE")
     if [[ -n "$PID" ]] && kill -0 "$PID" 2>/dev/null; then
-        echo "[$(date +%H:%M:%S)] menu is running (PID $PID) — killing" >> "$LOG"
+        _log "menu is running (PID $PID) — killing"
         kill "$PID" 2>/dev/null
         rm -f "$PIDFILE"
         exit 0
     else
-        echo "[$(date +%H:%M:%S)] stale pidfile (PID $PID) — removing" >> "$LOG"
+        _log "stale pidfile (PID $PID) — removing"
         rm -f "$PIDFILE"
     fi
 fi
 
-echo "[$(date +%H:%M:%S)] launching blazzcore-startmenu" >> "$LOG"
+_log "launching blazzcore-startmenu"
 python3 /usr/local/bin/blazzcore-startmenu >> "$LOG" 2>&1 &
 MENU_PID=$!
 echo "$MENU_PID" > "$PIDFILE"
-echo "[$(date +%H:%M:%S)] launched with PID $MENU_PID" >> "$LOG"
+_log "launched with PID $MENU_PID"

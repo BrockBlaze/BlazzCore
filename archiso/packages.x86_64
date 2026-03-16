@@ -6,6 +6,7 @@
 base
 base-devel
 archinstall
+openssh
 arch-install-scripts
 linux
 linux-firmware
@@ -115,6 +116,7 @@ gvfs-mtp
 xdg-user-dirs
 papirus-icon-theme
 adwaita-icon-theme
+xcursor-vanilla-dmz
 network-manager-applet
 swaync
 playerctl
