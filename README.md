@@ -1,6 +1,6 @@
 # BlazzCore
 
-A minimal, fast, Wayland-first Linux operating system built on Arch Linux.
+A minimal, fast, Wayland-first Linux operating system built on Arch Linux by Brock Blazzard
 
 ![BlazzCore](BlazzCore.png)
 
@@ -10,18 +10,18 @@ A minimal, fast, Wayland-first Linux operating system built on Arch Linux.
 
 BlazzCore is a custom Linux distro focused on simplicity, performance, and a consistent native look and feel. It ships a complete desktop experience out of the box — floating windows, a start menu, taskbar, system tray, clipboard history, and Chromium with hardware video decoding — while staying lean enough to run comfortably on modest hardware.
 
-| Component | Package |
-|-----------|---------|
-| Base | Arch Linux (rolling release) |
-| Window Manager | labwc (Wayland, floating) |
-| Status Bar | Waybar |
-| Terminal | foot |
-| Browser | Chromium (VA-API GPU acceleration) |
-| Audio | PipeWire + WirePlumber |
-| File Manager | Thunar |
-| Notifications | swaync |
-| App Launcher | wofi |
-| Packages | pacman |
+| Component      | Package                            |
+| -------------- | ---------------------------------- |
+| Base           | Arch Linux (rolling release)       |
+| Window Manager | labwc (Wayland, floating)          |
+| Status Bar     | Waybar                             |
+| Terminal       | foot                               |
+| Browser        | Chromium (VA-API GPU acceleration) |
+| Audio          | PipeWire + WirePlumber             |
+| File Manager   | Thunar                             |
+| Notifications  | swaync                             |
+| App Launcher   | wofi                               |
+| Packages       | pacman                             |
 
 ---
 
@@ -71,6 +71,7 @@ sudo mkarchiso -v -w /tmp/blazzcore-build -o /tmp/blazzcore-out archiso/
 Use [Rufus](https://rufus.ie) (Windows) or [Ventoy](https://ventoy.net):
 
 **Rufus:**
+
 - Device: your USB drive
 - Boot selection: select the `.iso`
 - Partition scheme: GPT
@@ -82,27 +83,27 @@ Use [Rufus](https://rufus.ie) (Windows) or [Ventoy](https://ventoy.net):
 
 ## Keyboard Shortcuts
 
-| Shortcut | Action |
-|----------|--------|
-| `Super + Enter` | Open terminal (foot) |
-| `Super + Space` / `Super + D` | Start menu |
-| `Super + B` | Open browser (Chromium) |
-| `Super + E` | File manager (Thunar) |
-| `Super + ,` | Settings |
-| `Super + V` | Clipboard history |
-| `Super + L` | Lock screen |
-| `Super + Shift + P` | Power menu |
-| `Super + N` | Toggle night light |
-| `Print` | Full screenshot |
-| `Shift + Print` | Area screenshot |
-| `Super + Shift + R` | Toggle screen recording |
-| `Super + Shift + Q` | Close window |
-| `Super + F` | Maximize/restore |
-| `Super + Left / Right` | Snap to half screen |
-| `Super + 1–5` | Switch workspace |
-| `Super + Shift + 1–5` | Move window to workspace |
-| `Alt + Tab` | Window switcher |
-| `Ctrl + Shift + Esc` | Task manager |
+| Shortcut                      | Action                   |
+| ----------------------------- | ------------------------ |
+| `Super + Enter`               | Open terminal (foot)     |
+| `Super + Space` / `Super + D` | Start menu               |
+| `Super + B`                   | Open browser (Chromium)  |
+| `Super + E`                   | File manager (Thunar)    |
+| `Super + ,`                   | Settings                 |
+| `Super + V`                   | Clipboard history        |
+| `Super + L`                   | Lock screen              |
+| `Super + Shift + P`           | Power menu               |
+| `Super + N`                   | Toggle night light       |
+| `Print`                       | Full screenshot          |
+| `Shift + Print`               | Area screenshot          |
+| `Super + Shift + R`           | Toggle screen recording  |
+| `Super + Shift + Q`           | Close window             |
+| `Super + F`                   | Maximize/restore         |
+| `Super + Left / Right`        | Snap to half screen      |
+| `Super + 1–5`                 | Switch workspace         |
+| `Super + Shift + 1–5`         | Move window to workspace |
+| `Alt + Tab`                   | Window switcher          |
+| `Ctrl + Shift + Esc`          | Task manager             |
 
 ---
 
