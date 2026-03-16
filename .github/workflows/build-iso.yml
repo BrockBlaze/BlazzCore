@@ -10,40 +10,59 @@ on:
 jobs:
   build:
     name: Build ISO
-    runs-on: ubuntu-latest
-    timeout-minutes: 90
-    container:
-      image: archlinux:latest
-      options: --privileged
+    runs-on: self-hosted
+    timeout-minutes: 60
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Restore pacman package cache
-        uses: actions/cache@v4
-        with:
-          path: /var/cache/pacman/pkg
-          # Normalize whitespace in package list before hashing to avoid spurious cache misses
-          key: pacman-pkgs-${{ hashFiles('archiso/packages.x86_64') }}
-          restore-keys: pacman-pkgs-
-
-      - name: Install dependencies
+      - name: Build ISO in Docker
         run: |
-          pacman -Sy --noconfirm
-          pacman -S --noconfirm --needed archiso git dosfstools e2fsprogs squashfs-tools erofs-utils grub syslinux
+          mkdir -p /tmp/blazzcore-pkg-cache /tmp/blazzcore-work
+          docker run --rm --privileged \
+            -v "${{ github.workspace }}:/build:ro" \
+            -v /tmp/blazzcore-out:/out \
+            -v /tmp/blazzcore-pkg-cache:/var/cache/pacman/pkg \
+            archlinux:latest \
+            bash -c '
+              set -e
+              pacman -Sy --noconfirm archiso squashfs-tools dosfstools e2fsprogs erofs-utils grub syslinux 2>&1 | grep -E "^(installing|error|warning)" || true
+              mkdir -p /run/archiso
+              mkarchiso -v -w /tmp/blazzcore-work -o /out /build/archiso/ 2>&1
+              rm -rf /tmp/blazzcore-work
+            '
 
-      - name: Build ISO
-        run: |
-          mkdir -p /run/archiso
-          mkarchiso -v -w /tmp/blazzcore-build -o /tmp/blazzcore-out archiso/
-
-      - name: Generate SHA256 checksum
+      - name: Generate checksum
         run: |
           cd /tmp/blazzcore-out
           sha256sum *.iso > SHA256SUMS
-          echo "=== Checksum ==="
           cat SHA256SUMS
+
+      - name: Move ISO to output folder
+        run: |
+          mkdir -p ~/blazzcore-out
+          # Keep only the 3 most recent ISOs
+          ls -t ~/blazzcore-out/blazzcore-*.iso 2>/dev/null | tail -n +3 | xargs rm -f || true
+          cp /tmp/blazzcore-out/blazzcore-*.iso ~/blazzcore-out/
+          cp /tmp/blazzcore-out/SHA256SUMS ~/blazzcore-out/
+          ISO=$(ls -t ~/blazzcore-out/blazzcore-*.iso | head -1)
+          echo "ISO ready: $ISO"
+
+      - name: Restart QEMU with new ISO
+        if: github.ref == 'refs/heads/main'
+        run: |
+          pkill -f qemu-system 2>/dev/null || true
+          sleep 2
+          nohup bash ~/run-blazzcore.sh > /tmp/qemu.log 2>&1 &
+          sleep 5
+          if pgrep -x qemu-system-x86_64 > /dev/null; then
+            echo "QEMU started with new ISO"
+            pgrep -a qemu-system-x86_64 | grep -o 'blazzcore-[^ ]*iso'
+          else
+            echo "WARNING: QEMU failed to start"
+            tail -20 /tmp/qemu.log
+          fi
 
       - name: Upload ISO artifact
         uses: actions/upload-artifact@v4
