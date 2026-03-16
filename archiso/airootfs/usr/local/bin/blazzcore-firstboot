@@ -103,7 +103,8 @@ WIFI=$(zenity --question \
     --width=400 2>/dev/null && echo "yes" || echo "no")
 
 if [[ "$WIFI" == "yes" ]]; then
-    foot -e nmtui
+    nm-connection-editor &
+    sleep 1
 fi
 
 # --- Done ---

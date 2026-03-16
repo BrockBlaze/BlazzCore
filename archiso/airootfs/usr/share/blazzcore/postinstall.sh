@@ -26,13 +26,21 @@ fi
 info "Free space on $MOUNT: $((FREE_KB / 1024)) MB — OK."
 
 # ---- Detect installed username ----
+# Primary: first non-system user (UID 1000-65533) in the installed passwd with a real shell
 INSTALL_USER=""
-for d in "$MOUNT/home"/*/; do
-    name=$(basename "$d")
-    [[ "$name" != "lost+found" ]] && INSTALL_USER="$name" && break
-done
+if [[ -f "$MOUNT/etc/passwd" ]]; then
+    INSTALL_USER=$(awk -F: '$3 >= 1000 && $3 < 65534 && $7 !~ /nologin|false/ {print $1; exit}' \
+        "$MOUNT/etc/passwd")
+fi
+# Fallback: first home directory that isn't lost+found
 if [[ -z "$INSTALL_USER" ]]; then
-    warn "No user home directory found in $MOUNT/home — using 'blazzcore' as fallback."
+    for d in "$MOUNT/home"/*/; do
+        name=$(basename "$d")
+        [[ "$name" != "lost+found" ]] && INSTALL_USER="$name" && break
+    done
+fi
+if [[ -z "$INSTALL_USER" ]]; then
+    warn "Could not detect installed user — using 'blazzcore' as fallback."
     INSTALL_USER="blazzcore"
 fi
 info "Configuring for user: $INSTALL_USER"
@@ -118,17 +126,17 @@ mkdir -p "$MOUNT/etc/systemd/system/getty@tty1.service.d"
 cat > "$MOUNT/etc/systemd/system/getty@tty1.service.d/autologin.conf" <<EOF
 [Service]
 ExecStart=
-ExecStart=-/sbin/agetty -o '-p -f -- \\\\u' --noclear --autologin ${INSTALL_USER} %I \$TERM
+ExecStart=-/sbin/agetty -o '-p -f -- \\u' --noclear --autologin ${INSTALL_USER} %I \$TERM
 EOF
 ok "Autologin configured."
 
 # ---- profile.d autostart ----
 info "Copying labwc autostart profile..."
 mkdir -p "$MOUNT/etc/profile.d"
-[[ -f /etc/profile.d/blazzcore-sway-autostart.sh ]] && \
-    cp /etc/profile.d/blazzcore-sway-autostart.sh \
-       "$MOUNT/etc/profile.d/blazzcore-sway-autostart.sh" && \
-    chmod 755 "$MOUNT/etc/profile.d/blazzcore-sway-autostart.sh"
+[[ -f /etc/profile.d/blazzcore-autostart.sh ]] && \
+    cp /etc/profile.d/blazzcore-autostart.sh \
+       "$MOUNT/etc/profile.d/blazzcore-autostart.sh" && \
+    chmod 755 "$MOUNT/etc/profile.d/blazzcore-autostart.sh"
 ok "Autostart script copied."
 
 # ---- arch-chroot commands ----
@@ -154,11 +162,12 @@ if [[ -f /etc/default/grub ]]; then
     grub-mkconfig -o /boot/grub/grub.cfg 2>/dev/null || true
 fi
 
-# Locale and timezone
-ln -sf /usr/share/zoneinfo/UTC /etc/localtime
-echo "LANG=en_US.UTF-8" > /etc/locale.conf
-echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen
+# Locale — only set defaults if installer hasn't already configured them
+[[ ! -f /etc/locale.conf ]] && echo "LANG=en_US.UTF-8" > /etc/locale.conf
+grep -q "^en_US.UTF-8" /etc/locale.gen 2>/dev/null || echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen
 locale-gen 2>/dev/null || true
+# Timezone — only set UTC if installer hasn't already set one
+[[ ! -L /etc/localtime ]] && ln -sf /usr/share/zoneinfo/UTC /etc/localtime
 
 # XDG user dirs
 xdg-user-dirs-update 2>/dev/null || true

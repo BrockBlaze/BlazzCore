@@ -8,7 +8,7 @@ This document tracks every feature in the OS — what's implemented, what's conf
 
 | Feature | Status | Notes |
 |---|---|---|
-| Wallpaper (stars.jpg) | ✅ Implemented | `swaybg` via autostart. File at `/usr/share/backgrounds/blazzcore/stars.jpg` |
+| Wallpaper | ✅ Implemented | `swaybg` via autostart. Generated at build time to `/usr/share/backgrounds/blazzcore/deep-space.png` (default) |
 | Waybar status bar (bottom) | ✅ Implemented | Start button, taskbar, clock, CPU, RAM, network, volume, battery, notifications |
 | Start menu (Super+Space / Super+D) | ⚠️ Needs verification | GtkLayerShell OVERLAY layer, 42px bottom margin. Errors logged to `/tmp/blazzcore-startmenu.log` — check this first if broken |
 | Start menu toggle (click to close) | ✅ Implemented | `blazzcore-startmenu-toggle` kills running instance or launches new one |

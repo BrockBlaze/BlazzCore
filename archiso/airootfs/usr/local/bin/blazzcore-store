@@ -56,7 +56,8 @@ case "$ACTION" in
             --width=360 2>/dev/null || exit 0
 
         foot --title="Installing $SELECTED" -e bash -c \
-            "sudo pacman -S --noconfirm '$SELECTED'; echo; echo 'Press Enter to close...'; read"
+            'sudo pacman -S --noconfirm "$1"; echo; echo "Press Enter to close..."; read' \
+            -- "$SELECTED"
         ;;
 
     "Remove Package")
@@ -79,7 +80,8 @@ case "$ACTION" in
             --width=360 2>/dev/null || exit 0
 
         foot --title="Removing $QUERY" -e bash -c \
-            "sudo pacman -Rs '$QUERY'; echo; echo 'Press Enter to close...'; read"
+            'sudo pacman -Rs "$1"; echo; echo "Press Enter to close..."; read' \
+            -- "$QUERY"
         ;;
 
     "Installed Packages")

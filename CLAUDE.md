@@ -24,40 +24,54 @@ Every push to `main` automatically:
 1. Triggers the self-hosted GitHub Actions runner on the **Friday test server** (`192.168.70.2`, user `addy`)
 2. Builds the ISO inside a Docker `archlinux:latest` container (~10–15 min, pacman pkg cache speeds up repeat builds)
 3. Copies the new ISO to `~/blazzcore-out/` on Friday
-4. Kills the old QEMU instance and starts a new one with `setsid` (detached from runner session so it persists)
-5. Restarts websockify (noVNC proxy on port 6080)
+4. Restarts the `blazzcore-qemu` systemd service (persistent, survives session exit, auto-restarts on crash)
+5. Restarts the `blazzcore-novnc` systemd service (websockify noVNC proxy on port 6080)
 
 **Connect to the running VM:** `http://192.168.70.2:6080/vnc.html`
 
+### SSH access to Friday
+
+Password is stored at `C:\Users\BrockBlazzard\AppData\Local\Temp\zabbixpw`. Use `SSH_ASKPASS` to connect non-interactively (required since shell state doesn't persist between sessions):
+
+```bash
+# One-time setup per shell session — recreate the askpass script
+cat > /tmp/askpass_zabbix.sh << 'SCRIPT'
+#!/bin/bash
+cat /c/Users/BrockBlazzard/AppData/Local/Temp/zabbixpw
+SCRIPT
+chmod +x /tmp/askpass_zabbix.sh
+
+# Then connect like this:
+export SSH_ASKPASS=/tmp/askpass_zabbix.sh SSH_ASKPASS_REQUIRE=force DISPLAY=:0
+ssh -o StrictHostKeyChecking=no addy@192.168.70.2 "command"
+```
+
 Runner service:
 ```bash
-ssh addy@192.168.70.2
-sudo systemctl status  actions.runner.BrockBlaze-BlazzCore.friday
-sudo systemctl restart actions.runner.BrockBlaze-BlazzCore.friday
+ssh -o StrictHostKeyChecking=no addy@192.168.70.2 "sudo systemctl status actions.runner.BrockBlaze-BlazzCore.friday"
+ssh -o StrictHostKeyChecking=no addy@192.168.70.2 "sudo systemctl restart actions.runner.BrockBlaze-BlazzCore.friday"
 ```
 
 ### Manual deploy (skip CI, build on Friday directly)
 
 ```bash
-ssh addy@192.168.70.2
-~/build-and-run.sh      # pull latest code → build in Docker → restart QEMU (~10-15 min)
+ssh -o StrictHostKeyChecking=no addy@192.168.70.2 "~/build-and-run.sh"
+# pull latest code → build in Docker → restart QEMU (~10-15 min)
 ```
 
 ### Restart QEMU only (no rebuild needed)
 
 ```bash
-ssh addy@192.168.70.2
-pkill -f qemu-system; sleep 1
-setsid bash ~/run-blazzcore.sh > /tmp/qemu.log 2>&1 &
-setsid websockify --web /usr/share/novnc/ 6080 localhost:5900 > /tmp/websockify.log 2>&1 &
+ssh -o StrictHostKeyChecking=no addy@192.168.70.2 "sudo systemctl restart blazzcore-qemu"
+ssh -o StrictHostKeyChecking=no addy@192.168.70.2 "sudo systemctl restart blazzcore-novnc"
 ```
 
 ### Debugging the running VM
 
 ```bash
-ssh addy@192.168.70.2 'cat /tmp/blazzcore-startmenu.log'  # start menu errors (check after clicking fire button)
-ssh addy@192.168.70.2 'cat /tmp/blazzcore-serial.log'     # kernel/boot log
-ssh addy@192.168.70.2 'cat /tmp/qemu.log'                 # QEMU startup errors
+ssh -o StrictHostKeyChecking=no addy@192.168.70.2 'cat /tmp/blazzcore-startmenu.log'        # start menu errors
+ssh -o StrictHostKeyChecking=no addy@192.168.70.2 'cat /tmp/blazzcore-serial.log'           # kernel/boot log
+ssh -o StrictHostKeyChecking=no addy@192.168.70.2 'sudo journalctl -u blazzcore-qemu -n 50' # QEMU service log
 ```
 
 ---
@@ -79,9 +93,8 @@ ssh addy@192.168.70.2 'cat /tmp/qemu.log'                 # QEMU startup errors
 - `.config/labwc/autostart` — Session startup commands (dock, waybar, notifications, etc.)
 - `.config/waybar/config` + `style.css` — Status bar layout and appearance
 - `.config/foot/foot.ini` — Terminal emulator settings
-- `.config/mako/config` — Notification daemon settings
 - `.config/wofi/` — App launcher config
-- `.config/swaync/` — Notification center config
+- `.config/swaync/` — Notification center config (replaces mako)
 - `.config/nwg-dock/` — Dock config
 - `.config/starship.toml` — Shell prompt config
 - `.bashrc` — Default shell config
@@ -104,7 +117,7 @@ All scripts are prefixed `blazzcore-`. The main ones:
 
 ### Post-Install (`usr/share/blazzcore/postinstall.sh`)
 
-Runs after `archinstall` completes when installing to disk. Copies scripts, configs, themes, and Plymouth setup into the installed system chroot.
+Runs after `blazzcore-install` completes when installing to disk. Copies scripts, configs, themes, and Plymouth setup into the installed system chroot.
 
 ### Desktop Technology Stack
 
@@ -131,4 +144,4 @@ Runs after `archinstall` completes when installing to disk. Copies scripts, conf
 - **waybar config is JSON** — `config` defines modules, `style.css` controls appearance.
 - **The `customize_airootfs.sh` script runs at build time in chroot**, not at runtime. Runtime startup is handled by `labwc/autostart`.
 - **Plymouth theme** is at `usr/share/plymouth/themes/blazzcore/`. On an installed system, changes require rebuilding initramfs (`mkinitcpio -P`). In QEMU virtio-vga, Plymouth may not get a full KMS framebuffer — the `video=1920x1080` kernel param in `grub.cfg` helps.
-- **QEMU must be launched with `setsid`** on the Friday server, otherwise the process is killed when the SSH session or GitHub Actions runner job exits.
+- **QEMU and noVNC run as systemd services** on the Friday server (`blazzcore-qemu` and `blazzcore-novnc`), so they persist across SSH sessions and runner job exits. Use `systemctl restart blazzcore-qemu` / `systemctl restart blazzcore-novnc` to restart them.

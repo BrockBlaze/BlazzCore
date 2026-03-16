@@ -21,7 +21,6 @@ file_permissions=(
   ["/etc/gshadow"]="0:0:400"
   ["/root/customize_airootfs.sh"]="0:0:755"
   ["/usr/local/bin/blazzcore-browser"]="0:0:755"
-  ["/usr/local/bin/blazzcore-setup"]="0:0:755"
   ["/usr/local/bin/blazzcore-settings"]="0:0:755"
   ["/usr/local/bin/blazzcore-wallpaper"]="0:0:755"
   ["/usr/local/bin/tictactoe"]="0:0:755"
@@ -46,5 +45,5 @@ file_permissions=(
   ["/usr/share/blazzcore/postinstall.sh"]="0:0:755"
   ["/usr/local/bin/blazzcore-drivers"]="0:0:755"
   ["/usr/local/bin/blazzcore-window-menu"]="0:0:755"
-  ["/etc/profile.d/blazzcore-sway-autostart.sh"]="0:0:755"
+  ["/etc/profile.d/blazzcore-autostart.sh"]="0:0:755"
 )

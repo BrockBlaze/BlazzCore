@@ -518,23 +518,14 @@ def page_sound():
     b.pack_start(page_title('Sound', 'Volume and audio output'), False, False, 0)
     st = status_label()
 
-    def get_vol():
-        out = _shell(['wpctl', 'get-volume', '@DEFAULT_AUDIO_SINK@'])
-        m = re.search(r'Volume:\s*([\d.]+)(\s+\[MUTED\])?', out)
-        if m:
-            return min(100, int(float(m.group(1)) * 100)), m.group(2) is not None
-        return 50, False
-
-    vol, muted = get_vol()
-
+    # ── Output volume card (built immediately with placeholder values) ──
     c1 = card()
 
-    # Volume row
     vol_scale = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, 0, 100, 1)
-    vol_scale.set_value(vol)
+    vol_scale.set_value(50)
     vol_scale.set_draw_value(False)
     vol_scale.set_size_request(220, -1)
-    vol_pct = Gtk.Label(label=f'{vol}%')
+    vol_pct = Gtk.Label(label='—')
     vol_pct.set_size_request(42, -1)
     vol_pct.set_xalign(1)
 
@@ -553,59 +544,43 @@ def page_sound():
     c1.pack_start(vol_box, False, False, 4)
     c1.pack_start(hsep(), False, False, 0)
 
-    # Mute toggle
     mute_sw = Gtk.Switch()
-    mute_sw.set_active(muted)
+    mute_sw.set_active(False)
+    _mute_handler = [None]
 
     def on_mute(sw, _):
         subprocess.Popen(['wpctl', 'set-mute', '@DEFAULT_AUDIO_SINK@', 'toggle'])
 
-    mute_sw.connect('notify::active', on_mute)
+    _mute_handler[0] = mute_sw.connect('notify::active', on_mute)
     c1.pack_start(row('Mute Output', 'Silence all audio output', mute_sw), False, False, 0)
     b.pack_start(c1, False, False, 0)
 
-    # Output device selector
+    # ── Output device card ──
     c2 = card()
-    sinks_raw = _shell('pactl list short sinks 2>/dev/null')
-    sinks = []
-    for line in sinks_raw.splitlines():
-        parts = line.split('\t')
-        if len(parts) >= 2:
-            sinks.append(parts[1])
+    combo = Gtk.ComboBoxText()
+    combo.append_text('Detecting…')
+    combo.set_active(0)
+    combo.set_sensitive(False)
+    _sinks = []
 
-    if sinks:
-        default_sink = _shell('pactl get-default-sink 2>/dev/null')
-        friendly = [s.replace('alsa_output.', '').replace('_', ' ').strip() for s in sinks]
-        combo = Gtk.ComboBoxText()
-        cur_idx = 0
-        for i, (s, f) in enumerate(zip(sinks, friendly)):
-            combo.append_text(f or s)
-            if s == default_sink:
-                cur_idx = i
-        combo.set_active(cur_idx)
+    def on_sink(c):
+        idx = c.get_active()
+        if 0 <= idx < len(_sinks):
+            subprocess.Popen(['pactl', 'set-default-sink', _sinks[idx]])
+            st.set_text('✓  Output device changed.')
+            GLib.timeout_add(2500, lambda: st.set_text('') or False)
 
-        def on_sink(c):
-            idx = c.get_active()
-            if idx >= 0 and idx < len(sinks):
-                subprocess.Popen(['pactl', 'set-default-sink', sinks[idx]])
-                st.set_text('✓  Output device changed.')
-                GLib.timeout_add(2500, lambda: st.set_text('') or False)
+    combo.connect('changed', on_sink)
+    c2.pack_start(row('Output Device', 'Select audio output', combo), False, False, 0)
+    b.pack_start(c2, False, False, 0)
 
-        combo.connect('changed', on_sink)
-        c2.pack_start(row('Output Device', 'Select audio output', combo), False, False, 0)
-        b.pack_start(c2, False, False, 0)
-
-    # Microphone volume
+    # ── Microphone card ──
     c3 = card()
-    mic_raw = _shell(['wpctl', 'get-volume', '@DEFAULT_AUDIO_SOURCE@'])
-    mic_m = re.search(r'Volume:\s*([\d.]+)', mic_raw)
-    mic_vol = min(100, int(float(mic_m.group(1)) * 100)) if mic_m else 80
-
     mic_scale = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, 0, 100, 1)
-    mic_scale.set_value(mic_vol)
+    mic_scale.set_value(80)
     mic_scale.set_draw_value(False)
     mic_scale.set_size_request(220, -1)
-    mic_pct = Gtk.Label(label=f'{mic_vol}%')
+    mic_pct = Gtk.Label(label='—')
     mic_pct.set_size_request(42, -1)
     mic_pct.set_xalign(1)
 
@@ -623,6 +598,68 @@ def page_sound():
     b.pack_start(c3, False, False, 0)
 
     b.pack_start(st, False, False, 0)
+
+    # ── Background thread: fetch audio data then update widgets ──
+    def _fetch():
+        def _t(cmd):
+            try:
+                return subprocess.check_output(
+                    cmd, text=True, stderr=subprocess.DEVNULL,
+                    shell=isinstance(cmd, str), timeout=4
+                ).strip()
+            except Exception:
+                return ''
+
+        out   = _t(['wpctl', 'get-volume', '@DEFAULT_AUDIO_SINK@'])
+        m     = re.search(r'Volume:\s*([\d.]+)(\s+\[MUTED\])?', out)
+        vol   = min(100, int(float(m.group(1)) * 100)) if m else 50
+        muted = m is not None and m.group(2) is not None
+
+        sinks_raw    = _t('pactl list short sinks 2>/dev/null')
+        sinks        = [ln.split('\t')[1] for ln in sinks_raw.splitlines()
+                        if len(ln.split('\t')) >= 2]
+        default_sink = _t('pactl get-default-sink 2>/dev/null') if sinks else ''
+
+        mic_raw = _t(['wpctl', 'get-volume', '@DEFAULT_AUDIO_SOURCE@'])
+        mic_m   = re.search(r'Volume:\s*([\d.]+)', mic_raw)
+        mic_vol = min(100, int(float(mic_m.group(1)) * 100)) if mic_m else 80
+
+        def _update():
+            vol_scale.handler_block_by_func(on_vol)
+            vol_scale.set_value(vol)
+            vol_scale.handler_unblock_by_func(on_vol)
+            vol_pct.set_text(f'{vol}%')
+
+            mute_sw.handler_block(_mute_handler[0])
+            mute_sw.set_active(muted)
+            mute_sw.handler_unblock(_mute_handler[0])
+
+            _sinks.clear()
+            _sinks.extend(sinks)
+            combo.remove(0)  # remove "Detecting…"
+            if sinks:
+                friendly = [sk.replace('alsa_output.', '').replace('_', ' ').strip()
+                            for sk in sinks]
+                cur = 0
+                for i, (sk, f) in enumerate(zip(sinks, friendly)):
+                    combo.append_text(f or sk)
+                    if sk == default_sink:
+                        cur = i
+                combo.set_active(cur)
+                combo.set_sensitive(True)
+            else:
+                combo.append_text('No devices found')
+                combo.set_active(0)
+
+            mic_scale.handler_block_by_func(on_mic)
+            mic_scale.set_value(mic_vol)
+            mic_scale.handler_unblock_by_func(on_mic)
+            mic_pct.set_text(f'{mic_vol}%')
+            return False
+
+        GLib.idle_add(_update)
+
+    threading.Thread(target=_fetch, daemon=True).start()
     return s
 
 def page_network():

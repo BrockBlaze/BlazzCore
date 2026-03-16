@@ -320,6 +320,31 @@ step_keyboard() {
 }
 
 # ---------------------------------------------------------------------------
+# Step 6c: Locale
+# ---------------------------------------------------------------------------
+step_locale() {
+    LOCALE=$(zenity --list \
+        --title="System Language" \
+        --text="Choose your locale:" \
+        --column="Locale" \
+        --print-column=1 \
+        --width=420 --height=500 \
+        en_US.UTF-8 en_GB.UTF-8 en_AU.UTF-8 en_CA.UTF-8 \
+        de_DE.UTF-8 de_AT.UTF-8 de_CH.UTF-8 \
+        fr_FR.UTF-8 fr_CA.UTF-8 fr_BE.UTF-8 \
+        es_ES.UTF-8 es_MX.UTF-8 es_AR.UTF-8 \
+        it_IT.UTF-8 pt_BR.UTF-8 pt_PT.UTF-8 \
+        nl_NL.UTF-8 sv_SE.UTF-8 da_DK.UTF-8 nb_NO.UTF-8 fi_FI.UTF-8 \
+        pl_PL.UTF-8 cs_CZ.UTF-8 sk_SK.UTF-8 hu_HU.UTF-8 \
+        ro_RO.UTF-8 tr_TR.UTF-8 ru_RU.UTF-8 uk_UA.UTF-8 \
+        ja_JP.UTF-8 zh_CN.UTF-8 zh_TW.UTF-8 ko_KR.UTF-8 \
+        ar_SA.UTF-8 \
+        2>/dev/null)
+
+    [[ -z "$LOCALE" ]] && LOCALE="en_US.UTF-8"
+}
+
+# ---------------------------------------------------------------------------
 # Step: Disk encryption (LUKS)
 # ---------------------------------------------------------------------------
 step_encryption() {
@@ -601,9 +626,9 @@ do_install() {
 
     arch-chroot /mnt ln -sf "/usr/share/zoneinfo/${TIMEZONE}" /etc/localtime
     arch-chroot /mnt hwclock --systohc
-    printf "en_US.UTF-8 UTF-8\n" > /mnt/etc/locale.gen
+    printf "%s UTF-8\n" "$LOCALE" > /mnt/etc/locale.gen
     arch-chroot /mnt locale-gen
-    printf "LANG=en_US.UTF-8\n" > /mnt/etc/locale.conf
+    printf "LANG=%s\n" "$LOCALE" > /mnt/etc/locale.conf
 
     # ------------------------------------------------------------------
     # 76% — Hostname and hosts
@@ -848,6 +873,7 @@ main() {
 
     # Defaults for new options
     KEYMAP="us"
+    LOCALE="en_US.UTF-8"
     ENABLE_LUKS=false
     LUKS_PASSPHRASE=""
     LUKS_DEVICE=""
@@ -880,7 +906,10 @@ main() {
         # Step 8: Keyboard layout
         step_keyboard
 
-        # Step 9: Timezone
+        # Step 9: Locale
+        step_locale
+
+        # Step 10: Timezone
         step_timezone
 
         # Step 10: Summary

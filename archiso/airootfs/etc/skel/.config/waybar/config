@@ -8,7 +8,7 @@
     "margin-right": 0,
     "modules-left": ["custom/menu", "wlr/taskbar"],
     "modules-center": ["mpris"],
-    "modules-right": ["tray", "custom/notifications", "custom/updates", "cpu", "memory", "keyboard-state", "network", "pulseaudio", "backlight", "battery", "clock"],
+    "modules-right": ["tray", "custom/updates", "network", "battery", "pulseaudio", "custom/notifications", "clock"],
 
     "custom/menu": {
         "format": "󰈸",
@@ -23,7 +23,7 @@
         "icon-theme": "Papirus-Dark",
         "tooltip-format": "{title}",
         "on-click": "activate",
-        "on-click-right": "blazzcore-window-menu {app_id}",
+        "on-click-right": "minimize",
         "on-click-middle": "minimize-raise",
         "ignore-list": ["waybar"]
     },
@@ -38,13 +38,8 @@
     "mpris": {
         "format": "{player_icon} {dynamic}",
         "format-paused": "{player_icon} {dynamic}",
-        "player-icons": {
-            "default": "▶",
-            "mpv": "🎥"
-        },
-        "status-icons": {
-            "paused": "⏸"
-        },
+        "player-icons": { "default": "▶", "mpv": "🎥" },
+        "status-icons": { "paused": "⏸" },
         "dynamic-len": 30,
         "dynamic-importance-order": ["title", "artist", "album"],
         "on-click": "playerctl play-pause",
@@ -56,55 +51,11 @@
     "network": {
         "format-wifi": "󰤨 {essid}",
         "format-ethernet": "󰈀 {ipaddr}",
-        "format-disconnected": "󰤭 No Network",
+        "format-disconnected": "󰤭",
         "tooltip-format-wifi": "{essid} — {signalStrength}%\n{ipaddr}",
         "tooltip-format-ethernet": "{ifname}: {ipaddr}",
+        "tooltip-format-disconnected": "No network",
         "on-click": "foot -e nmtui"
-    },
-
-    "cpu": {
-        "format": " {usage}%",
-        "interval": 5,
-        "tooltip-format": "CPU: {usage}%  Load: {load}",
-        "on-click": "foot -e btop"
-    },
-
-    "memory": {
-        "format": " {percentage}%",
-        "interval": 10,
-        "tooltip-format": "RAM: {used:0.1f}G / {total:0.1f}G",
-        "on-click": "foot -e btop"
-    },
-
-    "keyboard-state": {
-        "numlock": false,
-        "capslock": true,
-        "format": "{name} {icon}",
-        "format-icons": {
-            "locked": "󰌆",
-            "unlocked": ""
-        }
-    },
-
-    "pulseaudio": {
-        "format": "{icon} {volume}%",
-        "format-muted": "󰝟 Muted",
-        "format-icons": {
-            "default": ["󰕿", "󰕾", "󰕾"],
-            "headphone": "󰋋",
-            "headset": "󰋎"
-        },
-        "on-click": "blazzcore-volume mute",
-        "on-scroll-up": "blazzcore-volume up",
-        "on-scroll-down": "blazzcore-volume down",
-        "tooltip-format": "{desc}: {volume}%"
-    },
-
-    "backlight": {
-        "format": "{icon} {percent}%",
-        "format-icons": ["󰃞", "󰃟", "󰃠"],
-        "on-scroll-up": "blazzcore-brightness up",
-        "on-scroll-down": "blazzcore-brightness down"
     },
 
     "battery": {
@@ -116,9 +67,18 @@
         "tooltip-format": "{timeTo} — {capacity}%"
     },
 
-    "tray": {
-        "icon-size": 16,
-        "spacing": 6
+    "pulseaudio": {
+        "format": "{icon} {volume}%",
+        "format-muted": "󰝟 Muted",
+        "format-icons": {
+            "default": ["󰕿", "󰕾", "󰕾"],
+            "headphone": "󰋋",
+            "headset": "󰋎"
+        },
+        "on-click": "/usr/local/bin/blazzcore-volume mute",
+        "on-scroll-up": "/usr/local/bin/blazzcore-volume up",
+        "on-scroll-down": "/usr/local/bin/blazzcore-volume down",
+        "tooltip-format": "{desc}: {volume}%"
     },
 
     "custom/updates": {
@@ -148,16 +108,8 @@
         "escape": true
     },
 
-    "custom/nightlight": {
-        "exec": "pgrep -x wlsunset >/dev/null && echo '󰛨 On' || echo ' Off'",
-        "interval": 30,
-        "on-click": "blazzcore-nightlight",
-        "tooltip-format": "Toggle Night Light (Super+N)"
-    },
-
-    "custom/power": {
-        "format": "⏻",
-        "on-click": "blazzcore-power",
-        "tooltip": false
+    "tray": {
+        "icon-size": 16,
+        "spacing": 6
     }
 }

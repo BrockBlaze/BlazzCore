@@ -30,6 +30,12 @@ else
     swaybg -c "#0d0d1a" &
 fi
 
+# Set resolution to 1920x1080 on all connected outputs (silent fail if mode unavailable)
+for _OUT in $(wlr-randr 2>/dev/null | awk '/^[^ ]/{print $1}'); do
+    wlr-randr --output "$_OUT" --mode 1920x1080 2>/dev/null || true
+done
+unset _OUT
+
 # Status bar
 waybar &
 

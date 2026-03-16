@@ -53,16 +53,16 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: |
           # Restart via systemd services (persistent, survive session exit, auto-restart on crash)
-          echo "R1thm?24601" | sudo -S systemctl restart blazzcore-qemu
+          echo "${{ secrets.FRIDAY_SUDO_PASS }}" | sudo -S systemctl restart blazzcore-qemu
           sleep 7
-          echo "R1thm?24601" | sudo -S systemctl restart blazzcore-novnc
+          echo "${{ secrets.FRIDAY_SUDO_PASS }}" | sudo -S systemctl restart blazzcore-novnc
           sleep 3
           if ss -tlnp | grep -q 5900; then
             echo "QEMU started with VNC on :5900"
             ss -tlnp | grep 5900
           else
             echo "WARNING: VNC port not listening"
-            echo "R1thm?24601" | sudo -S journalctl -u blazzcore-qemu -n 20 --no-pager
+            echo "${{ secrets.FRIDAY_SUDO_PASS }}" | sudo -S journalctl -u blazzcore-qemu -n 20 --no-pager
           fi
 
       - name: Upload ISO artifact

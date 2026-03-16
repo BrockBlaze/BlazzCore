@@ -48,7 +48,6 @@ wlopm
 waybar
 wl-clipboard
 cliphist
-xdg-desktop-portal
 xdg-desktop-portal-wlr
 xdg-utils
 xorg-xwayland

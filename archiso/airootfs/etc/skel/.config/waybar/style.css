@@ -34,9 +34,7 @@ window#waybar {
 #custom-menu:active { background-color: rgba(100, 100, 210, 0.42); }
 
 /* ── Taskbar ─────────────────────────────────────────────────────────────── */
-#taskbar {
-    margin: 4px 4px;
-}
+#taskbar { margin: 4px 4px; }
 #taskbar button {
     padding: 2px 10px;
     color: #6868a0;
@@ -62,20 +60,13 @@ window#waybar {
     font-size: 12px;
     font-style: italic;
 }
-#mpris:hover {
-    color: #c0c0f0;
-    background: rgba(255, 255, 255, 0.04);
-}
+#mpris:hover { color: #c0c0f0; background: rgba(255, 255, 255, 0.04); }
 
 /* ── Right-side modules ──────────────────────────────────────────────────── */
 #tray,
-#cpu,
-#memory,
-#keyboard-state,
 #network,
-#pulseaudio,
-#backlight,
 #battery,
+#pulseaudio,
 #custom-updates,
 #custom-notifications,
 #clock {
@@ -86,12 +77,9 @@ window#waybar {
 }
 
 /* Hover highlight */
-#cpu:hover,
-#memory:hover,
 #network:hover,
-#pulseaudio:hover,
-#backlight:hover,
 #battery:hover,
+#pulseaudio:hover,
 #custom-updates:hover,
 #custom-notifications:hover {
     color: #e0e0ff;
@@ -99,20 +87,34 @@ window#waybar {
 }
 
 /* Subtle left separators between module groups */
-#cpu        { border-left: 1px solid rgba(80, 80, 140, 0.25); }
 #network    { border-left: 1px solid rgba(80, 80, 140, 0.25); }
 #pulseaudio { border-left: 1px solid rgba(80, 80, 140, 0.25); }
 #clock      { border-left: 1px solid rgba(80, 80, 140, 0.25); }
 
 /* Per-module accent colors */
-#cpu        { color: #6a9fd8; }
-#memory     { color: #6ac8a0; }
 #network    { color: #8ab0d8; }
-#pulseaudio { color: #9898c8; }
 #battery    { color: #9898c8; }
-#backlight  { color: #c8b86a; }
-#cpu:hover    { color: #90c0f8; }
-#memory:hover { color: #90e8c0; }
+#pulseaudio { color: #9898c8; }
+#network:hover { color: #b0d0f8; }
+#pulseaudio.muted { color: #404058; }
+
+/* ── Update indicator ────────────────────────────────────────────────────── */
+#custom-updates { color: #c8a820; font-weight: bold; }
+
+/* ── Notification bell ───────────────────────────────────────────────────── */
+#custom-notifications { color: #7070a0; }
+#custom-notifications:hover { color: #d0d0ff; }
+#custom-notifications.dnd-none,
+#custom-notifications.dnd-notification { color: #404058; }
+
+/* ── Battery states ──────────────────────────────────────────────────────── */
+#battery.warning  { color: #d4ac0d; }
+#battery.critical { color: #e05050; animation: blink 1s linear infinite alternate; }
+#battery.charging,
+#battery.plugged  { color: #60c860; }
+
+/* ── Network states ──────────────────────────────────────────────────────── */
+#network.disconnected { color: #e05050; }
 
 /* ── Clock (rightmost) ───────────────────────────────────────────────────── */
 #clock {
@@ -121,29 +123,6 @@ window#waybar {
     font-weight: 600;
     letter-spacing: 0.4px;
 }
-
-/* ── Update indicator ────────────────────────────────────────────────────── */
-#custom-updates {
-    color: #c8a820;
-    font-weight: bold;
-}
-
-/* ── Notification bell ───────────────────────────────────────────────────── */
-#custom-notifications { color: #7070a0; }
-#custom-notifications:hover { color: #d0d0ff; }
-#custom-notifications.notification     { color: #d4ac0d; }
-#custom-notifications.dnd-none,
-#custom-notifications.dnd-notification { color: #404058; }
-
-/* ── Battery states ──────────────────────────────────────────────────────── */
-#battery.warning          { color: #d4ac0d; }
-#battery.critical         { color: #e05050; animation: blink 1s linear infinite alternate; }
-#battery.charging,
-#battery.plugged          { color: #60c860; }
-
-/* ── Other states ────────────────────────────────────────────────────────── */
-#network.disconnected { color: #e05050; }
-#pulseaudio.muted     { color: #404058; }
 
 /* ── Tray ────────────────────────────────────────────────────────────────── */
 #tray { padding: 0 10px; margin: 4px 0; }
@@ -160,10 +139,9 @@ tooltip {
 }
 tooltip label { color: #d0d0f0; }
 
-/* ── Animation ───────────────────────────────────────────────────────────── */
+/* ── Animations ──────────────────────────────────────────────────────────── */
 @keyframes blink { to { color: #ffffff; } }
 
-/* Pulse the notification bell when there are unread notifications */
 @keyframes bell-pulse {
     0%   { color: #d4ac0d; }
     50%  { color: #f0d060; }
