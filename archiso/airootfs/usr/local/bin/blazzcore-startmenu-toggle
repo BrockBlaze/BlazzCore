@@ -1,11 +1,29 @@
 #!/usr/bin/env bash
 # BlazzCore — start menu toggle
-# Closes the menu if running, opens it if not.
-# Logs any Python errors to /tmp/blazzcore-startmenu.log
+# Uses a PID file to reliably track whether the menu is running.
+# Every action is logged to /tmp/blazzcore-startmenu.log for debugging.
 
-if pkill -f 'python3.*blazzcore-startmenu$'; then
-    exit 0
+PIDFILE=/tmp/blazzcore-startmenu.pid
+LOG=/tmp/blazzcore-startmenu.log
+
+echo "[$(date +%H:%M:%S)] toggle called (args: $*)" >> "$LOG"
+
+# Check if already running via PID file
+if [[ -f "$PIDFILE" ]]; then
+    PID=$(cat "$PIDFILE")
+    if [[ -n "$PID" ]] && kill -0 "$PID" 2>/dev/null; then
+        echo "[$(date +%H:%M:%S)] menu is running (PID $PID) — killing" >> "$LOG"
+        kill "$PID" 2>/dev/null
+        rm -f "$PIDFILE"
+        exit 0
+    else
+        echo "[$(date +%H:%M:%S)] stale pidfile (PID $PID) — removing" >> "$LOG"
+        rm -f "$PIDFILE"
+    fi
 fi
 
-exec python3 /usr/local/bin/blazzcore-startmenu \
-    >>/tmp/blazzcore-startmenu.log 2>&1
+echo "[$(date +%H:%M:%S)] launching blazzcore-startmenu" >> "$LOG"
+python3 /usr/local/bin/blazzcore-startmenu >> "$LOG" 2>&1 &
+MENU_PID=$!
+echo "$MENU_PID" > "$PIDFILE"
+echo "[$(date +%H:%M:%S)] launched with PID $MENU_PID" >> "$LOG"

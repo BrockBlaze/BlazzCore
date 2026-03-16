@@ -5,39 +5,65 @@
 screen_w = Window.GetWidth();
 screen_h = Window.GetHeight();
 
-// --- Background: subtle dark gradient ---
-Window.SetBackgroundTopColor(0.05, 0.05, 0.07);
-Window.SetBackgroundBottomColor(0.02, 0.02, 0.03);
+// --- Background ---
+Window.SetBackgroundTopColor(0.03, 0.03, 0.07);
+Window.SetBackgroundBottomColor(0.01, 0.01, 0.04);
 
-// --- Logo: scale to ~48% screen width, centered ---
-logo_img = Image("logo.png");
+// --- Logo ---
+logo_img  = Image("logo.png");
+logo_ok   = (logo_img.GetWidth() > 0);
 
-scale = Math.Min(
-    screen_w * 0.48 / logo_img.GetWidth(),
-    screen_h * 0.30 / logo_img.GetHeight()
-);
-scaled_logo = logo_img.Scale(
-    Math.Int(logo_img.GetWidth()  * scale),
-    Math.Int(logo_img.GetHeight() * scale)
-);
+if (logo_ok) {
+    scale = Math.Min(
+        screen_w * 0.44 / logo_img.GetWidth(),
+        screen_h * 0.28 / logo_img.GetHeight()
+    );
+    scaled = logo_img.Scale(
+        Math.Int(logo_img.GetWidth()  * scale),
+        Math.Int(logo_img.GetHeight() * scale)
+    );
+    logo   = Sprite(scaled);
+    logo_y = Math.Int((screen_h - scaled.GetHeight()) / 2 - screen_h * 0.06);
+    logo.SetX(Math.Int((screen_w - scaled.GetWidth()) / 2));
+    logo.SetY(logo_y);
+    logo.SetZ(1);
+    logo.SetOpacity(0);
+    bar_y  = logo_y + scaled.GetHeight() + 40;
+} else {
+    bar_y  = Math.Int(screen_h * 0.58);
+}
 
-logo = Sprite(scaled_logo);
-logo.SetX(Math.Int((screen_w - scaled_logo.GetWidth())  / 2));
-logo.SetY(Math.Int((screen_h - scaled_logo.GetHeight()) / 2 - screen_h * 0.08));
-logo.SetZ(1);
-logo.SetOpacity(0);
+// --- Progress bar track ---
+bar_w  = Math.Int(screen_w * 0.32);
+bar_h  = 3;
+bar_x  = Math.Int((screen_w - bar_w) / 2);
 
-// --- Animated loading dots below logo ---
+track_img = Image.NewWithColor(bar_w, bar_h, 0.15, 0.15, 0.25, 1.0);
+track     = Sprite(track_img);
+track.SetX(bar_x);
+track.SetY(bar_y);
+track.SetZ(2);
+track.SetOpacity(0);
+
+// --- Progress bar fill ---
+fill_img  = Image.NewWithColor(1, bar_h, 0.40, 0.40, 0.80, 1.0);
+fill      = Sprite(fill_img);
+fill.SetX(bar_x);
+fill.SetY(bar_y);
+fill.SetZ(3);
+fill.SetOpacity(0);
+
+// --- Animated dots below bar ---
 dot_count   = 5;
-dot_size    = 10;
-dot_spacing = 22;
+dot_size    = 8;
+dot_spacing = 20;
 dot_total_w = (dot_count - 1) * dot_spacing + dot_size;
 dot_start_x = Math.Int((screen_w - dot_total_w) / 2);
-dot_y       = logo.GetY() + scaled_logo.GetHeight() + 52;
+dot_y       = bar_y + bar_h + 22;
 
 for (i = 0; i < dot_count; i++) {
-    dot_img    = Image.NewWithColor(dot_size, dot_size, 1.0, 1.0, 1.0, 1.0);
-    dots[i]    = Sprite(dot_img);
+    dot_img   = Image.NewWithColor(dot_size, dot_size, 0.50, 0.50, 0.85, 1.0);
+    dots[i]   = Sprite(dot_img);
     dots[i].SetX(dot_start_x + i * dot_spacing);
     dots[i].SetY(dot_y);
     dots[i].SetZ(2);
@@ -47,30 +73,53 @@ for (i = 0; i < dot_count; i++) {
 // --- State ---
 tick       = 0;
 logo_alpha = 0.0;
+progress   = 0.0;
 
 fun refresh_callback() {
     tick++;
 
-    // Phase 1: fade logo in (ticks 0–40)
+    // Fade everything in during first 40 ticks
     if (logo_alpha < 1.0) {
         logo_alpha = Math.Min(logo_alpha + 0.025, 1.0);
-        logo.SetOpacity(logo_alpha);
+        if (logo_ok) { logo.SetOpacity(logo_alpha); }
+        track.SetOpacity(logo_alpha * 0.6);
+        fill.SetOpacity(logo_alpha);
     }
 
-    // Phase 2: gentle pulse once fully visible
-    if (logo_alpha >= 1.0) {
-        logo.SetOpacity(0.85 + 0.15 * Math.Sin(tick * 0.055));
+    // Gentle logo pulse
+    if (logo_ok && logo_alpha >= 1.0) {
+        logo.SetOpacity(0.88 + 0.12 * Math.Sin(tick * 0.05));
     }
 
-    // Travelling dot animation — fades in alongside logo
-    active = Math.Int(tick / 7) % dot_count;
+    // Travelling dot animation
+    active = Math.Int(tick / 6) % dot_count;
     for (i = 0; i < dot_count; i++) {
         dist  = Math.Abs(i - active);
         if (dist > dot_count / 2) { dist = dot_count - dist; }
         glow  = 1.0 - (dist / ((dot_count + 1) / 2.0));
-        alpha = (0.1 + glow * 0.85) * logo_alpha;
+        alpha = (0.08 + glow * 0.85) * logo_alpha;
         dots[i].SetOpacity(Math.Max(alpha, 0.0));
+    }
+
+    // Idle progress animation when no explicit progress is given
+    if (progress <= 0.0) {
+        idle = (Math.Sin(tick * 0.03) + 1.0) / 2.0 * 0.35 + 0.05;
+        fill_w = Math.Int(bar_w * idle);
+        if (fill_w < 1) { fill_w = 1; }
+        fill_img2 = Image.NewWithColor(fill_w, bar_h, 0.40, 0.40, 0.80, 1.0);
+        fill.SetImage(fill_img2);
     }
 }
 
 Plymouth.SetRefreshFunction(refresh_callback);
+
+fun progress_callback(percent) {
+    progress = percent / 100.0;
+    fill_w = Math.Int(bar_w * progress);
+    if (fill_w < 1) { fill_w = 1; }
+    fill_img2 = Image.NewWithColor(fill_w, bar_h, 0.45, 0.45, 0.90, 1.0);
+    fill.SetImage(fill_img2);
+    fill.SetOpacity(1.0);
+}
+
+Plymouth.SetBootProgressFunction(progress_callback);

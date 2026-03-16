@@ -227,7 +227,14 @@
     <default/>
 
     <context name="Desktop">
-      <!-- Right-click only shows context menu; left-click does nothing -->
+      <!-- Explicitly consume left-click so <default/> binding cannot show a menu -->
+      <mousebind button="Left" action="Click">
+        <action name="Execute"><command>true</command></action>
+      </mousebind>
+      <mousebind button="Left" action="DoubleClick">
+        <action name="Execute"><command>true</command></action>
+      </mousebind>
+      <!-- Right-click shows context menu -->
       <mousebind button="Right" action="Click">
         <action name="ShowMenu"><menu>root-menu</menu></action>
       </mousebind>

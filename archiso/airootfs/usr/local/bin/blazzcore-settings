@@ -1071,13 +1071,112 @@ def page_datetime():
 
 def page_updates():
     s, b = page_box()
-    b.pack_start(page_title('System Updates', 'Install available package updates'), False, False, 0)
-    st = status_label()
-    c = card()
-    c.pack_start(row('Update All Packages', 'Install latest updates from Arch Linux repositories',
-        btn('Update Now', lambda: run_term('System Update', 'sudo pacman -Syu', st))), False, False, 0)
-    b.pack_start(c, False, False, 0)
-    b.pack_start(st, False, False, 0)
+    b.pack_start(page_title('System Updates', 'Keep BlazzCore up to date'), False, False, 0)
+
+    # ── Available updates card ──────────────────────────────────────────────
+    avail_card = card()
+    hdr = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+    count_lbl = Gtk.Label(label='Checking for updates…', xalign=0)
+    count_lbl.set_hexpand(True)
+    hdr.pack_start(count_lbl, True, True, 0)
+
+    pkg_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+    pkg_box.set_margin_top(8)
+
+    avail_card.pack_start(hdr, False, False, 0)
+    avail_card.pack_start(pkg_box, False, False, 0)
+    b.pack_start(avail_card, False, False, 0)
+
+    # ── Install card ────────────────────────────────────────────────────────
+    inst_card = card()
+    inst_row_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+    inst_lbl = Gtk.Label(xalign=0)
+    inst_lbl.set_markup('<b>Install All Updates</b>')
+    inst_lbl.set_hexpand(True)
+    inst_btn = btn('Update Now', lambda: do_update())
+    refresh_btn = btn('Check', lambda: check_updates())
+    inst_row_box.pack_start(inst_lbl, True, True, 0)
+    inst_row_box.pack_start(refresh_btn, False, False, 0)
+    inst_row_box.pack_start(inst_btn, False, False, 0)
+    inst_card.pack_start(inst_row_box, False, False, 0)
+    b.pack_start(inst_card, False, False, 0)
+
+    # ── Output log ──────────────────────────────────────────────────────────
+    log_sw = Gtk.ScrolledWindow()
+    log_sw.set_min_content_height(200)
+    log_sw.set_no_show_all(True)
+    log_tv = Gtk.TextView()
+    log_tv.set_editable(False)
+    log_tv.set_monospace(True)
+    log_tv.set_wrap_mode(Gtk.WrapMode.WORD_CHAR)
+    log_tv.get_style_context().add_class('card')
+    log_sw.add(log_tv)
+    b.pack_start(log_sw, True, True, 0)
+
+    def check_updates():
+        count_lbl.set_text('Checking for updates…')
+        for child in pkg_box.get_children():
+            pkg_box.remove(child)
+        def _run():
+            out = _shell('checkupdates 2>/dev/null')
+            pkgs = [l.strip() for l in out.splitlines() if l.strip()] if out else []
+            def _done():
+                n = len(pkgs)
+                if pkgs:
+                    count_lbl.set_markup(f'<b>{n}</b> update{"s" if n != 1 else ""} available')
+                    for p in pkgs[:25]:
+                        lbl = Gtk.Label(label=p, xalign=0)
+                        lbl.set_margin_start(6)
+                        lbl.get_style_context().add_class('dim-label')
+                        pkg_box.pack_start(lbl, False, False, 0)
+                    if n > 25:
+                        more = Gtk.Label(label=f'  …and {n - 25} more', xalign=0)
+                        more.get_style_context().add_class('dim-label')
+                        pkg_box.pack_start(more, False, False, 0)
+                    inst_btn.set_sensitive(True)
+                else:
+                    count_lbl.set_text('Your system is up to date.')
+                    inst_btn.set_sensitive(False)
+                pkg_box.show_all()
+            GLib.idle_add(_done)
+        threading.Thread(target=_run, daemon=True).start()
+
+    def do_update():
+        buf = log_tv.get_buffer()
+        buf.set_text('')
+        log_sw.show()
+        inst_btn.set_sensitive(False)
+        refresh_btn.set_sensitive(False)
+        count_lbl.set_text('Installing updates…')
+        def _run():
+            try:
+                proc = subprocess.Popen(
+                    ['pkexec', 'pacman', '-Syu', '--noconfirm'],
+                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
+                )
+                for line in proc.stdout:
+                    l = line
+                    GLib.idle_add(lambda l=l: (
+                        buf.insert(buf.get_end_iter(), l),
+                        log_tv.scroll_to_iter(buf.get_end_iter(), 0, False, 0, 1.0)
+                    ) and False)
+                rc = proc.wait()
+            except Exception as e:
+                rc = -1
+                GLib.idle_add(lambda: buf.insert(buf.get_end_iter(), f'\nError: {e}\n'))
+            def _done():
+                refresh_btn.set_sensitive(True)
+                if rc == 0:
+                    count_lbl.set_text('Update complete. Reboot recommended.')
+                    check_updates()
+                else:
+                    count_lbl.set_text(f'Update failed (exit code {rc}).')
+                    inst_btn.set_sensitive(True)
+            GLib.idle_add(_done)
+        threading.Thread(target=_run, daemon=True).start()
+
+    inst_btn.set_sensitive(False)
+    check_updates()
     return s
 
 def page_drivers():
