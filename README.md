@@ -8,42 +8,45 @@ A minimal, fast, Wayland-first Linux operating system built on Arch Linux.
 
 ## Overview
 
-BlazzCore is a custom Linux distro focused on simplicity, performance, and GPU-accelerated browsing. It ships a complete desktop experience out of the box — floating windows, a dock, clipboard history, and Chromium with hardware video decoding — while staying lean enough to run comfortably on modest hardware.
+BlazzCore is a custom Linux distro focused on simplicity, performance, and a consistent native look and feel. It ships a complete desktop experience out of the box — floating windows, a start menu, taskbar, system tray, clipboard history, and Chromium with hardware video decoding — while staying lean enough to run comfortably on modest hardware.
 
 | Component | Package |
 |-----------|---------|
 | Base | Arch Linux (rolling release) |
-| Compositor | Sway (Wayland) |
-| Bar | Waybar |
+| Window Manager | labwc (Wayland, floating) |
+| Status Bar | Waybar |
 | Terminal | foot |
 | Browser | Chromium (VA-API GPU acceleration) |
 | Audio | PipeWire + WirePlumber |
-| File Manager | Thunar + PCManFM |
-| Dock | nwg-dock |
+| File Manager | Thunar |
+| Notifications | swaync |
+| App Launcher | wofi |
 | Packages | pacman |
 
 ---
 
 ## Features
 
-- **Floating desktop** — all windows open floating with title bars by default; tiling available via keybinds
-- **Desktop icons** — PCManFM runs in desktop mode for file shortcuts
-- **Right-click menu** — right-click the desktop to open a quick-launch context menu
-- **Dock** — autohiding bottom dock via nwg-dock
-- **Clipboard history** — `Super+V` opens a searchable clipboard history (cliphist)
-- **Settings GUI** — `Super+,` launches a settings menu for display, themes, wallpaper, sound, and network
-- **Wallpaper picker** — file chooser applies wallpaper live and persists it across reboots
-- **Multi-monitor support** — wdisplays for graphical display/resolution management
-- **Boot splash** — custom Plymouth theme with BlazzCore logo
-- **GPU acceleration** — Mesa VA-API drivers for Intel and AMD; Chromium uses hardware video decode
-- **Broad hardware support** — linux-firmware, sof-firmware, alsa-firmware, wireless-regdb, b43-fwcutter
-- **Tic Tac Toe** — terminal game with singleplayer bot (Easy / Medium / Hard minimax) and multiplayer
+- **Start menu** — fire button in taskbar or `Super+Space` / `Super+D` opens a searchable app launcher with Quick Access panel
+- **Native settings** — `Super+,` opens a fully BlazzCore-styled settings panel (Sound, Network, Bluetooth, Appearance, Updates, and more — no third-party popups)
+- **Inline system updates** — Settings → Updates lists available packages and installs them with a live progress view
+- **Taskbar** — open windows with minimize/maximize/close via right-click, minimize via middle-click
+- **Right-click desktop menu** — quick access to apps, screenshots, and power options
+- **Clipboard history** — `Super+V` opens searchable clipboard history (cliphist)
+- **Boot splash** — custom Plymouth theme with BlazzCore logo and animated progress bar
+- **GPU acceleration** — Mesa VA-API drivers; Chromium uses hardware video decode
+- **Square corners** — consistent sharp-corner UI throughout (windows, menus, settings, notifications)
+- **Dark navy theme** — `#0c0c1a` background throughout; Papirus-Dark icons
+- **Night light** — `Super+N` toggles warm color temperature via wlsunset
+- **Screen recording** — `Super+Shift+R` toggles wf-recorder MP4 recording
+- **Broad hardware support** — linux-firmware, sof-firmware, alsa-firmware, wireless-regdb
+- **5 workspaces** — `Super+1-5` to switch, scroll on desktop to cycle
 
 ---
 
 ## Building the ISO
 
-BlazzCore is built automatically via GitHub Actions on every push to `main`. No local Linux install required.
+CI builds automatically on every push to `main` using a self-hosted runner on the Friday test server. The ISO artifact is also uploaded to GitHub Actions.
 
 ### Download a pre-built ISO
 
@@ -82,39 +85,24 @@ Use [Rufus](https://rufus.ie) (Windows) or [Ventoy](https://ventoy.net):
 | Shortcut | Action |
 |----------|--------|
 | `Super + Enter` | Open terminal (foot) |
-| `Super + D` | App launcher (wofi) |
+| `Super + Space` / `Super + D` | Start menu |
 | `Super + B` | Open browser (Chromium) |
 | `Super + E` | File manager (Thunar) |
-| `Super + V` | Clipboard history |
 | `Super + ,` | Settings |
-| `Super + Print` | Area screenshot |
+| `Super + V` | Clipboard history |
+| `Super + L` | Lock screen |
+| `Super + Shift + P` | Power menu |
+| `Super + N` | Toggle night light |
 | `Print` | Full screenshot |
+| `Shift + Print` | Area screenshot |
+| `Super + Shift + R` | Toggle screen recording |
 | `Super + Shift + Q` | Close window |
-| `Super + Shift + Space` | Toggle floating/tiling |
-| `Super + F` | Fullscreen |
-| `Super + 1-5` | Switch workspace |
-| `Super + Shift + E` | Exit Sway |
-
----
-
-## Post-Boot
-
-```bash
-# Connect to Wi-Fi
-nmtui
-
-# Update all packages
-sudo pacman -Syu
-
-# Launch browser
-blazzcore-browser
-
-# Open settings
-blazzcore-settings
-
-# Play Tic Tac Toe
-tictactoe
-```
+| `Super + F` | Maximize/restore |
+| `Super + Left / Right` | Snap to half screen |
+| `Super + 1–5` | Switch workspace |
+| `Super + Shift + 1–5` | Move window to workspace |
+| `Alt + Tab` | Window switcher |
+| `Ctrl + Shift + Esc` | Task manager |
 
 ---
 
@@ -122,32 +110,34 @@ tictactoe
 
 ```
 archiso/
-├── profiledef.sh              # ISO profile (name, label, boot modes)
+├── profiledef.sh              # ISO profile, file permissions for all executables
 ├── packages.x86_64            # Full package list
-├── pacman.conf                # Pacman configuration
-├── grub/grub.cfg              # GRUB boot menu
-├── syslinux/syslinux.cfg      # BIOS boot menu
+├── grub/grub.cfg              # GRUB boot menu + kernel parameters
 └── airootfs/
     ├── etc/
-    │   ├── motd               # Terminal welcome message
-    │   ├── mkinitcpio.conf    # Initramfs hooks (includes archiso + plymouth)
-    │   ├── skel/              # Default user config files
+    │   ├── mkinitcpio.conf    # Initramfs hooks (archiso + plymouth)
+    │   ├── skel/              # Default user config (copied to home on first boot)
     │   │   └── .config/
-    │   │       ├── sway/      # Sway compositor config + desktop menu
-    │   │       ├── waybar/    # Status bar config
-    │   │       └── foot/      # Terminal config
+    │   │       ├── labwc/     # Window manager (rc.xml, autostart, menu.xml)
+    │   │       ├── waybar/    # Status bar (config, style.css)
+    │   │       ├── foot/      # Terminal
+    │   │       ├── wofi/      # App launcher
+    │   │       └── swaync/    # Notification center
     │   └── systemd/           # Service configs (autologin, etc.)
     ├── usr/
-    │   ├── local/bin/         # blazzcore-browser, blazzcore-settings,
-    │   │                      # blazzcore-wallpaper, tictactoe
-    │   └── share/plymouth/    # Boot splash theme
+    │   ├── local/bin/         # blazzcore-* utility scripts
+    │   └── share/
+    │       ├── backgrounds/   # Wallpapers
+    │       ├── plymouth/      # Boot splash theme
+    │       └── blazzcore/     # Post-install script
     └── root/
-        └── customize_airootfs.sh  # Chroot setup script (runs during build)
+        └── customize_airootfs.sh  # Chroot setup (runs at build time)
 
 .github/workflows/
-└── build-iso.yml              # GitHub Actions CI build pipeline
+└── build-iso.yml              # CI: self-hosted runner on Friday, auto-deploys to QEMU
 
 scripts/
+├── build-and-run.sh           # Manual: build on Friday server + restart QEMU
 └── build.sh                   # Local build helper
 ```
 

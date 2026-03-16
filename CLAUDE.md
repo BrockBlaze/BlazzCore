@@ -4,26 +4,63 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Project Is
 
-BlazzCore is a minimal, Wayland-first Linux desktop OS built on Arch Linux. The build system produces a bootable `.iso` using **archiso**. There are no traditional unit tests or linters — the "test" is booting the ISO.
+BlazzCore is a minimal, Wayland-first Linux desktop OS built on Arch Linux. The build system produces a bootable `.iso` using **archiso**. There are no traditional unit tests or linters — the "test" is booting the ISO in QEMU on the Friday test server.
 
-## Building the ISO
+---
 
-**Requires Arch Linux.** Builds cannot run on Windows/macOS natively.
+## Building & Deploying
+
+**Requires Arch Linux or Docker.** Builds cannot run natively on Windows/macOS.
 
 ```bash
-# Install archiso (Arch Linux only)
+# Build locally (Arch Linux only)
 sudo pacman -S archiso
-
-# Build locally
 sudo mkarchiso -v -w /tmp/blazzcore-build -o /tmp/blazzcore-out archiso/
-
-# Or use the helper script
-sudo ./scripts/build.sh
 ```
 
-The CI/CD pipeline (`.github/workflows/build-iso.yml`) builds on every push to `main` inside an `archlinux:latest` container. The ISO artifact is retained for 14 days.
+### CI/CD — Self-hosted runner on Friday
 
-**Testing on Windows:** `launch-qemu.ps1` launches the ISO in QEMU.
+Every push to `main` automatically:
+1. Triggers the self-hosted GitHub Actions runner on the **Friday test server** (`192.168.70.2`, user `addy`)
+2. Builds the ISO inside a Docker `archlinux:latest` container (~10–15 min, pacman pkg cache speeds up repeat builds)
+3. Copies the new ISO to `~/blazzcore-out/` on Friday
+4. Kills the old QEMU instance and starts a new one with `setsid` (detached from runner session so it persists)
+5. Restarts websockify (noVNC proxy on port 6080)
+
+**Connect to the running VM:** `http://192.168.70.2:6080/vnc.html`
+
+Runner service:
+```bash
+ssh addy@192.168.70.2
+sudo systemctl status  actions.runner.BrockBlaze-BlazzCore.friday
+sudo systemctl restart actions.runner.BrockBlaze-BlazzCore.friday
+```
+
+### Manual deploy (skip CI, build on Friday directly)
+
+```bash
+ssh addy@192.168.70.2
+~/build-and-run.sh      # pull latest code → build in Docker → restart QEMU (~10-15 min)
+```
+
+### Restart QEMU only (no rebuild needed)
+
+```bash
+ssh addy@192.168.70.2
+pkill -f qemu-system; sleep 1
+setsid bash ~/run-blazzcore.sh > /tmp/qemu.log 2>&1 &
+setsid websockify --web /usr/share/novnc/ 6080 localhost:5900 > /tmp/websockify.log 2>&1 &
+```
+
+### Debugging the running VM
+
+```bash
+ssh addy@192.168.70.2 'cat /tmp/blazzcore-startmenu.log'  # start menu errors (check after clicking fire button)
+ssh addy@192.168.70.2 'cat /tmp/blazzcore-serial.log'     # kernel/boot log
+ssh addy@192.168.70.2 'cat /tmp/qemu.log'                 # QEMU startup errors
+```
+
+---
 
 ## Architecture
 
@@ -86,8 +123,12 @@ Runs after `archinstall` completes when installing to disk. Copies scripts, conf
 
 ## Key Development Notes
 
-- **Adding a new utility script:** Create the script in `archiso/airootfs/usr/local/bin/`, add a `.desktop` file in `usr/share/applications/`, and register the file permissions in `archiso/profiledef.sh` under `file_permissions`.
+- **Adding a new utility script:** Create the script in `archiso/airootfs/usr/local/bin/`, add a `.desktop` file in `usr/share/applications/`, and register the file permissions in `archiso/profiledef.sh` under `file_permissions`: `["/usr/local/bin/blazzcore-myname"]="0:0:755"`.
 - **labwc config is XML** (`rc.xml`) — not a scripting language. Keybindings, window rules, and desktop count are all defined there.
+- **labwc mouse bindings — do NOT use `<default/>` in `<mouse>`:** Some labwc versions inject a Left+Click → ShowMenu binding for the Desktop context via their defaults. We define all mouse bindings explicitly so left-clicking the desktop does nothing. If you add `<default/>` back, left-click on the desktop will open the right-click context menu.
+- **Always use full paths in keybinds and waybar `on-click`:** e.g. `/usr/local/bin/blazzcore-startmenu-toggle` not just `blazzcore-startmenu-toggle`. The Wayland session launched by labwc may not have `/usr/local/bin` in PATH. Bare names fail silently.
+- **Start menu toggle uses a PID file** at `/tmp/blazzcore-startmenu.pid`. Every toggle action is logged to `/tmp/blazzcore-startmenu.log`. Check that file first if the start menu isn't responding.
 - **waybar config is JSON** — `config` defines modules, `style.css` controls appearance.
 - **The `customize_airootfs.sh` script runs at build time in chroot**, not at runtime. Runtime startup is handled by `labwc/autostart`.
-- **Plymouth theme** is at `usr/share/plymouth/themes/blazzcore/`. Changes require rebuilding initramfs (`mkinitcpio -P`) to take effect.
+- **Plymouth theme** is at `usr/share/plymouth/themes/blazzcore/`. On an installed system, changes require rebuilding initramfs (`mkinitcpio -P`). In QEMU virtio-vga, Plymouth may not get a full KMS framebuffer — the `video=1920x1080` kernel param in `grub.cfg` helps.
+- **QEMU must be launched with `setsid`** on the Friday server, otherwise the process is killed when the SSH session or GitHub Actions runner job exits.
