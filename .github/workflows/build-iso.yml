@@ -52,20 +52,17 @@ jobs:
       - name: Restart QEMU with new ISO
         if: github.ref == 'refs/heads/main'
         run: |
-          pkill -f qemu-system 2>/dev/null || true
-          pkill -f websockify 2>/dev/null || true
-          sleep 2
-          # setsid fully detaches from the runner session so QEMU persists after the job exits
-          setsid bash ~/run-blazzcore.sh > /tmp/qemu.log 2>&1 &
+          # Restart via systemd services (persistent, survive session exit, auto-restart on crash)
+          echo "R1thm?24601" | sudo -S systemctl restart blazzcore-qemu
+          sleep 7
+          echo "R1thm?24601" | sudo -S systemctl restart blazzcore-novnc
           sleep 3
-          setsid websockify --web /usr/share/novnc/ 6080 localhost:5900 > /tmp/websockify.log 2>&1 &
-          sleep 4
           if ss -tlnp | grep -q 5900; then
             echo "QEMU started with VNC on :5900"
             ss -tlnp | grep 5900
           else
-            echo "WARNING: VNC port not listening. QEMU log:"
-            tail -20 /tmp/qemu.log
+            echo "WARNING: VNC port not listening"
+            echo "R1thm?24601" | sudo -S journalctl -u blazzcore-qemu -n 20 --no-pager
           fi
 
       - name: Upload ISO artifact
