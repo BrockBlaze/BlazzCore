@@ -53,14 +53,18 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: |
           pkill -f qemu-system 2>/dev/null || true
+          pkill -f websockify 2>/dev/null || true
           sleep 2
-          nohup bash ~/run-blazzcore.sh > /tmp/qemu.log 2>&1 &
-          sleep 5
-          if pgrep -f qemu-system > /dev/null; then
-            echo "QEMU started with new ISO"
-            pgrep -af qemu-system | grep -o 'blazzcore-[^ ]*iso' || true
+          # setsid fully detaches from the runner session so QEMU persists after the job exits
+          setsid bash ~/run-blazzcore.sh > /tmp/qemu.log 2>&1 &
+          sleep 3
+          setsid websockify --web /usr/share/novnc/ 6080 localhost:5900 > /tmp/websockify.log 2>&1 &
+          sleep 4
+          if ss -tlnp | grep -q 5900; then
+            echo "QEMU started with VNC on :5900"
+            ss -tlnp | grep 5900
           else
-            echo "WARNING: QEMU failed to start"
+            echo "WARNING: VNC port not listening. QEMU log:"
             tail -20 /tmp/qemu.log
           fi
 
