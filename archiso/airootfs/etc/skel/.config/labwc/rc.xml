@@ -68,10 +68,10 @@
       <action name="Execute"><command>blazzcore-browser</command></action>
     </keybind>
     <keybind key="Super+d">
-      <action name="Execute"><command>blazzcore-startmenu-toggle</command></action>
+      <action name="Execute"><command>/usr/local/bin/blazzcore-startmenu-toggle</command></action>
     </keybind>
     <keybind key="Super+space">
-      <action name="Execute"><command>blazzcore-startmenu-toggle</command></action>
+      <action name="Execute"><command>/usr/local/bin/blazzcore-startmenu-toggle</command></action>
     </keybind>
     <keybind key="Super+e">
       <action name="Execute"><command>thunar</command></action>
@@ -223,18 +223,86 @@
   </keyboard>
 
   <mouse>
-    <!-- Use labwc defaults — this properly handles close/maximize/minimize buttons -->
-    <default/>
+    <!-- Explicit bindings — no <default/> so labwc cannot inject a
+         Left+Click → ShowMenu binding for the Desktop context.
+         All necessary window-management bindings are defined here. -->
 
-    <context name="Desktop">
-      <!-- Explicitly consume left-click so <default/> binding cannot show a menu -->
-      <mousebind button="Left" action="Click">
-        <action name="Execute"><command>true</command></action>
+    <!-- ── Titlebar ──────────────────────────────────────────────────── -->
+    <context name="TitleBar">
+      <mousebind button="Left" action="Press">
+        <action name="Focus"/><action name="Raise"/>
+      </mousebind>
+      <mousebind button="Left" action="Drag">
+        <action name="Move"/>
       </mousebind>
       <mousebind button="Left" action="DoubleClick">
-        <action name="Execute"><command>true</command></action>
+        <action name="ToggleMaximize"/>
       </mousebind>
-      <!-- Right-click shows context menu -->
+      <mousebind button="Right" action="Click">
+        <action name="ShowMenu"><menu>client-menu</menu></action>
+      </mousebind>
+    </context>
+
+    <!-- ── Window buttons ────────────────────────────────────────────── -->
+    <context name="Close">
+      <mousebind button="Left" action="Click">
+        <action name="Close"/>
+      </mousebind>
+    </context>
+    <context name="Maximize">
+      <mousebind button="Left" action="Click">
+        <action name="ToggleMaximize"/>
+      </mousebind>
+    </context>
+    <context name="Minimize">
+      <mousebind button="Left" action="Click">
+        <action name="Iconify"/>
+      </mousebind>
+    </context>
+
+    <!-- ── Resize edges ───────────────────────────────────────────────── -->
+    <context name="Top">
+      <mousebind button="Left" action="Drag"><action name="Resize"/></mousebind>
+    </context>
+    <context name="Bottom">
+      <mousebind button="Left" action="Drag"><action name="Resize"/></mousebind>
+    </context>
+    <context name="Left">
+      <mousebind button="Left" action="Drag"><action name="Resize"/></mousebind>
+    </context>
+    <context name="Right">
+      <mousebind button="Left" action="Drag"><action name="Resize"/></mousebind>
+    </context>
+    <context name="TopLeft">
+      <mousebind button="Left" action="Drag"><action name="Resize"/></mousebind>
+    </context>
+    <context name="TopRight">
+      <mousebind button="Left" action="Drag"><action name="Resize"/></mousebind>
+    </context>
+    <context name="BottomLeft">
+      <mousebind button="Left" action="Drag"><action name="Resize"/></mousebind>
+    </context>
+    <context name="BottomRight">
+      <mousebind button="Left" action="Drag"><action name="Resize"/></mousebind>
+    </context>
+
+    <!-- ── Client area (window body) ────────────────────────────────── -->
+    <context name="Client">
+      <mousebind button="Left" action="Press">
+        <action name="Focus"/><action name="Raise"/>
+      </mousebind>
+      <!-- Alt+drag to move/resize from anywhere in the window -->
+      <mousebind button="A-Left" action="Drag">
+        <action name="Move"/>
+      </mousebind>
+      <mousebind button="A-Right" action="Drag">
+        <action name="Resize"/>
+      </mousebind>
+    </context>
+
+    <!-- ── Desktop: right-click menu + scroll to switch workspace ────── -->
+    <!-- No Left+Click binding here — left click on desktop does nothing -->
+    <context name="Desktop">
       <mousebind button="Right" action="Click">
         <action name="ShowMenu"><menu>root-menu</menu></action>
       </mousebind>
