@@ -9,9 +9,16 @@
 
 import gi
 gi.require_version('Gtk', '3.0')
-gi.require_version('GtkLayerShell', '0.1')
-from gi.repository import Gtk, Gdk, Gio, GtkLayerShell, GLib
+from gi.repository import Gtk, Gdk, Gio, GLib
 import json, os, subprocess, shlex
+
+try:
+    gi.require_version('GtkLayerShell', '0.1')
+    from gi.repository import GtkLayerShell
+    _HAS_LAYER_SHELL = True
+except Exception:
+    GtkLayerShell = None
+    _HAS_LAYER_SHELL = False
 
 # ---- Paths -------------------------------------------------
 CFG_DIR        = os.path.expanduser("~/.config/blazzcore")
@@ -243,14 +250,15 @@ class StartMenu(Gtk.Window):
     def __init__(self):
         super().__init__()
 
-        GtkLayerShell.init_for_window(self)
-        GtkLayerShell.set_layer(self, GtkLayerShell.Layer.OVERLAY)
-        GtkLayerShell.set_anchor(self, GtkLayerShell.Edge.BOTTOM, True)
-        GtkLayerShell.set_anchor(self, GtkLayerShell.Edge.LEFT, True)
-        GtkLayerShell.set_margin(self, GtkLayerShell.Edge.BOTTOM, 42)
-        GtkLayerShell.set_margin(self, GtkLayerShell.Edge.LEFT, 0)
-        GtkLayerShell.set_keyboard_mode(self, GtkLayerShell.KeyboardMode.ON_DEMAND)
-        GtkLayerShell.set_exclusive_zone(self, 0)
+        if _HAS_LAYER_SHELL:
+            GtkLayerShell.init_for_window(self)
+            GtkLayerShell.set_layer(self, GtkLayerShell.Layer.OVERLAY)
+            GtkLayerShell.set_anchor(self, GtkLayerShell.Edge.BOTTOM, True)
+            GtkLayerShell.set_anchor(self, GtkLayerShell.Edge.LEFT, True)
+            GtkLayerShell.set_margin(self, GtkLayerShell.Edge.BOTTOM, 42)
+            GtkLayerShell.set_margin(self, GtkLayerShell.Edge.LEFT, 0)
+            GtkLayerShell.set_keyboard_mode(self, GtkLayerShell.KeyboardMode.ON_DEMAND)
+            GtkLayerShell.set_exclusive_zone(self, 0)
 
         self.set_default_size(560, 580)
         self._menu_active = False

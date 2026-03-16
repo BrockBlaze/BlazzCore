@@ -68,10 +68,10 @@
       <action name="Execute"><command>blazzcore-browser</command></action>
     </keybind>
     <keybind key="Super+d">
-      <action name="Execute"><command>sh -c "pkill -f 'python3.*blazzcore-startmenu' || blazzcore-startmenu &amp;"</command></action>
+      <action name="Execute"><command>blazzcore-startmenu-toggle</command></action>
     </keybind>
     <keybind key="Super+space">
-      <action name="Execute"><command>sh -c "pkill -f 'python3.*blazzcore-startmenu' || blazzcore-startmenu &amp;"</command></action>
+      <action name="Execute"><command>blazzcore-startmenu-toggle</command></action>
     </keybind>
     <keybind key="Super+e">
       <action name="Execute"><command>thunar</command></action>
