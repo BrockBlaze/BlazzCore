@@ -48,7 +48,7 @@ stacksidebar list row:selected {
 .card {
     background-color: #181828;
     border: 1px solid #252540;
-    border-radius: 8px;
+    border-radius: 0;
     padding: 14px 18px;
     margin-bottom: 12px;
 }
@@ -57,30 +57,32 @@ button {
     background: #222236;
     color: #d0d0f0;
     border: 1px solid #303050;
-    border-radius: 6px;
+    border-radius: 0;
     padding: 5px 14px;
     min-height: 28px;
 }
 button:hover  { background: #2c2c46; }
 button.action { background: #46468a; color: #fff; border-color: #5555a8; }
 button.action:hover { background: #5252a0; }
+button.destructive { background: #6a2020; color: #fff; border-color: #8a3030; }
+button.destructive:hover { background: #7a2828; }
 
 entry {
     background: #181828;
     color: #e0e0f0;
     border: 1px solid #303050;
-    border-radius: 5px;
+    border-radius: 0;
     padding: 4px 8px;
 }
 entry:focus { border-color: #6060b8; }
 
-spinbutton { background: #181828; color: #e0e0f0; border: 1px solid #303050; border-radius: 5px; }
+spinbutton { background: #181828; color: #e0e0f0; border: 1px solid #303050; border-radius: 0; }
 
 scale trough    { background: #252540; min-height: 4px; }
 scale highlight { background: #50509a; }
 
-switch slider      { background: #444460; border-radius: 50%; }
-switch             { background: #252540; border-radius: 14px; min-width: 46px; min-height: 26px; }
+switch slider      { background: #444460; border-radius: 0; }
+switch             { background: #252540; border-radius: 0; min-width: 46px; min-height: 26px; }
 switch:checked     { background: #46468a; }
 
 listbox             { background: transparent; }
@@ -92,18 +94,21 @@ searchentry {
     background: #181828;
     color: #e0e0f0;
     border: 1px solid #303050;
-    border-radius: 6px;
+    border-radius: 0;
     padding: 5px 10px;
 }
 
+combobox button { border-radius: 0; }
+
 separator { background-color: #222238; min-height: 1px; }
 label { color: #e0e0f0; }
+
+dialog { background: #12121e; }
+dialog .dialog-action-area button { min-width: 80px; }
 """
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 def run_bg(cmd, status_lbl=None):
-    """Launch a background process. Shows feedback in status_lbl if provided."""
-    # Determine executable name for validation
     exe = (cmd.split()[0] if isinstance(cmd, str) else cmd[0])
     if not shutil.which(exe):
         msg = f'Not installed: {exe}'
@@ -115,18 +120,14 @@ def run_bg(cmd, status_lbl=None):
             except Exception:
                 pass
         return
-
     if status_lbl:
         status_lbl.set_text('Launching…')
-
     try:
         proc = subprocess.Popen(cmd, shell=isinstance(cmd, str))
     except Exception as e:
         if status_lbl:
             status_lbl.set_text(f'Error: {e}')
         return
-
-    # Check after 1 s whether the process is still alive
     def _check_alive():
         rc = proc.poll()
         if rc is None:
@@ -137,7 +138,6 @@ def run_bg(cmd, status_lbl=None):
             if status_lbl:
                 status_lbl.set_text(f'Failed to launch {exe} (exit {rc}).')
         return False
-
     GLib.timeout_add(1000, _check_alive)
 
 def run_term(title, cmd, status_lbl=None):
@@ -145,7 +145,6 @@ def run_term(title, cmd, status_lbl=None):
            status_lbl)
 
 def themerc_get(path, key, default=''):
-    """Read a value from an openbox/labwc themerc file (key:   value format)."""
     try:
         for line in open(path):
             s = line.strip()
@@ -156,7 +155,6 @@ def themerc_get(path, key, default=''):
     return default
 
 def themerc_set(path, key, value):
-    """Update or append a key in a themerc file."""
     try:
         lines = open(path).readlines()
     except FileNotFoundError:
@@ -178,7 +176,7 @@ def conf_get(path, key, default=''):
             m = re.match(rf'^{key}=(.+)', line.strip())
             if m:
                 val = m.group(1).strip('"\'')
-                val = val.split('#')[0].strip()   # strip inline comments
+                val = val.split('#')[0].strip()
                 return val
     except FileNotFoundError:
         pass
@@ -204,6 +202,13 @@ def _shell(cmd):
                stderr=subprocess.DEVNULL, shell=isinstance(cmd, str)).strip()
     except Exception:
         return ''
+
+def _gsettings_get(schema, key, default=''):
+    out = _shell(f'gsettings get {schema} {key} 2>/dev/null')
+    return out.strip("'") if out else default
+
+def _gsettings_set(schema, key, value):
+    subprocess.Popen(['gsettings', 'set', schema, key, value])
 
 # ── Page building primitives ──────────────────────────────────────────────────
 def page_box():
@@ -270,11 +275,9 @@ def searchable_list(items, on_activate):
     vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
     search = Gtk.SearchEntry()
     search.set_placeholder_text('Search...')
-
     scroll = Gtk.ScrolledWindow()
     scroll.set_size_request(-1, 290)
     scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
-
     lb = Gtk.ListBox()
     lb.set_selection_mode(Gtk.SelectionMode.SINGLE)
     lb.set_activate_on_single_click(True)
@@ -284,19 +287,27 @@ def searchable_list(items, on_activate):
         l.set_margin_start(8); l.set_margin_top(3); l.set_margin_bottom(3)
         r.add(l)
         lb.add(r)
-
     def _filter(row, _=None):
         q = search.get_text().lower()
         return not q or q in row.get_child().get_text().lower()
-
     lb.set_filter_func(_filter)
     search.connect('search-changed', lambda _: lb.invalidate_filter())
     lb.connect('row-activated', lambda lb, r: on_activate(r.get_child().get_text()))
-
     scroll.add(lb)
     vbox.pack_start(search, False, False, 0)
     vbox.pack_start(scroll, True, True, 0)
     return vbox
+
+def themed_combo(items, current, on_change):
+    cb = Gtk.ComboBoxText()
+    cur_idx = 0
+    for i, item in enumerate(items):
+        cb.append_text(item)
+        if item == current:
+            cur_idx = i
+    cb.set_active(cur_idx)
+    cb.connect('changed', lambda c: on_change(c.get_active_text()) if c.get_active_text() else None)
+    return cb
 
 # ── Pages ─────────────────────────────────────────────────────────────────────
 def page_display():
@@ -310,7 +321,6 @@ def page_display():
         outputs = []
         cur = None
         for line in raw.splitlines():
-            # Output header: starts without leading whitespace and contains a name token
             if line and not line[0].isspace():
                 name = line.split()[0]
                 cur = {'name': name, 'modes': [], 'current': None}
@@ -341,7 +351,6 @@ def page_display():
         name_lbl.get_style_context().add_class('page-title')
         name_lbl.set_margin_bottom(6)
         c.pack_start(name_lbl, False, False, 0)
-
         modes = output['modes']
         if modes:
             combo = Gtk.ComboBoxText()
@@ -351,11 +360,9 @@ def page_display():
                 if output['current'] and mode['label'] == output['current']['label']:
                     cur_idx = i
             combo.set_active(cur_idx)
-
             def _apply(combo=combo, out=output, modes=modes):
                 idx = combo.get_active()
-                if idx < 0:
-                    return
+                if idx < 0: return
                 mode = modes[idx]
                 result = subprocess.run(
                     ['wlr-randr', '--output', out['name'],
@@ -367,7 +374,6 @@ def page_display():
                     err = result.stderr.strip() or f"exit {result.returncode}"
                     st.set_text(f"Failed: {err}")
                 GLib.timeout_add(3000, lambda: st.set_text('') or False)
-
             hb = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
             hb.pack_start(combo, True, True, 0)
             hb.pack_start(btn('Apply', _apply), False, False, 0)
@@ -375,9 +381,7 @@ def page_display():
                 'Select from available modes for this display', None), False, False, 0)
             c.pack_start(hb, False, False, 6)
         else:
-            c.pack_start(row('No modes available',
-                'This output reported no supported modes'), False, False, 0)
-
+            c.pack_start(row('No modes available', 'This output reported no supported modes'), False, False, 0)
         b.pack_start(c, False, False, 0)
 
     b.pack_start(st, False, False, 0)
@@ -385,16 +389,14 @@ def page_display():
 
 def page_appearance():
     s, b = page_box()
-    b.pack_start(page_title('Appearance', 'Colors, wallpaper, theme, icons, and fonts'), False, False, 0)
+    b.pack_start(page_title('Appearance', 'Colors, wallpaper, theme, and icons'), False, False, 0)
     st = status_label()
 
-    THEMERC       = os.path.expanduser('~/.config/labwc/themerc')
-    SYS_THEMERC   = '/usr/share/themes/BlazzCore/openbox-3/themerc'
+    THEMERC     = os.path.expanduser('~/.config/labwc/themerc')
+    SYS_THEMERC = '/usr/share/themes/BlazzCore/openbox-3/themerc'
 
-    # Read current accent color from user or system themerc
     cur_hex = (themerc_get(THEMERC, 'window.active.border.color') or
-               themerc_get(SYS_THEMERC, 'window.active.border.color') or
-               '#4a4a8a')
+               themerc_get(SYS_THEMERC, 'window.active.border.color') or '#4a4a8a')
     rgba = Gdk.RGBA()
     if not rgba.parse(cur_hex):
         rgba.parse('#4a4a8a')
@@ -408,18 +410,13 @@ def page_appearance():
         r, g, bl = int(c.red * 255), int(c.green * 255), int(c.blue * 255)
         accent = f'#{r:02x}{g:02x}{bl:02x}'
         title  = f'#{int(r*.20):02x}{int(g*.20):02x}{int(bl*.20):02x}'
-
-        # Ensure user themerc exists (copy system themerc as base)
         if not os.path.exists(THEMERC):
             try:
                 shutil.copy(SYS_THEMERC, THEMERC)
             except Exception:
                 pass
-
-        themerc_set(THEMERC, 'window.active.border.color',     accent)
-        themerc_set(THEMERC, 'window.active.title.bg.color',   title)
-
-        # Reload labwc theme live
+        themerc_set(THEMERC, 'window.active.border.color',   accent)
+        themerc_set(THEMERC, 'window.active.title.bg.color', title)
         try:
             subprocess.Popen(['labwc', '--reconfigure'])
         except Exception:
@@ -427,7 +424,6 @@ def page_appearance():
                 subprocess.run(['pkill', '-HUP', 'labwc'], capture_output=True)
             except Exception:
                 pass
-
         st.set_text(f'✓  Accent set to {accent}.')
         GLib.timeout_add(2500, lambda: st.set_text('') or False)
 
@@ -439,10 +435,66 @@ def page_appearance():
     c1.pack_start(row('Wallpaper', 'Set the desktop background image',
         btn('Choose', lambda: run_bg('blazzcore-wallpaper', st))), False, False, 0)
     b.pack_start(c1, False, False, 0)
+
+    # GTK theme / icon / cursor — inline, no nwg-look
+    def get_themes():
+        themes = []
+        for d in ['/usr/share/themes',
+                  os.path.expanduser('~/.local/share/themes'),
+                  os.path.expanduser('~/.themes')]:
+            try:
+                for t in sorted(os.listdir(d)):
+                    if os.path.exists(os.path.join(d, t, 'gtk-3.0')):
+                        themes.append(t)
+            except FileNotFoundError:
+                pass
+        return sorted(set(themes)) or ['Adwaita-dark']
+
+    def get_icon_themes():
+        icons = []
+        for d in ['/usr/share/icons',
+                  os.path.expanduser('~/.local/share/icons'),
+                  os.path.expanduser('~/.icons')]:
+            try:
+                for t in sorted(os.listdir(d)):
+                    if os.path.exists(os.path.join(d, t, 'index.theme')):
+                        icons.append(t)
+            except FileNotFoundError:
+                pass
+        return sorted(set(icons)) or ['Papirus-Dark']
+
+    cur_theme  = _gsettings_get('org.gnome.desktop.interface', 'gtk-theme',    'Adwaita-dark')
+    cur_icons  = _gsettings_get('org.gnome.desktop.interface', 'icon-theme',   'Papirus-Dark')
+    cur_cursor = _gsettings_get('org.gnome.desktop.interface', 'cursor-theme', 'Adwaita')
+
+    themes  = get_themes()
+    icons   = get_icon_themes()
+    cursors = [t for t in icons if 'cursor' in t.lower() or os.path.exists(f'/usr/share/icons/{t}/cursors')] \
+              or ['Adwaita']
+
     c2 = card()
-    c2.pack_start(row('GTK Theme & Icons', 'Application theme, icon pack, cursor, and fonts',
-        btn('Open', lambda: run_bg('nwg-look', st))), False, False, 0)
+    c2.pack_start(row('GTK Theme', 'Application window style',
+        themed_combo(themes, cur_theme,
+            lambda v: (_gsettings_set('org.gnome.desktop.interface', 'gtk-theme', v),
+                       st.set_text(f'✓  Theme: {v}'),
+                       GLib.timeout_add(2500, lambda: st.set_text('') or False))
+        )), False, False, 0)
+    c2.pack_start(hsep(), False, False, 0)
+    c2.pack_start(row('Icon Theme', 'Application and desktop icons',
+        themed_combo(icons, cur_icons,
+            lambda v: (_gsettings_set('org.gnome.desktop.interface', 'icon-theme', v),
+                       st.set_text(f'✓  Icons: {v}'),
+                       GLib.timeout_add(2500, lambda: st.set_text('') or False))
+        )), False, False, 0)
+    c2.pack_start(hsep(), False, False, 0)
+    c2.pack_start(row('Cursor Theme', 'Mouse pointer style',
+        themed_combo(cursors, cur_cursor,
+            lambda v: (_gsettings_set('org.gnome.desktop.interface', 'cursor-theme', v),
+                       st.set_text(f'✓  Cursor: {v}'),
+                       GLib.timeout_add(2500, lambda: st.set_text('') or False))
+        )), False, False, 0)
     b.pack_start(c2, False, False, 0)
+
     b.pack_start(st, False, False, 0)
     return s
 
@@ -450,15 +502,12 @@ def page_taskbar():
     s, b = page_box()
     b.pack_start(page_title('Taskbar', 'Restart or configure the Waybar taskbar'), False, False, 0)
     st = status_label()
-
     def restart_waybar():
         subprocess.run(['pkill', 'waybar'], capture_output=True)
         subprocess.Popen(['waybar'])
         st.set_text('✓  Waybar restarted.')
-
     c = card()
-    c.pack_start(row('Restart Taskbar',
-        'Apply config changes by restarting waybar',
+    c.pack_start(row('Restart Taskbar', 'Apply config changes by restarting waybar',
         btn('Restart', restart_waybar)), False, False, 0)
     b.pack_start(c, False, False, 0)
     b.pack_start(st, False, False, 0)
@@ -466,34 +515,375 @@ def page_taskbar():
 
 def page_sound():
     s, b = page_box()
-    b.pack_start(page_title('Sound', 'Volume, audio devices, and mixer'), False, False, 0)
+    b.pack_start(page_title('Sound', 'Volume and audio output'), False, False, 0)
     st = status_label()
-    c = card()
-    c.pack_start(row('Audio Mixer', 'Adjust per-application volume and output devices',
-        btn('Open Mixer', lambda: run_bg('pavucontrol', st))), False, False, 0)
-    b.pack_start(c, False, False, 0)
-    b.pack_start(st, False, False, 0)
-    return s
 
-def page_bluetooth():
-    s, b = page_box()
-    b.pack_start(page_title('Bluetooth', 'Pair and manage Bluetooth peripherals'), False, False, 0)
-    st = status_label()
-    c = card()
-    c.pack_start(row('Bluetooth Devices', 'Connect headphones, keyboards, mice, and more',
-        btn('Open', lambda: run_bg('blueman-manager', st))), False, False, 0)
-    b.pack_start(c, False, False, 0)
+    def get_vol():
+        out = _shell(['wpctl', 'get-volume', '@DEFAULT_AUDIO_SINK@'])
+        m = re.search(r'Volume:\s*([\d.]+)(\s+\[MUTED\])?', out)
+        if m:
+            return min(100, int(float(m.group(1)) * 100)), m.group(2) is not None
+        return 50, False
+
+    vol, muted = get_vol()
+
+    c1 = card()
+
+    # Volume row
+    vol_scale = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, 0, 100, 1)
+    vol_scale.set_value(vol)
+    vol_scale.set_draw_value(False)
+    vol_scale.set_size_request(220, -1)
+    vol_pct = Gtk.Label(label=f'{vol}%')
+    vol_pct.set_size_request(42, -1)
+    vol_pct.set_xalign(1)
+
+    def on_vol(scale):
+        v = int(scale.get_value())
+        vol_pct.set_text(f'{v}%')
+        subprocess.Popen(['wpctl', 'set-volume', '@DEFAULT_AUDIO_SINK@', f'{v}%'])
+
+    vol_scale.connect('value-changed', on_vol)
+
+    vol_box = Gtk.Box(spacing=8)
+    vol_box.pack_start(vol_scale, True, True, 0)
+    vol_box.pack_start(vol_pct, False, False, 0)
+
+    c1.pack_start(row('Output Volume', 'Master audio level', None), False, False, 0)
+    c1.pack_start(vol_box, False, False, 4)
+    c1.pack_start(hsep(), False, False, 0)
+
+    # Mute toggle
+    mute_sw = Gtk.Switch()
+    mute_sw.set_active(muted)
+
+    def on_mute(sw, _):
+        subprocess.Popen(['wpctl', 'set-mute', '@DEFAULT_AUDIO_SINK@', 'toggle'])
+
+    mute_sw.connect('notify::active', on_mute)
+    c1.pack_start(row('Mute Output', 'Silence all audio output', mute_sw), False, False, 0)
+    b.pack_start(c1, False, False, 0)
+
+    # Output device selector
+    c2 = card()
+    sinks_raw = _shell('pactl list short sinks 2>/dev/null')
+    sinks = []
+    for line in sinks_raw.splitlines():
+        parts = line.split('\t')
+        if len(parts) >= 2:
+            sinks.append(parts[1])
+
+    if sinks:
+        default_sink = _shell('pactl get-default-sink 2>/dev/null')
+        friendly = [s.replace('alsa_output.', '').replace('_', ' ').strip() for s in sinks]
+        combo = Gtk.ComboBoxText()
+        cur_idx = 0
+        for i, (s, f) in enumerate(zip(sinks, friendly)):
+            combo.append_text(f or s)
+            if s == default_sink:
+                cur_idx = i
+        combo.set_active(cur_idx)
+
+        def on_sink(c):
+            idx = c.get_active()
+            if idx >= 0 and idx < len(sinks):
+                subprocess.Popen(['pactl', 'set-default-sink', sinks[idx]])
+                st.set_text('✓  Output device changed.')
+                GLib.timeout_add(2500, lambda: st.set_text('') or False)
+
+        combo.connect('changed', on_sink)
+        c2.pack_start(row('Output Device', 'Select audio output', combo), False, False, 0)
+        b.pack_start(c2, False, False, 0)
+
+    # Microphone volume
+    c3 = card()
+    mic_raw = _shell(['wpctl', 'get-volume', '@DEFAULT_AUDIO_SOURCE@'])
+    mic_m = re.search(r'Volume:\s*([\d.]+)', mic_raw)
+    mic_vol = min(100, int(float(mic_m.group(1)) * 100)) if mic_m else 80
+
+    mic_scale = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, 0, 100, 1)
+    mic_scale.set_value(mic_vol)
+    mic_scale.set_draw_value(False)
+    mic_scale.set_size_request(220, -1)
+    mic_pct = Gtk.Label(label=f'{mic_vol}%')
+    mic_pct.set_size_request(42, -1)
+    mic_pct.set_xalign(1)
+
+    def on_mic(scale):
+        v = int(scale.get_value())
+        mic_pct.set_text(f'{v}%')
+        subprocess.Popen(['wpctl', 'set-volume', '@DEFAULT_AUDIO_SOURCE@', f'{v}%'])
+
+    mic_scale.connect('value-changed', on_mic)
+    mic_box = Gtk.Box(spacing=8)
+    mic_box.pack_start(mic_scale, True, True, 0)
+    mic_box.pack_start(mic_pct, False, False, 0)
+    c3.pack_start(row('Microphone', 'Input capture level', None), False, False, 0)
+    c3.pack_start(mic_box, False, False, 4)
+    b.pack_start(c3, False, False, 0)
+
     b.pack_start(st, False, False, 0)
     return s
 
 def page_network():
     s, b = page_box()
-    b.pack_start(page_title('Network', 'Wi-Fi and wired network connections'), False, False, 0)
+    b.pack_start(page_title('Network', 'Wi-Fi and wired connections'), False, False, 0)
     st = status_label()
-    c = card()
-    c.pack_start(row('Network Manager', 'Connect to Wi-Fi, configure VPN and wired connections',
-        btn('Open', lambda: run_term('Network', 'nmtui', st))), False, False, 0)
-    b.pack_start(c, False, False, 0)
+
+    def wifi_on():
+        return 'enabled' in _shell('nmcli radio wifi 2>/dev/null').lower()
+
+    def active_conn():
+        out = _shell('nmcli -t -f NAME,TYPE,STATE connection show --active 2>/dev/null')
+        for line in out.splitlines():
+            parts = line.split(':')
+            if len(parts) >= 3 and 'activated' in parts[2]:
+                return parts[0]
+        return None
+
+    # WiFi on/off card
+    c1 = card()
+    is_on = wifi_on()
+    wifi_sw = Gtk.Switch()
+    wifi_sw.set_active(is_on)
+
+    conn_name = active_conn()
+    conn_lbl = Gtk.Label(
+        label=f'Connected: {conn_name}' if conn_name else 'Not connected', xalign=0)
+    conn_lbl.get_style_context().add_class('dim')
+
+    net_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+    net_box.set_margin_top(6)
+
+    def connect_to(ssid, secured, window):
+        if secured:
+            dialog = Gtk.Dialog(title=f'Connect to {ssid}', transient_for=window, flags=0)
+            dialog.add_buttons('Connect', Gtk.ResponseType.OK, 'Cancel', Gtk.ResponseType.CANCEL)
+            area = dialog.get_content_area()
+            area.set_margin_start(20); area.set_margin_end(20)
+            area.set_margin_top(16); area.set_margin_bottom(8); area.set_spacing(10)
+            area.pack_start(Gtk.Label(label=f'Password for "{ssid}":', xalign=0), False, False, 0)
+            pw = Gtk.Entry()
+            pw.set_visibility(False)
+            pw.set_input_purpose(Gtk.InputPurpose.PASSWORD)
+            pw.set_placeholder_text('Wi-Fi password')
+            area.pack_start(pw, False, False, 0)
+            area.show_all()
+            resp = dialog.run()
+            password = pw.get_text()
+            dialog.destroy()
+            if resp != Gtk.ResponseType.OK or not password:
+                return
+            cmd = ['nmcli', 'device', 'wifi', 'connect', ssid, 'password', password]
+        else:
+            cmd = ['nmcli', 'device', 'wifi', 'connect', ssid]
+
+        st.set_text(f'Connecting to {ssid}...')
+
+        def _run():
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            def _done():
+                if result.returncode == 0:
+                    conn_lbl.set_text(f'Connected: {ssid}')
+                    st.set_text(f'✓  Connected to {ssid}.')
+                else:
+                    err = result.stderr.strip() or 'Connection failed'
+                    st.set_text(f'Failed: {err}')
+                GLib.timeout_add(3000, lambda: st.set_text('') or False)
+                refresh_nets()
+            GLib.idle_add(_done)
+
+        threading.Thread(target=_run, daemon=True).start()
+
+    def refresh_nets():
+        for child in net_box.get_children():
+            net_box.remove(child)
+        loading = Gtk.Label(label='Scanning...', xalign=0)
+        loading.get_style_context().add_class('dim')
+        net_box.pack_start(loading, False, False, 0)
+        net_box.show_all()
+
+        def _load():
+            raw = _shell('nmcli -t -f IN-USE,SSID,SIGNAL,SECURITY device wifi list 2>/dev/null')
+            nets = []
+            seen = set()
+            for line in raw.splitlines():
+                parts = line.split(':')
+                if len(parts) < 4:
+                    continue
+                in_use = parts[0] == '*'
+                ssid = parts[1]
+                if not ssid or ssid in seen:
+                    continue
+                seen.add(ssid)
+                try:
+                    signal = int(parts[2])
+                except ValueError:
+                    signal = 0
+                secured = bool(parts[3] and parts[3] not in ('--', ''))
+                nets.append((in_use, ssid, signal, secured))
+            nets.sort(key=lambda x: (not x[0], -x[2]))
+
+            def _populate():
+                for child in net_box.get_children():
+                    net_box.remove(child)
+                window = s.get_toplevel()
+                for in_use, ssid, signal, secured in nets[:25]:
+                    hb = Gtk.Box(spacing=8)
+                    hb.set_margin_top(1); hb.set_margin_bottom(1)
+                    bars = '▂▄▆█'[: max(1, signal // 26)]
+                    lock = '  🔒' if secured else ''
+                    prefix = '✓  ' if in_use else '      '
+                    lbl = Gtk.Label(label=f'{prefix}{ssid}{lock}', xalign=0)
+                    sig_lbl = Gtk.Label(label=bars)
+                    sig_lbl.get_style_context().add_class('dim')
+                    hb.pack_start(lbl, True, True, 0)
+                    hb.pack_start(sig_lbl, False, False, 0)
+                    if not in_use:
+                        cb = btn('Connect',
+                            (lambda s2=ssid, sec=secured, w=window:
+                             lambda: connect_to(s2, sec, w))(),
+                            None)
+                        hb.pack_end(cb, False, False, 0)
+                    net_box.pack_start(hb, False, False, 0)
+                if not nets:
+                    lbl = Gtk.Label(label='No networks found — click Refresh', xalign=0)
+                    lbl.get_style_context().add_class('dim')
+                    net_box.pack_start(lbl, False, False, 0)
+                net_box.show_all()
+            GLib.idle_add(_populate)
+
+        threading.Thread(target=_load, daemon=True).start()
+
+    def on_wifi_toggle(sw, _):
+        on = sw.get_active()
+        subprocess.Popen(['nmcli', 'radio', 'wifi', 'on' if on else 'off'])
+        if on:
+            GLib.timeout_add(1200, lambda: refresh_nets() or False)
+
+    wifi_sw.connect('notify::active', on_wifi_toggle)
+    c1.pack_start(row('Wi-Fi', 'Enable wireless networking', wifi_sw), False, False, 0)
+    c1.pack_start(hsep(), False, False, 0)
+    c1.pack_start(conn_lbl, False, False, 2)
+    b.pack_start(c1, False, False, 0)
+
+    # Network list card
+    c2 = card()
+    hdr = Gtk.Box(spacing=8)
+    hdr.pack_start(Gtk.Label(label='Available Networks', xalign=0), True, True, 0)
+    hdr.pack_end(btn('Refresh', refresh_nets, None), False, False, 0)
+    c2.pack_start(hdr, False, False, 0)
+    c2.pack_start(net_box, False, False, 0)
+    b.pack_start(c2, False, False, 0)
+    b.pack_start(st, False, False, 0)
+
+    if is_on:
+        GLib.idle_add(refresh_nets)
+
+    return s
+
+def page_bluetooth():
+    s, b = page_box()
+    b.pack_start(page_title('Bluetooth', 'Pair and manage Bluetooth devices'), False, False, 0)
+    st = status_label()
+
+    def bt_on():
+        return 'yes' in _shell('bluetoothctl show 2>/dev/null | grep -i "powered:"').lower()
+
+    c1 = card()
+    is_on = bt_on()
+    bt_sw = Gtk.Switch()
+    bt_sw.set_active(is_on)
+
+    devices_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+
+    def refresh_devices():
+        for child in devices_box.get_children():
+            devices_box.remove(child)
+
+        paired_raw = _shell('bluetoothctl devices Paired 2>/dev/null')
+        conn_raw   = _shell('bluetoothctl devices Connected 2>/dev/null')
+        conn_macs  = set(re.findall(r'([0-9A-Fa-f:]{17})', conn_raw))
+
+        rows = 0
+        for line in paired_raw.splitlines():
+            m = re.match(r'Device ([0-9A-Fa-f:]{17}) (.+)', line)
+            if not m:
+                continue
+            mac, name = m.group(1), m.group(2)
+            connected = mac in conn_macs
+            hb = Gtk.Box(spacing=8)
+            hb.set_margin_top(2); hb.set_margin_bottom(2)
+            dot = '●' if connected else '○'
+            lbl = Gtk.Label(label=f'{dot}  {name}', xalign=0)
+            hb.pack_start(lbl, True, True, 0)
+            if connected:
+                db = btn('Disconnect', (lambda m2=mac: lambda: (
+                    subprocess.Popen(['bluetoothctl', 'disconnect', m2]),
+                    st.set_text('Disconnecting...'),
+                    GLib.timeout_add(2000, lambda: refresh_devices() or st.set_text('') or False)
+                ))(), None)
+                hb.pack_end(db, False, False, 0)
+            else:
+                cb = btn('Connect', (lambda m2=mac, n=name: lambda: (
+                    subprocess.Popen(['bluetoothctl', 'connect', m2]),
+                    st.set_text(f'Connecting to {n}...'),
+                    GLib.timeout_add(4000, lambda: refresh_devices() or st.set_text('') or False)
+                ))(), 'action')
+                hb.pack_end(cb, False, False, 0)
+            devices_box.pack_start(hb, False, False, 0)
+            rows += 1
+
+        if rows == 0:
+            lbl = Gtk.Label(label='No paired devices', xalign=0)
+            lbl.get_style_context().add_class('dim')
+            devices_box.pack_start(lbl, False, False, 0)
+
+        devices_box.show_all()
+
+    _scan_proc = [None]
+
+    def scan():
+        if _scan_proc[0] and _scan_proc[0].poll() is None:
+            return
+        st.set_text('Scanning for 10 seconds...')
+        _scan_proc[0] = subprocess.Popen(
+            ['bluetoothctl', 'scan', 'on'],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+        def _stop():
+            if _scan_proc[0] and _scan_proc[0].poll() is None:
+                _scan_proc[0].terminate()
+            subprocess.Popen(['bluetoothctl', 'scan', 'off'],
+                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            refresh_devices()
+            st.set_text('Scan complete.')
+            GLib.timeout_add(2500, lambda: st.set_text('') or False)
+            return False
+
+        GLib.timeout_add(10000, _stop)
+
+    def on_bt_toggle(sw, _):
+        on = sw.get_active()
+        subprocess.Popen(['bluetoothctl', 'power', 'on' if on else 'off'])
+        if on:
+            GLib.timeout_add(1000, lambda: refresh_devices() or False)
+
+    bt_sw.connect('notify::active', on_bt_toggle)
+    c1.pack_start(row('Bluetooth', 'Enable Bluetooth radio', bt_sw), False, False, 0)
+    c1.pack_start(hsep(), False, False, 0)
+    c1.pack_start(row('Scan for Devices', 'Discover nearby Bluetooth devices',
+        btn('Scan (10s)', scan)), False, False, 0)
+    b.pack_start(c1, False, False, 0)
+
+    c2 = card()
+    c2.pack_start(Gtk.Label(label='Paired Devices', xalign=0), False, False, 2)
+    c2.pack_start(devices_box, False, False, 0)
+    b.pack_start(c2, False, False, 0)
+
+    if is_on:
+        GLib.idle_add(refresh_devices)
+
     b.pack_start(st, False, False, 0)
     return s
 
@@ -506,17 +896,17 @@ def page_nightlight():
     sw = Gtk.Switch()
     sw.set_active(is_on)
 
-    def _toggle_nightlight(sw, _):
+    def _toggle(sw, _):
         run_bg('blazzcore-nightlight')
         def _resync():
             actual = subprocess.run(['pgrep', '-x', 'wlsunset'], capture_output=True).returncode == 0
-            sw.handler_block_by_func(_toggle_nightlight)
+            sw.handler_block_by_func(_toggle)
             sw.set_active(actual)
-            sw.handler_unblock_by_func(_toggle_nightlight)
+            sw.handler_unblock_by_func(_toggle)
             return False
         GLib.timeout_add(600, _resync)
 
-    sw.connect('notify::active', _toggle_nightlight)
+    sw.connect('notify::active', _toggle)
     c1.pack_start(row('Enable Night Light', 'Reduce eye strain by warming the screen color', sw), False, False, 0)
     b.pack_start(c1, False, False, 0)
 
@@ -525,7 +915,7 @@ def page_nightlight():
     day_t   = int(conf_get(NL_CONF, 'DAY_TEMP',   '6500'))
 
     def temp_row(label, val, lo, hi, key):
-        hb = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        hb = Gtk.Box(spacing=10)
         lbl = Gtk.Label(label=label, xalign=0)
         lbl.set_size_request(140, -1)
         sc = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, lo, hi, 100)
@@ -549,7 +939,6 @@ def page_keyboard():
     s, b = page_box()
     b.pack_start(page_title('Keyboard', 'Set your keyboard input layout'), False, False, 0)
 
-    # Parse current layout from localectl status (not the non-existent get-keymap subcommand)
     m = re.search(r'VC Keymap:\s+(\S+)', _shell(['localectl', 'status']))
     cur_layout = m.group(1) if m else 'us'
 
@@ -559,8 +948,6 @@ def page_keyboard():
     b.pack_start(cur_lbl, False, False, 0)
 
     st = status_label('Loading keyboard layouts…')
-
-    # Placeholder while loading
     placeholder = Gtk.Label(label='Loading…', xalign=0)
     placeholder.get_style_context().add_class('dim')
     b.pack_start(placeholder, False, False, 0)
@@ -580,7 +967,7 @@ def page_keyboard():
         def populate():
             b.remove(placeholder)
             b.pack_start(searchable_list(keymaps, apply_layout), True, True, 0)
-            b.reorder_child(st, -1)  # keep status at bottom
+            b.reorder_child(st, -1)
             b.show_all()
             st.set_text('Click a layout to apply it.')
             return False
@@ -592,7 +979,6 @@ def page_keyboard():
 def page_power():
     s, b = page_box()
     b.pack_start(page_title('Power Management', 'Configure idle timeouts for lock and display'), False, False, 0)
-
     note = status_label()
 
     def save_and_apply(key, spin):
@@ -615,7 +1001,7 @@ def page_power():
         spin.set_value(int(val)); spin.set_size_request(90, -1)
         suf = Gtk.Label(label='sec'); suf.get_style_context().add_class('dim')
         save = btn('Save', (lambda k, sp: lambda: save_and_apply(k, sp))(key, spin))
-        hb = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        hb = Gtk.Box(spacing=8)
         vb = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=1)
         vb.pack_start(Gtk.Label(label=label, xalign=0), False, False, 0)
         d = Gtk.Label(label=desc, xalign=0); d.get_style_context().add_class('dim')
@@ -654,7 +1040,6 @@ def page_datetime():
     b.pack_start(placeholder, False, False, 0)
     b.pack_start(st, False, False, 0)
 
-    # tzones set is populated in background thread; used for O(1) validation
     tzones_set = set()
 
     def apply_tz(tz):
@@ -720,15 +1105,13 @@ def page_software():
 def page_about():
     s, b = page_box()
     b.pack_start(page_title('About BlazzCore'), False, False, 0)
-
     try:
         version = open('/etc/blazzcore-version').read().strip()
     except FileNotFoundError:
         version = 'BlazzCore'
-    kernel   = _shell(['uname', '-r'])
-    pkg_cnt  = _shell('pacman -Q 2>/dev/null | wc -l') + ' packages'
-    uptime   = _shell(['uptime', '-p'])
-
+    kernel  = _shell(['uname', '-r'])
+    pkg_cnt = _shell('pacman -Q 2>/dev/null | wc -l') + ' packages'
+    uptime  = _shell(['uptime', '-p'])
     c = card()
     for i, (k, v) in enumerate([
         ('Version',      version),
@@ -737,7 +1120,7 @@ def page_about():
         ('Packages',     pkg_cnt),
         ('Uptime',       uptime),
     ]):
-        hb = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
+        hb = Gtk.Box(spacing=0)
         kl = Gtk.Label(label=k, xalign=0); kl.set_size_request(160, -1)
         kl.get_style_context().add_class('dim')
         vl = Gtk.Label(label=v, xalign=0)
@@ -771,8 +1154,6 @@ class SettingsApp(Gtk.Window):
         sidebar = Gtk.StackSidebar()
         sidebar.set_stack(stack)
 
-        # StackSidebar wraps a ListBox internally — make it single-click
-        # Use "realize" signal so the internal ListBox exists before we traverse
         def _fix_single_click(widget, *_):
             if isinstance(widget, Gtk.ListBox):
                 widget.set_activate_on_single_click(True)
@@ -799,18 +1180,16 @@ class SettingsApp(Gtk.Window):
             ('about',      '  About',        page_about),
         ]
 
-        # Lazy-load: add placeholder boxes now, build the real page on first visit
-        self._built        = set()
-        self._builders     = {}
-        self._ph_to_name   = {}
+        self._built      = set()
+        self._builders   = {}
+        self._ph_to_name = {}
         for name, label, builder in pages:
             ph = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
             stack.add_titled(ph, name, label)
-            self._builders[name]   = (ph, builder)
+            self._builders[name]     = (ph, builder)
             self._ph_to_name[id(ph)] = name
 
         stack.connect('notify::visible-child', self._on_page_change)
-        # Build the first page immediately so the window isn't blank
         self._build_page(pages[0][0])
 
         hbox.pack_start(sidebar, False, False, 0)
