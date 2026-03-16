@@ -19,7 +19,9 @@ jobs:
 
       - name: Build ISO in Docker
         run: |
-          mkdir -p /tmp/blazzcore-pkg-cache /tmp/blazzcore-work
+          mkdir -p /tmp/blazzcore-pkg-cache
+          # Use a fresh output dir owned by the current user
+          rm -rf /tmp/blazzcore-out && mkdir -p /tmp/blazzcore-out
           docker run --rm --privileged \
             -v "${{ github.workspace }}:/build:ro" \
             -v /tmp/blazzcore-out:/out \
@@ -31,13 +33,11 @@ jobs:
               mkdir -p /run/archiso
               mkarchiso -v -w /tmp/blazzcore-work -o /out /build/archiso/ 2>&1
               rm -rf /tmp/blazzcore-work
+              cd /out && sha256sum *.iso > SHA256SUMS
+              # Make output files readable by host user
+              chmod -R a+rw /out
             '
-
-      - name: Generate checksum
-        run: |
-          cd /tmp/blazzcore-out
-          sha256sum *.iso > SHA256SUMS
-          cat SHA256SUMS
+          echo "=== Checksum ===" && cat /tmp/blazzcore-out/SHA256SUMS
 
       - name: Move ISO to output folder
         run: |
@@ -56,9 +56,9 @@ jobs:
           sleep 2
           nohup bash ~/run-blazzcore.sh > /tmp/qemu.log 2>&1 &
           sleep 5
-          if pgrep -x qemu-system-x86_64 > /dev/null; then
+          if pgrep -f qemu-system > /dev/null; then
             echo "QEMU started with new ISO"
-            pgrep -a qemu-system-x86_64 | grep -o 'blazzcore-[^ ]*iso'
+            pgrep -af qemu-system | grep -o 'blazzcore-[^ ]*iso' || true
           else
             echo "WARNING: QEMU failed to start"
             tail -20 /tmp/qemu.log
