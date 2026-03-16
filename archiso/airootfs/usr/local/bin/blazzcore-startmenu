@@ -70,7 +70,7 @@ window {
     background-color: #181828;
     color: #dcdcf8;
     border: 1px solid rgba(80, 80, 150, 0.55);
-    border-radius: 6px;
+    border-radius: 0;
     padding: 8px 14px;
     font-size: 14px;
     caret-color: #8888cc;
@@ -104,7 +104,7 @@ list, listbox, #apps-list {
 list row {
     background-color: transparent;
     background: transparent;
-    border-radius: 5px;
+    border-radius: 0;
     margin: 1px 6px;
     min-height: 0;
 }
@@ -135,7 +135,7 @@ list row {
     background-color: transparent;
     background: transparent;
     border: none;
-    border-radius: 5px;
+    border-radius: 0;
     padding: 6px 10px;
     margin: 1px 6px;
 }
@@ -156,7 +156,7 @@ list row {
     background-color: transparent;
     background: transparent;
     border: none;
-    border-radius: 5px;
+    border-radius: 0;
     padding: 6px 10px;
     margin: 4px 6px 8px 6px;
 }
@@ -169,7 +169,7 @@ menu, menuitem {
     background-color: #111122;
     color: #c8c8e8;
     border: 1px solid rgba(70, 70, 150, 0.5);
-    border-radius: 6px;
+    border-radius: 0;
 }
 menuitem:hover { background-color: rgba(75, 75, 170, 0.38); color: #ffffff; }
 menuitem label { padding: 4px 12px; }
@@ -178,7 +178,7 @@ menuitem label { padding: 4px 12px; }
 scrollbar { background: transparent; min-width: 5px; }
 scrollbar slider {
     background-color: rgba(75, 75, 135, 0.4);
-    border-radius: 3px;
+    border-radius: 0;
     min-width: 5px;
     min-height: 24px;
 }

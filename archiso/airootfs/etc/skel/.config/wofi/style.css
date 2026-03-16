@@ -12,7 +12,7 @@
 window {
     background: rgba(8, 8, 18, 0.96);
     border: 1px solid rgba(80, 80, 170, 0.40);
-    border-radius: 16px;
+    border-radius: 0;
     box-shadow:
         0 20px 60px rgba(0, 0, 0, 0.7),
         0 4px 16px rgba(0, 0, 0, 0.5),
@@ -30,7 +30,7 @@ window {
     background: rgba(255, 255, 255, 0.05);
     color: #e0e0f8;
     border: 1px solid rgba(100, 100, 190, 0.45);
-    border-radius: 10px;
+    border-radius: 0;
     padding: 11px 18px;
     margin-bottom: 12px;
     font-size: 15px;
@@ -39,7 +39,7 @@ window {
 #input:focus {
     border-color: rgba(130, 130, 220, 0.75);
     background: rgba(255, 255, 255, 0.07);
-    box-shadow: 0 0 0 3px rgba(100, 100, 200, 0.15);
+    box-shadow: none;
 }
 
 /* ── Scrollable list ─────────────────────────────────────────────────────── */
@@ -49,7 +49,7 @@ window {
 /* ── App entry ───────────────────────────────────────────────────────────── */
 #entry {
     padding: 8px 14px;
-    border-radius: 10px;
+    border-radius: 0;
     margin: 2px 0;
     background: transparent;
     transition: background 100ms ease;
@@ -67,7 +67,7 @@ window {
 /* ── App icon ────────────────────────────────────────────────────────────── */
 #img {
     margin-right: 14px;
-    border-radius: 6px;
+    border-radius: 0;
 }
 
 /* ── App name ────────────────────────────────────────────────────────────── */
