@@ -249,7 +249,7 @@ class StartMenu(Gtk.Window):
         GtkLayerShell.set_anchor(self, GtkLayerShell.Edge.LEFT, True)
         GtkLayerShell.set_margin(self, GtkLayerShell.Edge.BOTTOM, 0)
         GtkLayerShell.set_margin(self, GtkLayerShell.Edge.LEFT, 0)
-        GtkLayerShell.set_keyboard_mode(self, GtkLayerShell.KeyboardMode.EXCLUSIVE)
+        GtkLayerShell.set_keyboard_mode(self, GtkLayerShell.KeyboardMode.ON_DEMAND)
         GtkLayerShell.set_exclusive_zone(self, 0)
 
         self.set_default_size(560, 580)
@@ -259,8 +259,6 @@ class StartMenu(Gtk.Window):
         self._load_apps()
         self.connect("key-press-event", self._on_key)
         self.connect("realize", self._on_realize)
-        # Delay attaching focus-out so the window has time to receive focus first
-        GLib.timeout_add(300, lambda: self.connect("focus-out-event", self._on_focus_out) or False)
 
     # ---- Window events --------------------------------------
     def _on_realize(self, *_):
@@ -269,16 +267,6 @@ class StartMenu(Gtk.Window):
             self.get_window().set_cursor(cursor)
         except Exception:
             pass
-
-    def _on_focus_out(self, *_):
-        # Don't close immediately — a context menu popup briefly steals focus.
-        # Wait a short moment and only close if no menu is active.
-        GLib.timeout_add(120, self._maybe_close)
-
-    def _maybe_close(self):
-        if not self._menu_active and not self.has_toplevel_focus():
-            self.destroy()
-        return False  # don't repeat
 
     # ---- CSS ------------------------------------------------
     def _load_css(self):
