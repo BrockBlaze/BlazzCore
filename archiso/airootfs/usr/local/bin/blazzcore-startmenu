@@ -244,10 +244,10 @@ class StartMenu(Gtk.Window):
         super().__init__()
 
         GtkLayerShell.init_for_window(self)
-        GtkLayerShell.set_layer(self, GtkLayerShell.Layer.TOP)
+        GtkLayerShell.set_layer(self, GtkLayerShell.Layer.OVERLAY)
         GtkLayerShell.set_anchor(self, GtkLayerShell.Edge.BOTTOM, True)
         GtkLayerShell.set_anchor(self, GtkLayerShell.Edge.LEFT, True)
-        GtkLayerShell.set_margin(self, GtkLayerShell.Edge.BOTTOM, 0)
+        GtkLayerShell.set_margin(self, GtkLayerShell.Edge.BOTTOM, 42)
         GtkLayerShell.set_margin(self, GtkLayerShell.Edge.LEFT, 0)
         GtkLayerShell.set_keyboard_mode(self, GtkLayerShell.KeyboardMode.ON_DEMAND)
         GtkLayerShell.set_exclusive_zone(self, 0)
