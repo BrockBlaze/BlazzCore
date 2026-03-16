@@ -46,12 +46,12 @@ window.inactive.button.max.image.color:         #aaaaaa
 
 # --- Minimize button ---
 window.active.button.iconify.bg:                flat solid
-window.active.button.iconify.bg.color:          #d4ac0d
+window.active.button.iconify.bg.color:          #2980b9
 window.active.button.iconify.image.color:       #ffffff
-window.active.button.iconify.hover.bg.color:    #f1c40f
+window.active.button.iconify.hover.bg.color:    #3498db
 window.active.button.iconify.hover.image.color: #ffffff
 window.inactive.button.iconify.bg:              flat solid
-window.inactive.button.iconify.bg.color:        #4a3f12
+window.inactive.button.iconify.bg.color:        #1a3a4a
 window.inactive.button.iconify.image.color:     #aaaaaa
 
 # --- Dimensions ---

@@ -2,6 +2,8 @@
 
 A minimal, fast, Wayland-first Linux operating system built on Arch Linux by Brock Blazzard
 
+Theme of OS is Blaze, or a flame 🔥
+
 ![BlazzCore](BlazzCore.png)
 
 ---
