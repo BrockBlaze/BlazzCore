@@ -2,14 +2,19 @@
 # BlazzCore — Accent Color Picker
 # Updates window border and title bar tint, then reloads labwc theme
 
-THEMERC="$HOME/.config/labwc/themerc"
 SYSTEM_THEMERC="/usr/share/themes/BlazzCore/openbox-3/themerc"
+# Write to both: ~/.local/share is the standard labwc theme search path;
+# ~/.config/labwc/themerc is the override for labwc 0.7+
+USER_THEMERC="$HOME/.local/share/themes/BlazzCore/openbox-3/themerc"
+CFG_THEMERC="$HOME/.config/labwc/themerc"
 
-# Copy system theme to user dir if not already customised
-if [[ ! -f "$THEMERC" ]]; then
-    mkdir -p "$(dirname "$THEMERC")"
-    cp "$SYSTEM_THEMERC" "$THEMERC"
-fi
+for THEMERC in "$USER_THEMERC" "$CFG_THEMERC"; do
+    if [[ ! -f "$THEMERC" ]]; then
+        mkdir -p "$(dirname "$THEMERC")"
+        cp "$SYSTEM_THEMERC" "$THEMERC"
+    fi
+done
+THEMERC="$USER_THEMERC"
 
 # Open color picker (zenity returns hex like #rrggbb)
 CURRENT=$(grep 'window.active.border.color' "$THEMERC" | awk '{print $NF}')
@@ -44,9 +49,11 @@ TG=$(printf '%02x' $(( G * 20 / 100 )))
 TB=$(printf '%02x' $(( B * 20 / 100 )))
 TITLE_COLOR="#${TR}${TG}${TB}"
 
-# Update themerc
-sed -i "s|^window.active.border.color:.*|window.active.border.color:         $COLOR|" "$THEMERC"
-sed -i "s|^window.active.title.bg.color:.*|window.active.title.bg.color:       $TITLE_COLOR|" "$THEMERC"
+# Update both themerc copies
+for THEMERC in "$USER_THEMERC" "$CFG_THEMERC"; do
+    sed -i "s|^window.active.border.color:.*|window.active.border.color:         $COLOR|" "$THEMERC"
+    sed -i "s|^window.active.title.bg.color:.*|window.active.title.bg.color:       $TITLE_COLOR|" "$THEMERC"
+done
 
 # Point labwc rc.xml at the user theme override
 RCXML="$HOME/.config/labwc/rc.xml"
@@ -54,6 +61,10 @@ if grep -q '<name>BlazzCore</name>' "$RCXML"; then
     # Already using BlazzCore theme — labwc will pick up ~/.config/labwc/themerc automatically
     :
 fi
+
+# Save accent color for other BlazzCore apps (start menu, etc.)
+mkdir -p "$HOME/.config/blazzcore"
+echo "$COLOR" > "$HOME/.config/blazzcore/accent"
 
 # Reload labwc theme live (no full restart needed)
 labwc --reconfigure 2>/dev/null || true

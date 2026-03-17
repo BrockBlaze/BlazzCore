@@ -1,31 +1,62 @@
 #!/usr/bin/env bash
-# BlazzCore wallpaper picker — opens file chooser, sets wallpaper live
+# BlazzCore wallpaper picker — pick an image file or a solid color
 
-IMG=$(zenity --file-selection \
-    --title="Choose Wallpaper" \
-    --file-filter="Images | *.png *.jpg *.jpeg *.webp" \
-    2>/dev/null)
+AUTOSTART="$HOME/.config/labwc/autostart"
 
-if [[ -n "$IMG" ]]; then
-    # Validate the selected file is a readable image
+# Ask: image or color?
+CHOICE=$(zenity --list \
+    --title="Set Wallpaper" \
+    --text="Choose wallpaper type:" \
+    --column="Option" \
+    "Image File" "Solid Color" \
+    --height=220 --width=300 2>/dev/null)
+
+[[ -z "$CHOICE" ]] && exit 0
+
+if [[ "$CHOICE" == "Image File" ]]; then
+    IMG=$(zenity --file-selection \
+        --title="Choose Wallpaper Image" \
+        --file-filter="Images | *.png *.jpg *.jpeg *.webp" \
+        2>/dev/null)
+
+    [[ -z "$IMG" ]] && exit 0
+
     if [[ ! -r "$IMG" ]]; then
         zenity --error --title="Wallpaper Error" --text="Cannot read file:\n$IMG" --width=320 2>/dev/null
         exit 1
     fi
 
-    # Kill existing swaybg and start fresh with new wallpaper
     pkill swaybg 2>/dev/null || true
     swaybg -i "$IMG" -m fill &
 
-    # Persist across reboots — update the WALLPAPER variable in autostart
-    AUTOSTART="$HOME/.config/labwc/autostart"
-    # Escape characters special in sed replacement (& \ |)
-    # Escape characters special in sed replacement strings
     ESCAPED_IMG=$(printf '%s' "$IMG" | sed 's/[&\]/\\&/g; s/|/\\|/g')
     if grep -q '^WALLPAPER=' "$AUTOSTART"; then
         sed -i "s|^WALLPAPER=.*|WALLPAPER=\"$ESCAPED_IMG\"|" "$AUTOSTART"
     else
-        # Fallback: update the swaybg line directly if WALLPAPER var not present
         sed -i "s|swaybg -i .* -m fill|swaybg -i \"$ESCAPED_IMG\" -m fill|" "$AUTOSTART"
+    fi
+
+elif [[ "$CHOICE" == "Solid Color" ]]; then
+    COLOR=$(zenity --color-selection \
+        --title="Choose Wallpaper Color" \
+        2>/dev/null)
+
+    [[ -z "$COLOR" ]] && exit 0
+
+    # Normalize to #rrggbb
+    if [[ "$COLOR" =~ ^rgb\(([0-9]+),([0-9]+),([0-9]+)\)$ ]]; then
+        COLOR=$(printf '#%02x%02x%02x' "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" "${BASH_REMATCH[3]}")
+    fi
+
+    pkill swaybg 2>/dev/null || true
+    swaybg -c "$COLOR" &
+
+    # Persist: update autostart to use solid color
+    if grep -q '^WALLPAPER=' "$AUTOSTART"; then
+        sed -i "s|^WALLPAPER=.*|WALLPAPER_COLOR=\"$COLOR\"|" "$AUTOSTART"
+    fi
+    # Update/add the swaybg line to use color mode
+    if grep -q 'swaybg' "$AUTOSTART"; then
+        sed -i "s|swaybg .*|swaybg -c \"$COLOR\" \&|" "$AUTOSTART"
     fi
 fi
