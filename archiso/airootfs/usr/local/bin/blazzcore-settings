@@ -392,11 +392,15 @@ def page_appearance():
     b.pack_start(page_title('Appearance', 'Colors, wallpaper, theme, and icons'), False, False, 0)
     st = status_label()
 
-    THEMERC     = os.path.expanduser('~/.config/labwc/themerc')
-    SYS_THEMERC = '/usr/share/themes/BlazzCore/openbox-3/themerc'
+    SYS_THEMERC  = '/usr/share/themes/BlazzCore/openbox-3/themerc'
+    # Write to both paths: ~/.local/share is the standard theme search path;
+    # ~/.config/labwc/themerc is the override path for labwc 0.7+
+    USER_THEMERC = os.path.expanduser('~/.local/share/themes/BlazzCore/openbox-3/themerc')
+    CFG_THEMERC  = os.path.expanduser('~/.config/labwc/themerc')
 
-    cur_hex = (themerc_get(THEMERC, 'window.active.border.color') or
-               themerc_get(SYS_THEMERC, 'window.active.border.color') or '#4a4a8a')
+    cur_hex = (themerc_get(USER_THEMERC, 'window.active.border.color') or
+               themerc_get(CFG_THEMERC,  'window.active.border.color') or
+               themerc_get(SYS_THEMERC,  'window.active.border.color') or '#4a4a8a')
     rgba = Gdk.RGBA()
     if not rgba.parse(cur_hex):
         rgba.parse('#4a4a8a')
@@ -410,20 +414,27 @@ def page_appearance():
         r, g, bl = int(c.red * 255), int(c.green * 255), int(c.blue * 255)
         accent = f'#{r:02x}{g:02x}{bl:02x}'
         title  = f'#{int(r*.20):02x}{int(g*.20):02x}{int(bl*.20):02x}'
-        if not os.path.exists(THEMERC):
-            try:
-                shutil.copy(SYS_THEMERC, THEMERC)
-            except Exception:
-                pass
-        themerc_set(THEMERC, 'window.active.border.color',   accent)
-        themerc_set(THEMERC, 'window.active.title.bg.color', title)
+        for path in (USER_THEMERC, CFG_THEMERC):
+            if not os.path.exists(path):
+                try:
+                    os.makedirs(os.path.dirname(path), exist_ok=True)
+                    shutil.copy(SYS_THEMERC, path)
+                except Exception:
+                    pass
+            themerc_set(path, 'window.active.border.color',   accent)
+            themerc_set(path, 'window.active.title.bg.color', title)
         try:
             subprocess.Popen(['labwc', '--reconfigure'])
         except Exception:
             try:
-                subprocess.run(['pkill', '-HUP', 'labwc'], capture_output=True)
+                subprocess.run(['pkill', '-SIGUSR1', 'labwc'], capture_output=True)
             except Exception:
                 pass
+        # Save accent for other BlazzCore apps (start menu, etc.)
+        accent_dir = os.path.expanduser('~/.config/blazzcore')
+        os.makedirs(accent_dir, exist_ok=True)
+        with open(os.path.join(accent_dir, 'accent'), 'w') as af:
+            af.write(accent + '\n')
         st.set_text(f'✓  Accent set to {accent}.')
         GLib.timeout_add(2500, lambda: st.set_text('') or False)
 
@@ -432,8 +443,43 @@ def page_appearance():
     c1 = card()
     c1.pack_start(row('Accent Color', 'Window border and highlight color', color_btn), False, False, 0)
     c1.pack_start(hsep(), False, False, 0)
-    c1.pack_start(row('Wallpaper', 'Set the desktop background image',
-        btn('Choose', lambda: run_bg('blazzcore-wallpaper', st))), False, False, 0)
+
+    # Wallpaper: image picker + color gradient generator
+    wp_box = Gtk.Box(spacing=8)
+    wp_img_btn = btn('Image', lambda: run_bg('blazzcore-wallpaper', st))
+    wp_box.pack_start(wp_img_btn, False, False, 0)
+
+    wp_color_btn = Gtk.ColorButton()
+    wp_color_btn.set_use_alpha(False)
+    wp_color_btn.set_title('Choose Wallpaper Color')
+    wp_rgba = Gdk.RGBA()
+    wp_rgba.parse('#0a1e50')
+    wp_color_btn.set_rgba(wp_rgba)
+
+    def _on_wallpaper_color(button):
+        c = button.get_rgba()
+        r, g, bl = int(c.red * 255), int(c.green * 255), int(c.blue * 255)
+        hex_c = f'#{r:02x}{g:02x}{bl:02x}'
+        st.set_text('Generating wallpaper...')
+        def _gen():
+            try:
+                subprocess.run([
+                    '/usr/local/bin/blazzcore-gen-wallpapers', '--color', hex_c
+                ], capture_output=True, timeout=60)
+                wp_path = os.path.expanduser('~/.local/share/backgrounds/blazzcore/custom.png')
+                subprocess.Popen(['pkill', 'swaybg'])
+                import time; time.sleep(0.3)
+                subprocess.Popen(['swaybg', '-i', wp_path, '-m', 'fill'])
+                GLib.idle_add(lambda: st.set_text(f'✓  Wallpaper set to {hex_c} gradient.') or False)
+                GLib.timeout_add(2500, lambda: st.set_text('') or False)
+            except Exception as e:
+                GLib.idle_add(lambda: st.set_text(f'Error: {e}') or False)
+        threading.Thread(target=_gen, daemon=True).start()
+
+    wp_color_btn.connect('color-set', _on_wallpaper_color)
+    wp_box.pack_start(wp_color_btn, False, False, 0)
+
+    c1.pack_start(row('Wallpaper', 'Pick an image or generate a color gradient', wp_box), False, False, 0)
     b.pack_start(c1, False, False, 0)
 
     # GTK theme / icon / cursor — inline, no nwg-look

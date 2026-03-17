@@ -8,6 +8,10 @@ Resolution priority:
   2. $WALLPAPER_RES environment variable
   3. wlr-randr/wdisplays detection
   4. Fallback: 1920x1080
+
+Usage:
+  blazzcore-gen-wallpapers [WxH]          — generate default wallpapers
+  blazzcore-gen-wallpapers --color #hex   — generate a custom gradient from a color
 """
 import struct, zlib, math, os, re, subprocess, sys
 
@@ -26,6 +30,32 @@ def detect_resolution():
     except Exception:
         pass
     return 1920, 1080
+
+# --- Custom color mode: --color #rrggbb ---
+if '--color' in sys.argv:
+    idx = sys.argv.index('--color')
+    hex_color = sys.argv[idx + 1] if idx + 1 < len(sys.argv) else '#0a1e50'
+    if not re.match(r'^#[0-9a-fA-F]{6}$', hex_color):
+        print(f'Invalid color: {hex_color}'); sys.exit(1)
+    br, bg, bb = int(hex_color[1:3], 16), int(hex_color[3:5], 16), int(hex_color[5:7], 16)
+    W, H = detect_resolution()
+    USER_OUT = os.path.expanduser('~/.local/share/backgrounds/blazzcore')
+    os.makedirs(USER_OUT, exist_ok=True)
+    print(f'Generating custom gradient from {hex_color} at {W}x{H}')
+    pixels = []
+    for y in range(H):
+        for x in range(W):
+            t = y / H
+            r = int(br * 0.04 + t * br * 0.35)
+            g = int(bg * 0.04 + t * bg * 0.35)
+            b = int(bb * 0.04 + t * bb * 0.55)
+            dx = (x / W - 0.5) * 2
+            dy = (y / H - 0.5) * 2
+            v = max(0.0, 1.0 - (dx*dx + dy*dy) * 0.3)
+            pixels.append((min(255, int(r*v)), min(255, int(g*v)), min(255, int(b*v))))
+    write_png(f'{USER_OUT}/custom.png', pixels)
+    print(f'Custom wallpaper saved to {USER_OUT}/custom.png')
+    sys.exit(0)
 
 # Resolution from CLI arg, env var, or detection
 if len(sys.argv) > 1 and 'x' in sys.argv[1]:
