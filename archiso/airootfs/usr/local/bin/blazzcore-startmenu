@@ -52,7 +52,7 @@ BUILTIN = [
 ]
 
 # ---- Stylesheet --------------------------------------------
-CSS = b"""
+CSS = """
 window {
     background-color: #0c0c1a;
     border: 1px solid rgba(80, 80, 160, 0.45);
@@ -279,7 +279,7 @@ class StartMenu(Gtk.Window):
     # ---- CSS ------------------------------------------------
     def _load_css(self):
         p = Gtk.CssProvider()
-        p.load_from_data(CSS)
+        p.load_from_data(CSS.encode())
         Gtk.StyleContext.add_provider_for_screen(
             Gdk.Screen.get_default(), p,
             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
