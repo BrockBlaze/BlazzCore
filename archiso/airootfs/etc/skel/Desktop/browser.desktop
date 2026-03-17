@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Browser
+Comment=Open the web browser
+Exec=blazzcore-browser
+Icon=web-browser
+Type=Application
+Terminal=false

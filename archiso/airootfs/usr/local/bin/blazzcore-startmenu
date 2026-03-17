@@ -30,7 +30,7 @@ def _load_accent():
             return c
     except Exception:
         pass
-    return '#6060b8'
+    return '#4a9eff'
 
 def _accent_rgba(alpha=0.7):
     c = _load_accent()
@@ -94,7 +94,7 @@ window {
     font-size: 14px;
     caret-color: #8888cc;
 }
-#search-entry:focus { border-color: #6060b8; }
+#search-entry:focus { border-color: __ACCENT__; }
 
 /* Section headers */
 .col-header {

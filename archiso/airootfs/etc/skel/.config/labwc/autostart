@@ -36,6 +36,9 @@ for _OUT in $(wlr-randr 2>/dev/null | awk '/^[^ ]/{print $1}'); do
 done
 unset _OUT
 
+# Desktop icons (trash, mounted drives, shortcuts)
+pcmanfm --desktop --profile default &
+
 # Status bar
 waybar &
 
@@ -61,8 +64,8 @@ WOB_PIPE=/tmp/wob.pipe
 [ -p "$WOB_PIPE" ] || mkfifo "$WOB_PIPE" || { echo "autostart: failed to create wob pipe" >&2; }
 wob \
     --background-color "#0e0e1add" \
-    --border-color "#4a4a8aff" \
-    --bar-color "#8080c8ff" \
+    --border-color "#4a9effff" \
+    --bar-color "#4a9effff" \
     --overflow-background-color "#1a0a0add" \
     --overflow-bar-color "#c0392bff" \
     --overflow-border-color "#c0392bff" \

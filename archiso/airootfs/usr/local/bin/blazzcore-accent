@@ -20,7 +20,7 @@ THEMERC="$USER_THEMERC"
 CURRENT=$(grep 'window.active.border.color' "$THEMERC" | awk '{print $NF}')
 COLOR=$(zenity --color-selection \
     --title="Choose Accent Color" \
-    --color="${CURRENT:-#4a4a8a}" \
+    --color="${CURRENT:-#4a9eff}" \
     2>/dev/null)
 
 [[ -z "$COLOR" ]] && exit 0

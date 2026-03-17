@@ -13,7 +13,7 @@ window.inactive.title.bg.color:     #111118
 window.inactive.label.text.color:   #555568
 
 # --- Borders ---
-window.active.border.color:         #4a4a8a
+window.active.border.color:         #4a9eff
 window.inactive.border.color:       #22222a
 border.width:                       1
 

@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Files
+Comment=Open the file manager
+Exec=thunar
+Icon=system-file-manager
+Type=Application
+Terminal=false
