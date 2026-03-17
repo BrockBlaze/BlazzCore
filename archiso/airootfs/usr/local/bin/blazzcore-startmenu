@@ -71,7 +71,7 @@ BUILTIN = [
 # ---- Stylesheet --------------------------------------------
 CSS = """
 window {
-    background-color: #0c0c1a;
+    background-color: #1e1e1e;
     border-top: 1px solid __ACCENT__;
     border-right: 1px solid __ACCENT__;
     border-bottom: none;
@@ -82,23 +82,23 @@ window {
 /* Search bar */
 #search-row {
     padding: 14px 12px 10px 12px;
-    background-color: #0c0c1a;
-    border-bottom: 1px solid rgba(55, 55, 110, 0.4);
+    background-color: #1e1e1e;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 #search-entry {
-    background-color: #181828;
-    color: #dcdcf8;
-    border: 1px solid rgba(80, 80, 150, 0.55);
+    background-color: #2a2a2a;
+    color: #e0e0e0;
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 0;
     padding: 8px 14px;
     font-size: 14px;
-    caret-color: #8888cc;
+    caret-color: __ACCENT__;
 }
 #search-entry:focus { border-color: __ACCENT__; }
 
 /* Section headers */
 .col-header {
-    color: rgba(100, 100, 160, 0.9);
+    color: __ACCENT__;
     font-size: 10px;
     font-weight: bold;
     padding: 10px 14px 5px 14px;
@@ -109,7 +109,7 @@ window {
 
 /* ── Left: app list ─────────────────────────── */
 #apps-panel {
-    background-color: #0c0c1a;
+    background-color: #1e1e1e;
     min-width: 310px;
     padding: 0 0 8px 0;
 }
@@ -127,25 +127,25 @@ list row {
     margin: 1px 6px;
     min-height: 0;
 }
-#apps-list row:hover    { background-color: rgba(255, 255, 255, 0.055); }
-#apps-list row:selected { background-color: rgba(75, 75, 170, 0.38); }
+#apps-list row:hover    { background-color: rgba(255, 255, 255, 0.06); }
+#apps-list row:selected { background-color: __ACCENT_SEL__; }
 #apps-list row:selected .app-label { color: #ffffff; }
 
 .app-box   { padding: 5px 8px; }
-.app-label { color: #c2c2e2; font-size: 13px; padding-left: 10px; }
+.app-label { color: #cccccc; font-size: 13px; padding-left: 10px; }
 
 /* ── Divider ────────────────────────────────── */
 #col-sep {
-    background-color: rgba(60, 60, 120, 0.35);
+    background-color: rgba(255, 255, 255, 0.08);
     min-width: 1px;
 }
 
 /* ── Right: quick access ────────────────────── */
 #shortcuts-panel {
-    background-color: #0a0a16;
+    background-color: #1a1a1a;
     min-width: 196px;
     padding: 0 0 8px 0;
-    border-left: 1px solid rgba(55, 55, 110, 0.3);
+    border-left: 1px solid rgba(255, 255, 255, 0.06);
 }
 .sc-header-box { padding: 0 10px 2px 10px; }
 
@@ -158,17 +158,17 @@ list row {
     padding: 6px 10px;
     margin: 1px 6px;
 }
-.shortcut-btn:hover  { background-color: rgba(255, 255, 255, 0.065); }
-.shortcut-btn:active { background-color: rgba(75, 75, 170, 0.35); }
+.shortcut-btn:hover  { background-color: rgba(255, 255, 255, 0.07); }
+.shortcut-btn:active { background-color: __ACCENT_SEL__; }
 .shortcut-label {
-    color: #b4b4d4;
+    color: #b0b0b0;
     font-size: 13px;
     padding-left: 10px;
 }
-.shortcut-btn:hover .shortcut-label { color: #dcdcf8; }
+.shortcut-btn:hover .shortcut-label { color: #e0e0e0; }
 
 /* User-pinned indicator */
-.pinned-dot { color: rgba(110, 110, 180, 0.55); font-size: 8px; padding-left: 4px; }
+.pinned-dot { color: rgba(255, 255, 255, 0.25); font-size: 8px; padding-left: 4px; }
 
 /* Power button */
 .power-btn {
@@ -179,29 +179,29 @@ list row {
     padding: 6px 10px;
     margin: 4px 6px 8px 6px;
 }
-.power-btn:hover { background-color: rgba(150, 25, 25, 0.28); }
-.power-btn .shortcut-label { color: #a84444; }
-.power-btn:hover .shortcut-label { color: #dd6666; }
+.power-btn:hover { background-color: rgba(200, 50, 50, 0.2); }
+.power-btn .shortcut-label { color: #cc4444; }
+.power-btn:hover .shortcut-label { color: #ee5555; }
 
 /* Context menus */
 menu, menuitem {
-    background-color: #111122;
-    color: #c8c8e8;
-    border: 1px solid rgba(70, 70, 150, 0.5);
+    background-color: #252525;
+    color: #d0d0d0;
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 0;
 }
-menuitem:hover { background-color: rgba(75, 75, 170, 0.38); color: #ffffff; }
+menuitem:hover { background-color: __ACCENT_SEL__; color: #ffffff; }
 menuitem label { padding: 4px 12px; }
 
 /* Scrollbar */
 scrollbar { background: transparent; min-width: 5px; }
 scrollbar slider {
-    background-color: rgba(75, 75, 135, 0.4);
+    background-color: rgba(255, 255, 255, 0.12);
     border-radius: 0;
     min-width: 5px;
     min-height: 24px;
 }
-scrollbar slider:hover { background-color: rgba(95, 95, 165, 0.55); }
+scrollbar slider:hover { background-color: rgba(255, 255, 255, 0.2); }
 """
 
 # ---- Pinned Quick Access helpers ---------------------------
@@ -305,6 +305,7 @@ class StartMenu(Gtk.Window):
     def _load_css(self):
         p = Gtk.CssProvider()
         css = CSS.replace('__ACCENT__', _accent_rgba(0.75))
+        css = css.replace('__ACCENT_SEL__', _accent_rgba(0.3))
         p.load_from_data(css.encode())
         Gtk.StyleContext.add_provider_for_screen(
             Gdk.Screen.get_default(), p,
