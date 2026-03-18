@@ -1,0 +1,58 @@
+# BlazzCore GRUB Theme — dark grey + blue accent
+
+desktop-color: "#1a1a1a"
+title-text: "BlazzCore"
+title-color: "#4a9eff"
+title-font: "DejaVu Sans Bold 16"
+message-color: "#808080"
+message-font: "DejaVu Sans 12"
+terminal-font: "DejaVu Sans Mono 12"
+
++ boot_menu {
+    left = 25%
+    top = 30%
+    width = 50%
+    height = 50%
+    item_color = "#b0b0b0"
+    selected_item_color = "#ffffff"
+    item_height = 36
+    item_padding = 12
+    item_spacing = 4
+    item_font = "DejaVu Sans 14"
+    selected_item_font = "DejaVu Sans Bold 14"
+    selected_item_pixmap_style = "select_*"
+    scrollbar = true
+    scrollbar_width = 4
+    scrollbar_thumb_color = "#4a9eff"
+    scrollbar_frame_color = "#333333"
+}
+
++ label {
+    left = 25%
+    top = 85%
+    width = 50%
+    align = "center"
+    color = "#505050"
+    font = "DejaVu Sans 10"
+    text = "Use arrow keys to select, Enter to boot"
+}
+
++ label {
+    left = 25%
+    top = 22%
+    width = 50%
+    align = "center"
+    color = "#4a9eff"
+    font = "DejaVu Sans Bold 18"
+    text = "BlazzCore"
+}
+
++ label {
+    left = 25%
+    top = 26%
+    width = 50%
+    align = "center"
+    color = "#606060"
+    font = "DejaVu Sans 11"
+    text = "A minimal, fast Wayland desktop"
+}

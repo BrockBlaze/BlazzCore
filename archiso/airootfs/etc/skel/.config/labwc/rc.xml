@@ -12,7 +12,7 @@
     <name>BlazzCore</name>
     <cornerRadius>0</cornerRadius>
     <cursor>
-      <theme>Vanilla-DMZ</theme>
+      <theme>Adwaita</theme>
       <size>24</size>
     </cursor>
     <font place="ActiveWindow">

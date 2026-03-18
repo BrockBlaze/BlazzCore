@@ -9,8 +9,8 @@ LOG=/tmp/blazzcore-startmenu.log
 # Ensure Wayland environment is set (waybar inherits these, but be explicit)
 export GDK_BACKEND="${GDK_BACKEND:-wayland}"
 export WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-wayland-0}"
-export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/1000}"
-export DBUS_SESSION_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS:-unix:path=/run/user/1000/bus}"
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+export DBUS_SESSION_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS:-unix:path=/run/user/$(id -u)/bus}"
 
 _log() {
     local msg="[$(date +%H:%M:%S)] $*"

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Volume Mixer
+Comment=Audio device and volume settings
+Exec=pavucontrol
+Icon=audio-volume-high
+Type=Application
+Categories=AudioVideo;Audio;Settings;
+Keywords=audio;volume;mixer;sound;speaker;microphone;

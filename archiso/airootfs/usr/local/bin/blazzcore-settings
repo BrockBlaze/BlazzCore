@@ -12,98 +12,98 @@ NL_CONF   = f'{HOME}/.config/blazzcore/nightlight.conf'
 
 # ── CSS ───────────────────────────────────────────────────────────────────────
 CSS = b"""
-window { background-color: #12121e; color: #e0e0f0; }
+window { background-color: #1e1e1e; color: #e0e0e0; }
 
 stacksidebar {
-    background-color: #0d0d1a;
+    background-color: #191919;
     min-width: 180px;
-    border-right: 1px solid #222232;
+    border-right: 1px solid #333333;
 }
 stacksidebar list { background: transparent; }
 stacksidebar list row {
     padding: 10px 20px;
-    color: #9090b8;
+    color: #909090;
     border-radius: 0;
     border-left: 3px solid transparent;
 }
 stacksidebar list row:hover:not(:selected) {
-    background: #16162a;
-    color: #c0c0e0;
+    background: #252525;
+    color: #c0c0c0;
 }
 stacksidebar list row:selected {
-    background: #1c1c30;
+    background: #2a2a2a;
     color: #ffffff;
-    border-left: 3px solid #6060b8;
+    border-left: 3px solid #4a9eff;
 }
 
 .page-title {
     font-size: 19px;
     font-weight: bold;
-    color: #e8e8ff;
+    color: #f0f0f0;
     margin-bottom: 2px;
 }
-.subtitle { color: #6868a0; font-size: 12px; }
-.dim      { color: #6868a0; font-size: 12px; }
+.subtitle { color: #707070; font-size: 12px; }
+.dim      { color: #707070; font-size: 12px; }
 
 .card {
-    background-color: #181828;
-    border: 1px solid #252540;
+    background-color: #252525;
+    border: 1px solid #333333;
     border-radius: 0;
     padding: 14px 18px;
     margin-bottom: 12px;
 }
 
 button {
-    background: #222236;
-    color: #d0d0f0;
-    border: 1px solid #303050;
+    background: #2a2a2a;
+    color: #d0d0d0;
+    border: 1px solid #3a3a3a;
     border-radius: 0;
     padding: 5px 14px;
     min-height: 28px;
 }
-button:hover  { background: #2c2c46; }
-button.action { background: #46468a; color: #fff; border-color: #5555a8; }
-button.action:hover { background: #5252a0; }
+button:hover  { background: #353535; }
+button.action { background: #4a9eff; color: #fff; border-color: #4a9eff; }
+button.action:hover { background: #5aabff; }
 button.destructive { background: #6a2020; color: #fff; border-color: #8a3030; }
 button.destructive:hover { background: #7a2828; }
 
 entry {
-    background: #181828;
-    color: #e0e0f0;
-    border: 1px solid #303050;
+    background: #2a2a2a;
+    color: #e0e0e0;
+    border: 1px solid #3a3a3a;
     border-radius: 0;
     padding: 4px 8px;
 }
-entry:focus { border-color: #6060b8; }
+entry:focus { border-color: #4a9eff; }
 
-spinbutton { background: #181828; color: #e0e0f0; border: 1px solid #303050; border-radius: 0; }
+spinbutton { background: #2a2a2a; color: #e0e0e0; border: 1px solid #3a3a3a; border-radius: 0; }
 
-scale trough    { background: #252540; min-height: 4px; }
-scale highlight { background: #50509a; }
+scale trough    { background: #333333; min-height: 4px; }
+scale highlight { background: #4a9eff; }
 
-switch slider      { background: #444460; border-radius: 0; }
-switch             { background: #252540; border-radius: 0; min-width: 46px; min-height: 26px; }
-switch:checked     { background: #46468a; }
+switch slider      { background: #555555; border-radius: 0; }
+switch             { background: #333333; border-radius: 0; min-width: 46px; min-height: 26px; }
+switch:checked     { background: #4a9eff; }
 
 listbox             { background: transparent; }
-listbox row         { background: #181828; border-bottom: 1px solid #1e1e38; padding: 7px 12px; }
-listbox row:hover   { background: #20203a; }
-listbox row:selected { background: #26264a; }
+listbox row         { background: #252525; border-bottom: 1px solid #2e2e2e; padding: 7px 12px; }
+listbox row:hover   { background: #2e2e2e; }
+listbox row:selected { background: #3a3a3a; }
 
 searchentry {
-    background: #181828;
-    color: #e0e0f0;
-    border: 1px solid #303050;
+    background: #2a2a2a;
+    color: #e0e0e0;
+    border: 1px solid #3a3a3a;
     border-radius: 0;
     padding: 5px 10px;
 }
 
 combobox button { border-radius: 0; }
 
-separator { background-color: #222238; min-height: 1px; }
-label { color: #e0e0f0; }
+separator { background-color: #333333; min-height: 1px; }
+label { color: #e0e0e0; }
 
-dialog { background: #12121e; }
+dialog { background: #1e1e1e; }
 dialog .dialog-action-area button { min-width: 80px; }
 """
 
@@ -1284,6 +1284,226 @@ def page_software():
     b.pack_start(st, False, False, 0)
     return s
 
+def page_mouse():
+    s, b = page_box()
+    b.pack_start(page_title('Mouse & Touchpad', 'Pointer speed and scrolling behavior'), False, False, 0)
+    st = status_label()
+
+    LIBINPUT_CONF = '/etc/libinput-gestures.conf'
+    LABWC_ENV = os.path.expanduser('~/.config/labwc/environment')
+
+    c1 = card()
+
+    # Pointer speed
+    speed_scale = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, -1.0, 1.0, 0.1)
+    cur_speed = _shell("gsettings get org.gnome.desktop.peripherals.mouse speed 2>/dev/null").strip() or '0.0'
+    try:
+        speed_scale.set_value(float(cur_speed))
+    except ValueError:
+        speed_scale.set_value(0.0)
+    speed_scale.set_draw_value(True)
+    speed_scale.set_size_request(250, -1)
+
+    def on_speed(scale):
+        v = round(scale.get_value(), 2)
+        _gsettings_set('org.gnome.desktop.peripherals.mouse', 'speed', str(v))
+        st.set_text(f'Pointer speed: {v}')
+        GLib.timeout_add(2000, lambda: st.set_text('') or False)
+
+    speed_scale.connect('value-changed', on_speed)
+    c1.pack_start(row('Pointer Speed', 'Adjust mouse cursor speed', speed_scale), False, False, 0)
+    c1.pack_start(hsep(), False, False, 0)
+
+    # Natural scrolling
+    nat_sw = Gtk.Switch()
+    cur_nat = 'true' in _shell("gsettings get org.gnome.desktop.peripherals.mouse natural-scroll 2>/dev/null").lower()
+    nat_sw.set_active(cur_nat)
+
+    def on_nat(sw, _):
+        v = 'true' if sw.get_active() else 'false'
+        _gsettings_set('org.gnome.desktop.peripherals.mouse', 'natural-scroll', v)
+        st.set_text(f'Natural scrolling: {v}')
+        GLib.timeout_add(2000, lambda: st.set_text('') or False)
+
+    nat_sw.connect('notify::active', on_nat)
+    c1.pack_start(row('Natural Scrolling', 'Reverse scroll direction (like a touchpad)', nat_sw), False, False, 0)
+    c1.pack_start(hsep(), False, False, 0)
+
+    # Cursor size
+    cur_size = _gsettings_get('org.gnome.desktop.interface', 'cursor-size', '24')
+    size_combo = themed_combo(['16', '24', '32', '48', '64'], cur_size,
+        lambda v: (_gsettings_set('org.gnome.desktop.interface', 'cursor-size', v),
+                   st.set_text(f'✓  Cursor size: {v}px (may need re-login)'),
+                   GLib.timeout_add(2500, lambda: st.set_text('') or False)))
+    c1.pack_start(row('Cursor Size', 'Size of the mouse pointer in pixels', size_combo), False, False, 0)
+
+    b.pack_start(c1, False, False, 0)
+    b.pack_start(st, False, False, 0)
+    return s
+
+def page_startup():
+    s, b = page_box()
+    b.pack_start(page_title('Startup Programs', 'Manage applications that run on login'), False, False, 0)
+    st = status_label()
+
+    autostart_path = os.path.expanduser('~/.config/labwc/autostart')
+    user_autostart = os.path.expanduser('~/.config/blazzcore/autostart.d')
+    os.makedirs(user_autostart, exist_ok=True)
+
+    programs_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+
+    def get_user_entries():
+        entries = []
+        for f in sorted(os.listdir(user_autostart)):
+            if f.endswith('.sh'):
+                path = os.path.join(user_autostart, f)
+                try:
+                    cmd = open(path).read().strip().split('\n')[-1]
+                    enabled = os.access(path, os.X_OK)
+                    entries.append({'file': f, 'path': path, 'cmd': cmd, 'enabled': enabled})
+                except Exception:
+                    pass
+        return entries
+
+    def refresh_list():
+        for child in programs_box.get_children():
+            programs_box.remove(child)
+        entries = get_user_entries()
+        if not entries:
+            lbl = Gtk.Label(label='No custom startup programs. Click "Add" to create one.', xalign=0)
+            lbl.get_style_context().add_class('dim')
+            programs_box.pack_start(lbl, False, False, 0)
+        for entry in entries:
+            hb = Gtk.Box(spacing=8)
+            hb.set_margin_top(2); hb.set_margin_bottom(2)
+            sw = Gtk.Switch()
+            sw.set_active(entry['enabled'])
+            sw.connect('notify::active', lambda sw, _, p=entry['path']: (
+                os.chmod(p, 0o755) if sw.get_active() else os.chmod(p, 0o644),
+            ))
+            lbl = Gtk.Label(label=entry['cmd'], xalign=0)
+            lbl.set_ellipsize(3)
+            rm_btn = btn('Remove', (lambda p=entry['path']: lambda: (
+                os.remove(p), refresh_list(),
+                st.set_text('Removed.'),
+                GLib.timeout_add(2000, lambda: st.set_text('') or False)
+            ))(), 'destructive')
+            hb.pack_start(sw, False, False, 0)
+            hb.pack_start(lbl, True, True, 0)
+            hb.pack_end(rm_btn, False, False, 0)
+            programs_box.pack_start(hb, False, False, 0)
+        programs_box.show_all()
+
+    def add_program():
+        dialog = Gtk.Dialog(title='Add Startup Program', transient_for=s.get_toplevel(), flags=0)
+        dialog.add_buttons('Add', Gtk.ResponseType.OK, 'Cancel', Gtk.ResponseType.CANCEL)
+        area = dialog.get_content_area()
+        area.set_margin_start(20); area.set_margin_end(20)
+        area.set_margin_top(16); area.set_margin_bottom(8); area.set_spacing(10)
+        area.pack_start(Gtk.Label(label='Command to run at login:', xalign=0), False, False, 0)
+        entry = Gtk.Entry()
+        entry.set_placeholder_text('e.g. /usr/bin/my-app --flag')
+        area.pack_start(entry, False, False, 0)
+        area.show_all()
+        resp = dialog.run()
+        cmd = entry.get_text().strip()
+        dialog.destroy()
+        if resp != Gtk.ResponseType.OK or not cmd:
+            return
+        name = re.sub(r'[^a-zA-Z0-9_-]', '_', cmd.split()[0].split('/')[-1])
+        path = os.path.join(user_autostart, f'{name}.sh')
+        with open(path, 'w') as f:
+            f.write(f'#!/bin/bash\n{cmd} &\n')
+        os.chmod(path, 0o755)
+        refresh_list()
+        st.set_text(f'✓  Added: {cmd}')
+        GLib.timeout_add(2500, lambda: st.set_text('') or False)
+
+    c1 = card()
+    hdr = Gtk.Box(spacing=8)
+    hdr.pack_start(Gtk.Label(label='Custom Startup Programs', xalign=0), True, True, 0)
+    hdr.pack_end(btn('Add', add_program), False, False, 0)
+    c1.pack_start(hdr, False, False, 0)
+    c1.pack_start(programs_box, False, False, 0)
+    b.pack_start(c1, False, False, 0)
+
+    # Info card about autostart.d
+    c2 = card()
+    info = Gtk.Label(xalign=0)
+    info.set_markup(
+        '<small>Scripts are stored in <b>~/.config/blazzcore/autostart.d/</b>\n'
+        'They are sourced by the session autostart on login.\n'
+        'Toggle the switch to enable/disable without removing.</small>')
+    info.get_style_context().add_class('dim')
+    c2.pack_start(info, False, False, 0)
+    b.pack_start(c2, False, False, 0)
+
+    b.pack_start(st, False, False, 0)
+    refresh_list()
+    return s
+
+def page_shortcuts():
+    s, b = page_box()
+    b.pack_start(page_title('Keyboard Shortcuts', 'Default keybindings reference'), False, False, 0)
+
+    shortcuts = [
+        ('General', [
+            ('Super + Space', 'Open Start Menu'),
+            ('Super + D', 'Open Start Menu (alt)'),
+            ('Super + Return', 'Open Terminal'),
+            ('Super + E', 'Open File Manager'),
+            ('Super + L', 'Lock Screen'),
+            ('Super + V', 'Clipboard History'),
+            ('Alt + F4', 'Close Window'),
+            ('Alt + F11', 'Toggle Fullscreen'),
+        ]),
+        ('Window Management', [
+            ('Super + Left', 'Snap Window Left'),
+            ('Super + Right', 'Snap Window Right'),
+            ('Super + Up', 'Maximize Window'),
+            ('Super + Down', 'Unmaximize / Restore'),
+            ('Alt + Tab', 'Switch Windows'),
+            ('Super + Tab', 'Switch Windows (alt)'),
+        ]),
+        ('Workspaces', [
+            ('Super + 1–5', 'Switch to Workspace'),
+            ('Super + Shift + 1–5', 'Move Window to Workspace'),
+            ('Super + Scroll', 'Cycle Workspaces'),
+        ]),
+        ('Screenshots', [
+            ('Print', 'Screenshot Full Screen'),
+            ('Shift + Print', 'Screenshot Area'),
+            ('Ctrl + Print', 'Screenshot to Clipboard'),
+            ('Super + Shift + R', 'Screen Recording'),
+        ]),
+        ('Media', [
+            ('Volume Up/Down', 'Adjust Volume'),
+            ('Volume Mute', 'Toggle Mute'),
+            ('Brightness Up/Down', 'Adjust Brightness'),
+        ]),
+    ]
+
+    for section, binds in shortcuts:
+        c = card()
+        sec_lbl = Gtk.Label(label=section, xalign=0)
+        sec_lbl.set_markup(f'<b>{section}</b>')
+        c.pack_start(sec_lbl, False, False, 2)
+        for i, (key, action) in enumerate(binds):
+            hb = Gtk.Box(spacing=8)
+            k = Gtk.Label(label=key, xalign=0)
+            k.set_size_request(200, -1)
+            k.set_markup(f'<b>{key}</b>')
+            a = Gtk.Label(label=action, xalign=0)
+            a.get_style_context().add_class('dim')
+            hb.pack_start(k, False, False, 0)
+            hb.pack_start(a, True, True, 0)
+            c.pack_start(hb, False, False, 1)
+            if i < len(binds) - 1:
+                c.pack_start(hsep(), False, False, 0)
+        b.pack_start(c, False, False, 0)
+
+    return s
+
 def page_about():
     s, b = page_box()
     b.pack_start(page_title('About BlazzCore'), False, False, 0)
@@ -1354,6 +1574,9 @@ class SettingsApp(Gtk.Window):
             ('network',    '  Network',      page_network),
             ('nightlight', '  Night Light',  page_nightlight),
             ('keyboard',   '  Keyboard',     page_keyboard),
+            ('mouse',      '  Mouse',        page_mouse),
+            ('shortcuts',  '  Shortcuts',    page_shortcuts),
+            ('startup',    '  Startup Apps', page_startup),
             ('power',      '  Power',        page_power),
             ('datetime',   '  Date & Time',  page_datetime),
             ('updates',    '  Updates',      page_updates),

@@ -23,7 +23,7 @@ export XCURSOR_SIZE=24
 
 # Wallpaper (fall back to solid color if image is missing)
 # blazzcore-wallpaper updates the WALLPAPER= line below to persist changes
-WALLPAPER=/usr/share/backgrounds/blazzcore/stars.jpg
+WALLPAPER=/usr/share/backgrounds/blazzcore/default.png
 if [[ -f "$WALLPAPER" ]]; then
     swaybg -i "$WALLPAPER" -m fill &
 else
@@ -39,8 +39,8 @@ unset _OUT
 # Desktop icons (trash, mounted drives, shortcuts)
 pcmanfm --desktop --profile default &
 
-# Status bar
-waybar &
+# Status bar (slight delay lets PipeWire register before waybar's pulseaudio module)
+(sleep 1 && waybar) &
 
 # Polkit authentication agent (allows GUI apps to request elevated privileges)
 /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 &
@@ -99,6 +99,12 @@ if [[ ! -f "$_GTK_FLAG" ]]; then
     gsettings set org.gnome.desktop.interface enable-animations true 2>/dev/null || true
 fi
 unset _GTK_FLAG
+
+# User startup programs (managed by Settings → Startup Apps)
+for _script in "$HOME/.config/blazzcore/autostart.d"/*.sh; do
+    [[ -x "$_script" ]] && source "$_script"
+done
+unset _script
 
 # Auto-launch installer if booted via "Install BlazzCore" GRUB entry
 if grep -qw 'blazzcore_install' /proc/cmdline; then

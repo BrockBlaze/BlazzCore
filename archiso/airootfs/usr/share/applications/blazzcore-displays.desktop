@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Displays
+Comment=Configure display resolution and layout
+Exec=wdisplays
+Icon=preferences-desktop-display
+Type=Application
+Categories=Settings;System;
+Keywords=display;monitor;screen;resolution;

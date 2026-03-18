@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Keyboard Shortcuts
+Comment=View BlazzCore keyboard shortcuts
+Exec=blazzcore-settings
+Icon=preferences-desktop-keyboard-shortcuts
+Type=Application
+Categories=Settings;
+Keywords=keyboard;shortcuts;keybindings;hotkeys;

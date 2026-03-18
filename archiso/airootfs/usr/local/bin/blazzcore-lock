@@ -12,8 +12,7 @@ ACCENT=$(grep 'window.active.border.color' "$THEMERC" 2>/dev/null | awk '{print 
 ACCENT=${ACCENT:-4a4a8a}
 
 # Use current wallpaper if it exists, otherwise fall back to solid
-WALLPAPER="$HOME/.config/labwc/autostart"
-BG=$(grep '^WALLPAPER=' "$WALLPAPER" 2>/dev/null | cut -d= -f2-)
+BG=$(grep '^WALLPAPER=' "$HOME/.config/labwc/autostart" 2>/dev/null | cut -d= -f2- | tr -d '"'"'")
 [[ -f "$BG" ]] || BG=/usr/share/backgrounds/blazzcore/default.png
 
 SWAYLOCK_ARGS=(

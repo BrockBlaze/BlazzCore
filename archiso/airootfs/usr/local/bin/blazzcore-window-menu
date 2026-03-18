@@ -20,7 +20,7 @@ CHOICE=$(printf 'Restore / Show\nMinimize\nMaximize\nClose' \
 # labwc IPC: 4-byte LE length prefix + JSON payload
 _labwc_action() {
     local action="$1"
-    local socket="${XDG_RUNTIME_DIR:-/run/user/1000}/labwc.socket"
+    local socket="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/labwc.socket"
     [[ -S "$socket" ]] || return 1
     python3 - "$socket" "$action" <<'PYEOF'
 import socket, struct, json, sys
