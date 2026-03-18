@@ -42,8 +42,8 @@ jobs:
       - name: Move ISO to output folder
         run: |
           mkdir -p ~/blazzcore-out
-          # Keep only the 3 most recent ISOs
-          ls -t ~/blazzcore-out/blazzcore-*.iso 2>/dev/null | tail -n +3 | xargs rm -f || true
+          # Remove old ISOs (may be root-owned from Docker) then copy new ones
+          sudo rm -f ~/blazzcore-out/blazzcore-*.iso ~/blazzcore-out/SHA256SUMS 2>/dev/null || true
           cp /tmp/blazzcore-out/blazzcore-*.iso ~/blazzcore-out/
           cp /tmp/blazzcore-out/SHA256SUMS ~/blazzcore-out/
           ISO=$(ls -t ~/blazzcore-out/blazzcore-*.iso | head -1)
