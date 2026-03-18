@@ -1506,7 +1506,14 @@ def page_shortcuts():
 
 def page_about():
     s, b = page_box()
-    b.pack_start(page_title('About BlazzCore'), False, False, 0)
+    b.pack_start(page_title('About BlazzCore', 'System information'), False, False, 0)
+    st = status_label()
+    c = card()
+    c.pack_start(row('About This System', 'View detailed hardware and software info',
+        btn('Open', lambda: run_bg('/usr/local/bin/blazzcore-about', st))), False, False, 0)
+    b.pack_start(c, False, False, 0)
+
+    # Quick info inline
     try:
         version = open('/etc/blazzcore-version').read().strip()
     except FileNotFoundError:
@@ -1514,11 +1521,11 @@ def page_about():
     kernel  = _shell(['uname', '-r'])
     pkg_cnt = _shell('pacman -Q 2>/dev/null | wc -l') + ' packages'
     uptime  = _shell(['uptime', '-p'])
-    c = card()
+
+    c2 = card()
     for i, (k, v) in enumerate([
         ('Version',      version),
         ('Kernel',       kernel),
-        ('Architecture', 'x86_64'),
         ('Packages',     pkg_cnt),
         ('Uptime',       uptime),
     ]):
@@ -1528,10 +1535,11 @@ def page_about():
         vl = Gtk.Label(label=v, xalign=0)
         hb.pack_start(kl, False, False, 0)
         hb.pack_start(vl, True, True, 0)
-        c.pack_start(hb, False, False, 2)
-        if i < 4:
-            c.pack_start(hsep(), False, False, 0)
-    b.pack_start(c, False, False, 0)
+        c2.pack_start(hb, False, False, 2)
+        if i < 3:
+            c2.pack_start(hsep(), False, False, 0)
+    b.pack_start(c2, False, False, 0)
+    b.pack_start(st, False, False, 0)
     return s
 
 # ── Main window ───────────────────────────────────────────────────────────────

@@ -66,6 +66,7 @@ BUILTIN = [
     ("Browser",         "web-browser",               "blazzcore-browser",   True),
     ("Downloads",       "folder-download",           "thunar ~/Downloads",  True),
     ("Documents",       "folder-documents",          "thunar ~/Documents",  True),
+    ("Trash",           "user-trash",                "thunar trash:///",    True),
 ]
 
 # ---- Stylesheet --------------------------------------------

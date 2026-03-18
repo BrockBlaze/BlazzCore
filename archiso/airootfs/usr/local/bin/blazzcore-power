@@ -1,35 +1,160 @@
-#!/usr/bin/env bash
-# BlazzCore power menu
+#!/usr/bin/env python3
+"""BlazzCore — Power Menu"""
 
-CHOICE=$(zenity --list \
-    --title="Power" \
-    --text="What would you like to do?" \
-    --column="" --column="Action" --column="Description" \
-    "⏻" "Shutdown"  "Power off the computer" \
-    "↺" "Restart"   "Reboot the computer" \
-    "⏸" "Suspend"   "Suspend to RAM" \
-    "🔒" "Lock"      "Lock the screen" \
-    "⎋" "Log Out"   "Exit the desktop session" \
-    --width=400 --height=340 \
-    --print-column=2 \
-    --hide-column=1 2>/dev/null)
+import gi
+gi.require_version('Gtk', '3.0')
+from gi.repository import Gtk, Gdk, GLib
+import subprocess, os, re
 
-case "$CHOICE" in
-    "Shutdown") systemctl poweroff ;;
-    "Restart")  systemctl reboot ;;
-    "Suspend")
-        # Lock screen first, give it time to render, then suspend
-        blazzcore-lock &
-        sleep 1
-        systemctl suspend
-        ;;
-    "Lock") blazzcore-lock ;;
-    "Log Out")
-        zenity --question --title="Log Out" \
-            --text="Exit BlazzCore?" \
-            --ok-label="Log Out" --cancel-label="Cancel" \
-            --width=300 2>/dev/null || exit 0
-        # Try graceful exit first, fall back to SIGTERM
-        labwc --exit 2>/dev/null || pkill -TERM -x labwc
-        ;;
-esac
+# ── Accent color ──────────────────────────────────────────────────────────────
+ACCENT = '#4a9eff'
+try:
+    c = open(os.path.expanduser('~/.config/blazzcore/accent')).read().strip()
+    if re.match(r'^#[0-9a-fA-F]{6}$', c):
+        ACCENT = c
+except Exception:
+    pass
+
+CSS = f"""
+window {{
+    background-color: #1e1e1e;
+}}
+.power-title {{
+    font-size: 18px;
+    font-weight: 700;
+    color: #f0f0f0;
+}}
+.power-subtitle {{
+    font-size: 12px;
+    color: #707070;
+}}
+.power-btn {{
+    background: #252525;
+    border: 1px solid #333333;
+    border-radius: 0;
+    padding: 14px 20px;
+    min-width: 280px;
+}}
+.power-btn:hover {{
+    background: #2e2e2e;
+    border-color: {ACCENT};
+}}
+.power-btn:active {{
+    background: {ACCENT};
+}}
+.power-btn label {{
+    color: #d0d0d0;
+    font-size: 14px;
+}}
+.power-btn:hover label {{
+    color: #ffffff;
+}}
+.power-icon {{
+    color: {ACCENT};
+    font-size: 18px;
+}}
+.cancel-btn {{
+    background: #2a2a2a;
+    border: 1px solid #3a3a3a;
+    border-radius: 0;
+    padding: 8px 24px;
+    color: #909090;
+}}
+.cancel-btn:hover {{
+    background: #353535;
+    color: #d0d0d0;
+}}
+""".encode()
+
+ACTIONS = [
+    ("⏻", "Shut Down",    "Power off the computer",    ["systemctl", "poweroff"]),
+    ("↺", "Restart",      "Reboot the computer",       ["systemctl", "reboot"]),
+    ("⏸", "Suspend",      "Suspend to RAM",            None),  # special
+    ("🔒", "Lock",         "Lock the screen",           ["/usr/local/bin/blazzcore-lock"]),
+    ("⎋", "Log Out",      "Exit the desktop session",  None),  # special
+]
+
+
+class PowerMenu(Gtk.Window):
+    def __init__(self):
+        super().__init__(title='Power')
+        self.set_default_size(340, -1)
+        self.set_resizable(False)
+        self.set_position(Gtk.WindowPosition.CENTER)
+        self.set_decorated(True)
+
+        p = Gtk.CssProvider()
+        p.load_from_data(CSS)
+        Gtk.StyleContext.add_provider_for_screen(
+            Gdk.Screen.get_default(), p,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+
+        root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        root.set_margin_start(20); root.set_margin_end(20)
+        root.set_margin_top(18); root.set_margin_bottom(16)
+        self.add(root)
+
+        title = Gtk.Label(label='Power')
+        title.get_style_context().add_class('power-title')
+        title.set_halign(Gtk.Align.CENTER)
+        root.pack_start(title, False, False, 0)
+
+        sub = Gtk.Label(label='What would you like to do?')
+        sub.get_style_context().add_class('power-subtitle')
+        sub.set_halign(Gtk.Align.CENTER)
+        root.pack_start(sub, False, False, 4)
+        root.pack_start(Gtk.Box(), False, False, 6)
+
+        for icon, label, desc, cmd in ACTIONS:
+            btn = Gtk.Button()
+            btn.get_style_context().add_class('power-btn')
+            btn.set_relief(Gtk.ReliefStyle.NONE)
+            box = Gtk.Box(spacing=12)
+            ico = Gtk.Label(label=icon)
+            ico.get_style_context().add_class('power-icon')
+            vb = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=1)
+            l = Gtk.Label(label=label, xalign=0)
+            d = Gtk.Label(label=desc, xalign=0)
+            d.get_style_context().add_class('power-subtitle')
+            vb.pack_start(l, False, False, 0)
+            vb.pack_start(d, False, False, 0)
+            box.pack_start(ico, False, False, 0)
+            box.pack_start(vb, True, True, 0)
+            btn.add(box)
+            btn.connect('clicked', self._on_action, label, cmd)
+            root.pack_start(btn, False, False, 3)
+
+        root.pack_start(Gtk.Box(), False, False, 4)
+
+        cancel = Gtk.Button(label='Cancel')
+        cancel.get_style_context().add_class('cancel-btn')
+        cancel.set_halign(Gtk.Align.CENTER)
+        cancel.connect('clicked', lambda *_: self.destroy())
+        root.pack_start(cancel, False, False, 0)
+
+        self.connect('key-press-event', lambda w, e:
+            self.destroy() if e.keyval == Gdk.KEY_Escape else None)
+
+    def _on_action(self, _btn, label, cmd):
+        self.destroy()
+        # Process pending GTK events so window closes before action
+        while Gtk.events_pending():
+            Gtk.main_iteration()
+
+        if label == 'Suspend':
+            subprocess.Popen(['/usr/local/bin/blazzcore-lock'])
+            import time; time.sleep(1)
+            subprocess.run(['systemctl', 'suspend'])
+        elif label == 'Log Out':
+            try:
+                subprocess.run(['labwc', '--exit'], timeout=3)
+            except Exception:
+                subprocess.run(['pkill', '-TERM', '-x', 'labwc'])
+        elif cmd:
+            subprocess.Popen(cmd)
+
+
+win = PowerMenu()
+win.connect('destroy', Gtk.main_quit)
+win.show_all()
+Gtk.main()

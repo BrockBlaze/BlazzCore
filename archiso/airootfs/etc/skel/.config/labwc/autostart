@@ -48,11 +48,20 @@ for _OUT in $(wlr-randr 2>/dev/null | awk '/^[^ ]/{print $1}'); do
 done
 unset _OUT
 
-# Desktop icons (trash, mounted drives, shortcuts)
-pcmanfm --desktop --profile default &
-
 # Status bar (slight delay lets PipeWire register before waybar's pulseaudio module)
 (sleep 1 && waybar) &
+
+# Dock (app launcher bar — position managed by blazzcore-dock / Settings)
+_DOCK_POS=bottom
+_DOCK_CONF="$HOME/.config/blazzcore/dock.conf"
+[[ -f "$_DOCK_CONF" ]] && eval "$(grep '^DOCK_POSITION=' "$_DOCK_CONF")" && _DOCK_POS="${DOCK_POSITION:-bottom}"
+case "$_DOCK_POS" in
+    left)   nwg-dock -p left   -a center -i 42 -ml 0 -f & ;;
+    right)  nwg-dock -p right  -a center -i 42 -mr 0 -f & ;;
+    top)    nwg-dock -p top    -a center -i 42 -mt 0 -f & ;;
+    *)      nwg-dock -p bottom -a center -i 42 -mb 0 -f & ;;
+esac
+unset _DOCK_POS _DOCK_CONF DOCK_POSITION
 
 # Polkit authentication agent (allows GUI apps to request elevated privileges)
 /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 &
