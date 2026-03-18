@@ -265,6 +265,37 @@ def _is_dock_pinned(desktop_name):
     return desktop_name in _dock_pinned()
 
 
+# ---- Transparent click-catcher (closes menu on outside click) --
+class _ClickBackdrop(Gtk.Window):
+    """Full-screen transparent layer surface behind the start menu.
+    Any click on it closes the start menu."""
+    def __init__(self, menu_win):
+        super().__init__()
+        self._menu = menu_win
+        if _HAS_LAYER_SHELL:
+            GtkLayerShell.init_for_window(self)
+            GtkLayerShell.set_layer(self, GtkLayerShell.Layer.TOP)
+            GtkLayerShell.set_anchor(self, GtkLayerShell.Edge.TOP, True)
+            GtkLayerShell.set_anchor(self, GtkLayerShell.Edge.BOTTOM, True)
+            GtkLayerShell.set_anchor(self, GtkLayerShell.Edge.LEFT, True)
+            GtkLayerShell.set_anchor(self, GtkLayerShell.Edge.RIGHT, True)
+            GtkLayerShell.set_exclusive_zone(self, -1)
+            GtkLayerShell.set_keyboard_mode(self, GtkLayerShell.KeyboardMode.NONE)
+        self.set_app_paintable(True)
+        screen = self.get_screen()
+        visual = screen.get_rgba_visual()
+        if visual:
+            self.set_visual(visual)
+        self.connect("draw", lambda w, cr: (cr.set_source_rgba(0, 0, 0, 0), cr.paint()))
+        self.add_events(Gdk.EventMask.BUTTON_PRESS_MASK)
+        self.connect("button-press-event", self._on_click)
+
+    def _on_click(self, _w, _event):
+        if self._menu:
+            self._menu.destroy()
+        return True
+
+
 # ---- Main window -------------------------------------------
 class StartMenu(Gtk.Window):
     def __init__(self):
@@ -277,17 +308,18 @@ class StartMenu(Gtk.Window):
             GtkLayerShell.set_anchor(self, GtkLayerShell.Edge.LEFT, True)
             GtkLayerShell.set_margin(self, GtkLayerShell.Edge.BOTTOM, 0)
             GtkLayerShell.set_margin(self, GtkLayerShell.Edge.LEFT, 0)
-            GtkLayerShell.set_keyboard_mode(self, GtkLayerShell.KeyboardMode.EXCLUSIVE)
+            GtkLayerShell.set_keyboard_mode(self, GtkLayerShell.KeyboardMode.ON_DEMAND)
             GtkLayerShell.set_exclusive_zone(self, 0)
 
         self.set_default_size(560, 580)
         self._menu_active = False
+        self._backdrop = None
         self._load_css()
         self._build_ui()
         self._load_apps()
         self.connect("key-press-event", self._on_key)
-        self.connect("focus-out-event", self._on_focus_out)
         self.connect("realize", self._on_realize)
+        self.connect("destroy", self._on_destroy)
 
     # ---- Window events --------------------------------------
     def _on_realize(self, *_):
@@ -296,11 +328,14 @@ class StartMenu(Gtk.Window):
             self.get_window().set_cursor(cursor)
         except Exception:
             pass
+        # Create invisible full-screen click-catcher behind the menu
+        self._backdrop = _ClickBackdrop(self)
+        self._backdrop.show_all()
 
-    def _on_focus_out(self, _w, _event):
-        if not self._menu_active:
-            self.destroy()
-        return False
+    def _on_destroy(self, *_):
+        if self._backdrop:
+            self._backdrop.destroy()
+            self._backdrop = None
 
     # ---- CSS ------------------------------------------------
     def _load_css(self):
