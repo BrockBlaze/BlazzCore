@@ -6,9 +6,9 @@
     "margin-bottom": 0,
     "margin-left": 0,
     "margin-right": 0,
-    "modules-left": ["custom/menu", "wlr/taskbar"],
-    "modules-center": ["mpris"],
-    "modules-right": ["tray", "custom/updates", "network", "battery", "pulseaudio", "custom/notifications", "clock"],
+    "modules-left": ["custom/menu"],
+    "modules-center": [],
+    "modules-right": ["tray", "pulseaudio", "custom/notifications", "clock"],
 
     "custom/menu": {
         "format": "󰈸",
@@ -17,54 +17,9 @@
         "tooltip": true
     },
 
-    "wlr/taskbar": {
-        "format": "{icon} {title:.20}",
+    "tray": {
         "icon-size": 16,
-        "icon-theme": "Papirus-Dark",
-        "tooltip-format": "{title}",
-        "on-click": "activate",
-        "on-click-right": "minimize",
-        "on-click-middle": "minimize-raise",
-        "ignore-list": ["waybar"]
-    },
-
-    "clock": {
-        "format": "{:%a %b %d  ·  %H:%M}",
-        "format-alt": "{:%Y-%m-%d %H:%M:%S}",
-        "tooltip-format": "<big>{:%B %Y}</big>\n<tt><small>{calendar}</small></tt>",
-        "interval": 60
-    },
-
-    "mpris": {
-        "format": "{player_icon} {dynamic}",
-        "format-paused": "{player_icon} {dynamic}",
-        "player-icons": { "default": "▶", "mpv": "🎥" },
-        "status-icons": { "paused": "⏸" },
-        "dynamic-len": 30,
-        "dynamic-importance-order": ["title", "artist", "album"],
-        "on-click": "playerctl play-pause",
-        "on-scroll-up": "playerctl next",
-        "on-scroll-down": "playerctl previous",
-        "tooltip-format": "{title}\n{artist}\n{album}"
-    },
-
-    "network": {
-        "format-wifi": "󰤨 {essid}",
-        "format-ethernet": "󰈀 {ipaddr}",
-        "format-disconnected": "󰤭",
-        "tooltip-format-wifi": "{essid} — {signalStrength}%\n{ipaddr}",
-        "tooltip-format-ethernet": "{ifname}: {ipaddr}",
-        "tooltip-format-disconnected": "No network",
-        "on-click": "foot -e nmtui"
-    },
-
-    "battery": {
-        "states": { "warning": 30, "critical": 15 },
-        "format": "{icon} {capacity}%",
-        "format-charging": "󰂄 {capacity}%",
-        "format-plugged": "󰚥 {capacity}%",
-        "format-icons": ["󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"],
-        "tooltip-format": "{timeTo} — {capacity}%"
+        "spacing": 6
     },
 
     "pulseaudio": {
@@ -80,14 +35,6 @@
         "on-scroll-up": "/usr/local/bin/blazzcore-volume up",
         "on-scroll-down": "/usr/local/bin/blazzcore-volume down",
         "tooltip-format": "{desc}: {volume}%"
-    },
-
-    "custom/updates": {
-        "exec": "COUNT=$(checkupdates 2>/dev/null | wc -l); [ \"$COUNT\" -gt 0 ] && echo \"↑ $COUNT\" || echo ''",
-        "interval": 3600,
-        "on-click": "foot --title='System Update' -e bash -c 'sudo pacman -Syu; echo; echo \"Press Enter to close...\"; read'",
-        "tooltip-format": "Updates available — click to upgrade",
-        "return-type": ""
     },
 
     "custom/notifications": {
@@ -109,8 +56,10 @@
         "escape": true
     },
 
-    "tray": {
-        "icon-size": 16,
-        "spacing": 6
+    "clock": {
+        "format": "{:%a %b %d  ·  %H:%M}",
+        "format-alt": "{:%Y-%m-%d %H:%M:%S}",
+        "tooltip-format": "<big>{:%B %Y}</big>\n<tt><small>{calendar}</small></tt>",
+        "interval": 60
     }
 }

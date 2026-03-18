@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 # BlazzCore wallpaper picker — pick an image file or a solid color
+# Persists choice to ~/.config/blazzcore/wallpaper.conf
 
-AUTOSTART="$HOME/.config/labwc/autostart"
+CONF_DIR="$HOME/.config/blazzcore"
+CONF="$CONF_DIR/wallpaper.conf"
+mkdir -p "$CONF_DIR"
 
 # Ask: image or color?
 CHOICE=$(zenity --list \
@@ -29,12 +32,8 @@ if [[ "$CHOICE" == "Image File" ]]; then
     pkill swaybg 2>/dev/null || true
     swaybg -i "$IMG" -m fill &
 
-    ESCAPED_IMG=$(printf '%s' "$IMG" | sed 's/[&\]/\\&/g; s/|/\\|/g')
-    if grep -q '^WALLPAPER=' "$AUTOSTART"; then
-        sed -i "s|^WALLPAPER=.*|WALLPAPER=\"$ESCAPED_IMG\"|" "$AUTOSTART"
-    else
-        sed -i "s|swaybg -i .* -m fill|swaybg -i \"$ESCAPED_IMG\" -m fill|" "$AUTOSTART"
-    fi
+    # Persist
+    printf 'MODE=image\nIMG=%s\n' "$IMG" > "$CONF"
 
 elif [[ "$CHOICE" == "Solid Color" ]]; then
     COLOR=$(zenity --color-selection \
@@ -51,12 +50,6 @@ elif [[ "$CHOICE" == "Solid Color" ]]; then
     pkill swaybg 2>/dev/null || true
     swaybg -c "$COLOR" &
 
-    # Persist: update autostart to use solid color
-    if grep -q '^WALLPAPER=' "$AUTOSTART"; then
-        sed -i "s|^WALLPAPER=.*|WALLPAPER_COLOR=\"$COLOR\"|" "$AUTOSTART"
-    fi
-    # Update/add the swaybg line to use color mode
-    if grep -q 'swaybg' "$AUTOSTART"; then
-        sed -i "s|swaybg .*|swaybg -c \"$COLOR\" \&|" "$AUTOSTART"
-    fi
+    # Persist
+    printf 'MODE=color\nCOLOR=%s\n' "$COLOR" > "$CONF"
 fi

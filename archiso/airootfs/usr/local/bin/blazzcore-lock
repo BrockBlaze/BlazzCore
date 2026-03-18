@@ -11,9 +11,16 @@ SYSTEM_THEMERC="/usr/share/themes/BlazzCore/openbox-3/themerc"
 ACCENT=$(grep 'window.active.border.color' "$THEMERC" 2>/dev/null | awk '{print $NF}' | tr -d '#')
 ACCENT=${ACCENT:-4a4a8a}
 
-# Use current wallpaper if it exists, otherwise fall back to solid
-BG=$(grep '^WALLPAPER=' "$HOME/.config/labwc/autostart" 2>/dev/null | cut -d= -f2- | tr -d '"'"'")
-[[ -f "$BG" ]] || BG=/usr/share/backgrounds/blazzcore/default.png
+# Use current wallpaper from config, fall back to default
+_WP_CONF="$HOME/.config/blazzcore/wallpaper.conf"
+BG=/usr/share/backgrounds/blazzcore/default.png
+if [[ -f "$_WP_CONF" ]]; then
+    _MODE=$(grep '^MODE=' "$_WP_CONF" | cut -d= -f2-)
+    if [[ "$_MODE" == "image" ]]; then
+        _IMG=$(grep '^IMG=' "$_WP_CONF" | cut -d= -f2-)
+        [[ -f "$_IMG" ]] && BG="$_IMG"
+    fi
+fi
 
 SWAYLOCK_ARGS=(
     --scaling fill

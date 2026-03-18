@@ -21,14 +21,26 @@ wireplumber &
 export XCURSOR_THEME=Adwaita
 export XCURSOR_SIZE=24
 
-# Wallpaper (fall back to solid color if image is missing)
-# blazzcore-wallpaper updates the WALLPAPER= line below to persist changes
-WALLPAPER=/usr/share/backgrounds/blazzcore/default.png
-if [[ -f "$WALLPAPER" ]]; then
-    swaybg -i "$WALLPAPER" -m fill &
-else
-    swaybg -c "#0d0d1a" &
+# Wallpaper — reads user choice from config, falls back to generated default
+_WP_CONF="$HOME/.config/blazzcore/wallpaper.conf"
+_WP_MODE=image
+_WP_PATH=/usr/share/backgrounds/blazzcore/default.png
+_WP_COLOR="#0d0d1a"
+if [[ -f "$_WP_CONF" ]]; then
+    eval "$(grep -E '^(MODE|IMG|COLOR)=' "$_WP_CONF")"
+    _WP_MODE="${MODE:-image}"
+    _WP_PATH="${IMG:-$_WP_PATH}"
+    _WP_COLOR="${COLOR:-$_WP_COLOR}"
+    unset MODE IMG COLOR
 fi
+if [[ "$_WP_MODE" == "color" ]]; then
+    swaybg -c "$_WP_COLOR" &
+elif [[ -f "$_WP_PATH" ]]; then
+    swaybg -i "$_WP_PATH" -m fill &
+else
+    swaybg -c "$_WP_COLOR" &
+fi
+unset _WP_CONF _WP_MODE _WP_PATH _WP_COLOR
 
 # Set resolution to 1920x1080 on all connected outputs (silent fail if mode unavailable)
 for _OUT in $(wlr-randr 2>/dev/null | awk '/^[^ ]/{print $1}'); do
