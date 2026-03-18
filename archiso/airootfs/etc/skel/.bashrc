@@ -66,7 +66,7 @@ extract() {
 # fzf: fuzzy Ctrl+R history search and Ctrl+T file finder
 if command -v fzf &>/dev/null; then
     eval "$(fzf --bash)"
-    export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border --color=bg+:#1a1a2e,hl:#8080c8,fg+:#e0e0f0,hl+:#8080c8'
+    export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border --color=bg+:#252525,hl:#4a9eff,fg+:#e0e0e0,hl+:#4a9eff'
 fi
 
 # bat as man pager (syntax-highlighted man pages)

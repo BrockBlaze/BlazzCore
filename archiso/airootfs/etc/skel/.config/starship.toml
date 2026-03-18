@@ -1,27 +1,27 @@
 # BlazzCore Starship Prompt
 
 format = """
-[╭─](bold #5a5aaa)$os$username$hostname$directory$git_branch$git_status$python$nodejs$cmd_duration
-[╰─](bold #5a5aaa)$character"""
+[╭─](bold #4a9eff)$os$username$hostname$directory$git_branch$git_status$python$nodejs$cmd_duration
+[╰─](bold #4a9eff)$character"""
 
 [os]
 disabled = false
-format = "[$symbol](bold #8080c8) "
+format = "[$symbol](bold #4a9eff) "
 
 [os.symbols]
 Arch = " "
 
 [username]
 show_always = false
-format = "[$user](bold #a0a0d0)[@](dimmed #555568)"
+format = "[$user](bold #b0b0b0)[@](dimmed #606060)"
 
 [hostname]
 ssh_only = true
-format = "[$hostname](bold #a0a0d0) "
+format = "[$hostname](bold #b0b0b0) "
 
 [directory]
 format = "[ $path]($style)[$read_only]($read_only_style) "
-style = "bold #8080c8"
+style = "bold #4a9eff"
 read_only = " "
 truncation_length = 5
 truncate_to_repo = true
@@ -37,7 +37,7 @@ style = "bold #c0392b"
 [cmd_duration]
 min_time = 500
 format = "[ $duration]($style) "
-style = "dimmed #888898"
+style = "dimmed #808080"
 
 [python]
 format = "[ $virtualenv]($style) "
@@ -54,5 +54,5 @@ detect_files = ["package.json", ".nvmrc"]
 detect_folders = ["node_modules"]
 
 [character]
-success_symbol = "[❯](bold #5a5aaa)"
+success_symbol = "[❯](bold #4a9eff)"
 error_symbol = "[❯](bold #c0392b)"

@@ -10,8 +10,8 @@
 
 /* ── Window ──────────────────────────────────────────────────────────────── */
 window {
-    background: rgba(8, 8, 18, 0.96);
-    border: 1px solid rgba(80, 80, 170, 0.40);
+    background: rgba(30, 30, 30, 0.96);
+    border: 1px solid rgba(74, 158, 255, 0.40);
     border-radius: 0;
     box-shadow:
         0 20px 60px rgba(0, 0, 0, 0.7),
@@ -27,18 +27,18 @@ window {
 
 /* ── Search bar ──────────────────────────────────────────────────────────── */
 #input {
-    background: rgba(255, 255, 255, 0.05);
-    color: #e0e0f8;
-    border: 1px solid rgba(100, 100, 190, 0.45);
+    background: rgba(255, 255, 255, 0.06);
+    color: #e0e0e0;
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 0;
     padding: 11px 18px;
     margin-bottom: 12px;
     font-size: 15px;
-    caret-color: #8888e0;
+    caret-color: #4a9eff;
 }
 #input:focus {
-    border-color: rgba(130, 130, 220, 0.75);
-    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(74, 158, 255, 0.75);
+    background: rgba(255, 255, 255, 0.08);
     box-shadow: none;
 }
 
@@ -58,10 +58,10 @@ window {
     background: rgba(255, 255, 255, 0.06);
 }
 #entry:selected {
-    background: rgba(80, 80, 200, 0.28);
+    background: rgba(74, 158, 255, 0.25);
 }
 #entry:selected:hover {
-    background: rgba(90, 90, 220, 0.36);
+    background: rgba(74, 158, 255, 0.35);
 }
 
 /* ── App icon ────────────────────────────────────────────────────────────── */
@@ -72,7 +72,7 @@ window {
 
 /* ── App name ────────────────────────────────────────────────────────────── */
 #text {
-    color: #c8c8f0;
+    color: #cccccc;
     font-size: 14px;
 }
 #entry:selected #text {
@@ -82,7 +82,7 @@ window {
 
 /* ── Separator ───────────────────────────────────────────────────────────── */
 #separator {
-    background: rgba(80, 80, 160, 0.22);
+    background: rgba(255, 255, 255, 0.08);
     min-height: 1px;
     margin: 6px 8px;
 }

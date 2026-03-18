@@ -9,7 +9,7 @@ SYSTEM_THEMERC="/usr/share/themes/BlazzCore/openbox-3/themerc"
 
 # Extract accent hex (strip leading #)
 ACCENT=$(grep 'window.active.border.color' "$THEMERC" 2>/dev/null | awk '{print $NF}' | tr -d '#')
-ACCENT=${ACCENT:-4a4a8a}
+ACCENT=${ACCENT:-4a9eff}
 
 # Use current wallpaper from config, fall back to default
 _WP_CONF="$HOME/.config/blazzcore/wallpaper.conf"
@@ -30,7 +30,7 @@ SWAYLOCK_ARGS=(
     --ring-color "$ACCENT"
     --key-hl-color "$ACCENT"
     --line-color 00000000
-    --inside-color 0d0d1acc
+    --inside-color 1e1e1ecc
     --separator-color 00000000
     --text-color e8e8f0
     --ring-wrong-color c0392b
@@ -45,5 +45,5 @@ SWAYLOCK_ARGS=(
 if [[ -f "$BG" ]]; then
     exec swaylock --image "$BG" "${SWAYLOCK_ARGS[@]}"
 else
-    exec swaylock --color 0d0d1a "${SWAYLOCK_ARGS[@]}"
+    exec swaylock --color 1e1e1e "${SWAYLOCK_ARGS[@]}"
 fi

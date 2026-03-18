@@ -5,7 +5,7 @@
 * {
     font-family: "Noto Sans", "Hack Nerd Font Mono", sans-serif;
     font-size: 13px;
-    color: #e0e0f0;
+    color: #e0e0e0;
     border-radius: 0;
 }
 
@@ -27,8 +27,8 @@
 }
 
 .notification {
-    background-color: rgba(14, 14, 26, 0.97);
-    border: 1px solid rgba(80, 80, 160, 0.4);
+    background-color: rgba(30, 30, 30, 0.97);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 0;
     padding: 0;
     margin: 6px 0;
@@ -51,35 +51,35 @@
 }
 
 /* ---- Urgency colors ---- */
-.low    { border-left: 3px solid rgba(80, 80, 160, 0.6); }
-.normal { border-left: 3px solid rgba(128, 128, 200, 0.8); }
+.low    { border-left: 3px solid rgba(74, 158, 255, 0.5); }
+.normal { border-left: 3px solid rgba(74, 158, 255, 0.8); }
 .critical {
     border-left: 3px solid #c0392b;
-    background-color: rgba(30, 8, 8, 0.97);
+    background-color: rgba(40, 10, 10, 0.97);
 }
 
 /* ---- Notification summary / body ---- */
 .summary {
     font-size: 13px;
     font-weight: bold;
-    color: #e8e8f8;
+    color: #f0f0f0;
 }
 
 .body {
     font-size: 12px;
-    color: #a8a8c8;
+    color: #909090;
     margin-top: 2px;
 }
 
 .app-name {
     font-size: 11px;
-    color: #686888;
+    color: #606060;
     margin-bottom: 2px;
 }
 
 .time {
     font-size: 11px;
-    color: #555570;
+    color: #505050;
 }
 
 /* ---- Icon ---- */
@@ -92,7 +92,7 @@ image {
 .close-button {
     background-color: transparent;
     border: none;
-    color: #555568;
+    color: #505050;
     border-radius: 0;
     padding: 2px 8px;
     font-size: 12px;
@@ -105,8 +105,8 @@ image {
 
 /* ---- Control center panel ---- */
 .control-center {
-    background-color: rgba(10, 10, 22, 0.97);
-    border-left: 1px solid rgba(80, 80, 160, 0.35);
+    background-color: rgba(25, 25, 25, 0.97);
+    border-left: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 0;
     padding: 0;
     box-shadow: -4px 0 24px rgba(0, 0, 0, 0.5);
@@ -118,77 +118,77 @@ image {
 
 /* ---- Header row (title + clear all) ---- */
 .widget-title {
-    background-color: rgba(9, 9, 18, 0.98);
+    background-color: rgba(30, 30, 30, 0.98);
     border-radius: 0;
     padding: 14px 16px 12px 16px;
-    border-bottom: 1px solid rgba(70, 70, 130, 0.4);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .widget-title > label {
     font-size: 14px;
     font-weight: bold;
-    color: #b0b0e0;
+    color: #4a9eff;
     letter-spacing: 0.5px;
 }
 
 .widget-title > button {
-    background-color: rgba(80, 80, 160, 0.18);
-    border: 1px solid rgba(80, 80, 160, 0.35);
+    background-color: rgba(74, 158, 255, 0.12);
+    border: 1px solid rgba(74, 158, 255, 0.25);
     border-radius: 0;
-    color: #8080c0;
+    color: #4a9eff;
     font-size: 11px;
     padding: 4px 12px;
     transition: all 120ms ease;
 }
 
 .widget-title > button:hover {
-    background-color: rgba(80, 80, 160, 0.38);
-    color: #d0d0ff;
-    border-color: rgba(100, 100, 200, 0.6);
+    background-color: rgba(74, 158, 255, 0.3);
+    color: #ffffff;
+    border-color: rgba(74, 158, 255, 0.6);
 }
 
 /* ---- Do Not Disturb toggle ---- */
 .widget-dnd {
     padding: 10px 16px;
-    border-bottom: 1px solid rgba(70, 70, 130, 0.25);
-    background-color: rgba(12, 12, 24, 0.6);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    background-color: rgba(25, 25, 25, 0.6);
 }
 
 .widget-dnd > label {
-    color: #9090b8;
+    color: #808080;
     font-size: 12px;
 }
 
 .widget-dnd > switch {
     border-radius: 0;
-    background-color: rgba(30, 30, 55, 0.9);
-    border: 1px solid rgba(70, 70, 130, 0.5);
+    background-color: #333333;
+    border: 1px solid #444444;
     min-height: 20px;
     min-width: 42px;
 }
 
 .widget-dnd > switch:checked {
-    background-color: rgba(70, 70, 150, 0.85);
-    border-color: rgba(100, 100, 200, 0.7);
+    background-color: #4a9eff;
+    border-color: #4a9eff;
 }
 
 .widget-dnd > switch slider {
     border-radius: 0;
-    background-color: #9090c8;
-    border: 1px solid rgba(100, 100, 180, 0.6);
+    background-color: #808080;
+    border: 1px solid #666666;
     min-height: 16px;
     min-width: 16px;
     margin: 2px;
 }
 
 .widget-dnd > switch:checked slider {
-    background-color: #b0b0e8;
+    background-color: #ffffff;
 }
 
 /* ---- MPRIS media widget ---- */
 .widget-mpris {
-    background-color: rgba(12, 12, 24, 0.8);
-    border-bottom: 1px solid rgba(70, 70, 130, 0.25);
+    background-color: rgba(25, 25, 25, 0.8);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     padding: 10px 16px;
 }
 
@@ -199,50 +199,50 @@ image {
 .widget-mpris-title {
     font-weight: bold;
     font-size: 13px;
-    color: #d0d0f0;
+    color: #e0e0e0;
 }
 
 .widget-mpris-subtitle {
     font-size: 11px;
-    color: #7878a0;
+    color: #707070;
 }
 
 .widget-mpris button {
     background: transparent;
-    border: 1px solid rgba(80, 80, 140, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 0;
-    color: #8888b8;
+    color: #808080;
     padding: 4px 10px;
     min-width: 28px;
     transition: all 100ms ease;
 }
 
 .widget-mpris button:hover {
-    background: rgba(80, 80, 160, 0.2);
-    color: #c0c0f0;
-    border-color: rgba(100, 100, 180, 0.5);
+    background: rgba(74, 158, 255, 0.15);
+    color: #e0e0e0;
+    border-color: rgba(74, 158, 255, 0.4);
 }
 
 /* ---- Empty state ---- */
 .notification-center-placeholder-text {
-    color: #3a3a55;
+    color: #404040;
     font-size: 13px;
     padding: 32px 24px;
 }
 
 /* ---- Notification action buttons ---- */
 .notification-action {
-    background-color: rgba(30, 30, 55, 0.6);
-    border: 1px solid rgba(70, 70, 130, 0.3);
+    background-color: rgba(42, 42, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 0;
-    color: #9090c0;
+    color: #909090;
     padding: 5px 14px;
     font-size: 12px;
     transition: all 100ms ease;
 }
 
 .notification-action:hover {
-    background-color: rgba(70, 70, 150, 0.3);
-    color: #d0d0ff;
-    border-color: rgba(100, 100, 190, 0.5);
+    background-color: rgba(74, 158, 255, 0.25);
+    color: #ffffff;
+    border-color: rgba(74, 158, 255, 0.4);
 }
