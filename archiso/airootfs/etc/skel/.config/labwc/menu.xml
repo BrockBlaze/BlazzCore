@@ -7,7 +7,7 @@
       <action name="Execute"><command>foot</command></action>
     </item>
     <item label="Browser">
-      <action name="Execute"><command>blazzcore-browser</command></action>
+      <action name="Execute"><command>/usr/local/bin/blazzcore-browser</command></action>
     </item>
     <item label="Files">
       <action name="Execute"><command>thunar</command></action>
@@ -18,49 +18,60 @@
     <item label="Calculator">
       <action name="Execute"><command>galculator</command></action>
     </item>
+    <item label="Task Manager">
+      <action name="Execute"><command>/usr/local/bin/blazzcore-taskmanager</command></action>
+    </item>
+  </menu>
+
+  <!-- Desktop submenu -->
+  <menu id="menu-desktop" label="Desktop">
+    <item label="Change Wallpaper">
+      <action name="Execute"><command>/usr/local/bin/blazzcore-wallpaper</command></action>
+    </item>
+    <item label="Accent Color">
+      <action name="Execute"><command>/usr/local/bin/blazzcore-accent</command></action>
+    </item>
+    <item label="Night Light">
+      <action name="Execute"><command>/usr/local/bin/blazzcore-nightlight</command></action>
+    </item>
+    <item label="Display Settings">
+      <action name="Execute"><command>wdisplays</command></action>
+    </item>
   </menu>
 
   <!-- System submenu -->
   <menu id="menu-system" label="System">
     <item label="Settings">
-      <action name="Execute"><command>blazzcore-settings</command></action>
-    </item>
-    <item label="Display &amp; Monitors">
-      <action name="Execute"><command>wdisplays</command></action>
-    </item>
-    <item label="Wallpaper">
-      <action name="Execute"><command>blazzcore-wallpaper</command></action>
-    </item>
-    <item label="Night Light">
-      <action name="Execute"><command>blazzcore-nightlight</command></action>
-    </item>
-    <item label="Task Manager">
-      <action name="Execute"><command>blazzcore-taskmanager</command></action>
+      <action name="Execute"><command>/usr/local/bin/blazzcore-settings</command></action>
     </item>
     <item label="Software Center">
-      <action name="Execute"><command>blazzcore-store</command></action>
+      <action name="Execute"><command>/usr/local/bin/blazzcore-store</command></action>
+    </item>
+    <item label="System Update">
+      <action name="Execute"><command>foot --title='System Update' -e bash -c 'sudo pacman -Syu; echo; echo "Press Enter to close..."; read'</command></action>
     </item>
   </menu>
 
   <!-- Root (right-click desktop) menu -->
   <menu id="root-menu" label="BlazzCore">
-    <menu id="menu-apps"/>
-    <separator/>
-    <item label="Start Menu">
-      <action name="Execute"><command>blazzcore-startmenu</command></action>
+    <item label="Open Terminal Here">
+      <action name="Execute"><command>foot</command></action>
     </item>
     <item label="Screenshot">
-      <action name="Execute"><command>blazzcore-screenshot area</command></action>
+      <action name="Execute"><command>/usr/local/bin/blazzcore-screenshot area</command></action>
     </item>
     <separator/>
+    <menu id="menu-apps"/>
+    <separator/>
+    <menu id="menu-desktop"/>
     <menu id="menu-system"/>
     <separator/>
     <item label="Install BlazzCore to Disk">
-      <action name="Execute"><command>foot -e sudo -E blazzcore-install</command></action>
+      <action name="Execute"><command>foot -e sudo -E /usr/local/bin/blazzcore-install</command></action>
     </item>
     <separator/>
     <item label="Power...">
-      <action name="Execute"><command>blazzcore-power</command></action>
+      <action name="Execute"><command>/usr/local/bin/blazzcore-power</command></action>
     </item>
   </menu>
 

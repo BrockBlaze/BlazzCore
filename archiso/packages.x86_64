@@ -59,6 +59,8 @@ slurp
 
 # --- Seat Management ---
 seatd
+greetd
+greetd-gtkgreet
 polkit
 polkit-gnome
 

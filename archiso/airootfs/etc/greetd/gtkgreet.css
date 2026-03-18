@@ -1,0 +1,63 @@
+/* BlazzCore login screen — dark grey + blue accent */
+
+window {
+    background-color: #1e1e1e;
+}
+
+box#body {
+    margin: 60px;
+    padding: 40px;
+    border: 1px solid #333333;
+    background-color: #252525;
+}
+
+entry {
+    background-color: #2a2a2a;
+    color: #e0e0e0;
+    border: 1px solid #3a3a3a;
+    border-radius: 0;
+    padding: 8px 14px;
+    font-size: 14px;
+}
+
+entry:focus {
+    border-color: #4a9eff;
+}
+
+button {
+    background: #4a9eff;
+    color: #ffffff;
+    border: 1px solid #4a9eff;
+    border-radius: 0;
+    padding: 8px 20px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+button:hover {
+    background: #5aabff;
+}
+
+label {
+    color: #b0b0b0;
+    font-size: 14px;
+}
+
+label#clock {
+    font-size: 48px;
+    font-weight: 300;
+    color: #ffffff;
+    margin-bottom: 16px;
+}
+
+label#hostname {
+    font-size: 13px;
+    color: #4a9eff;
+    font-weight: 600;
+}
+
+combobox button {
+    background: #2a2a2a;
+    color: #d0d0d0;
+    border-color: #3a3a3a;
+}

@@ -1,25 +1,25 @@
 {
   "manifest_version": 2,
-  "version": "1.0",
+  "version": "2.0",
   "name": "BlazzCore",
-  "description": "BlazzCore dark navy theme",
+  "description": "BlazzCore dark grey theme with blue accent",
   "theme": {
     "colors": {
-      "frame":                  [11,  11,  22],
-      "frame_inactive":         [8,   8,  16],
-      "toolbar":                [14,  14,  28],
-      "tab_text":               [220, 220, 255],
-      "tab_background_text":    [110, 110, 170],
-      "background_tab":         [10,  10,  20],
-      "bookmark_text":          [170, 170, 215],
-      "ntp_background":         [12,  12,  24],
-      "ntp_text":               [200, 200, 240],
-      "ntp_link":               [96,  96,  184],
-      "omnibox_background":     [18,  18,  36],
-      "omnibox_text":           [220, 220, 255]
+      "frame":                  [30,  30,  30],
+      "frame_inactive":         [25,  25,  25],
+      "toolbar":                [37,  37,  37],
+      "tab_text":               [224, 224, 224],
+      "tab_background_text":    [144, 144, 144],
+      "background_tab":         [30,  30,  30],
+      "bookmark_text":          [176, 176, 176],
+      "ntp_background":         [30,  30,  30],
+      "ntp_text":               [224, 224, 224],
+      "ntp_link":               [74,  158, 255],
+      "omnibox_background":     [42,  42,  42],
+      "omnibox_text":           [224, 224, 224]
     },
     "tints": {
-      "buttons":   [0.61, 0.50, 0.85],
+      "buttons":   [0.58, 0.50, 0.80],
       "frame":     [-1,   -1,   -1],
       "background_tab": [-1, -1, -1]
     },

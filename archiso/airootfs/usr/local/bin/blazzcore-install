@@ -29,8 +29,8 @@ PACKAGES=(
     labwc swaybg swayidle swaylock wlopm waybar wl-clipboard cliphist
     xdg-desktop-portal xdg-desktop-portal-wlr xdg-utils xorg-xwayland
     foot wofi grim slurp wob wlsunset wf-recorder
-    # Seat / polkit
-    seatd polkit polkit-gnome cryptsetup
+    # Seat / polkit / login
+    seatd polkit polkit-gnome cryptsetup greetd greetd-gtkgreet
     # GPU
     mesa vulkan-icd-loader libva libva-mesa-driver libva-utils libvdpau vulkan-radeon vulkan-intel
     # Audio
@@ -666,6 +666,7 @@ EOF
     arch-chroot /mnt systemctl enable NetworkManager 2>/dev/null || true
     arch-chroot /mnt systemctl enable seatd          2>/dev/null || true
     arch-chroot /mnt systemctl enable bluetooth      2>/dev/null || true
+    arch-chroot /mnt systemctl enable greetd         2>/dev/null || true
 
     # Crypttab for LUKS
     if [[ "$ENABLE_LUKS" == true ]]; then

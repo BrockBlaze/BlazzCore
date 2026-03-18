@@ -1,13 +1,13 @@
 // ============================================
-// BlazzCore Plymouth Theme
+// BlazzCore Plymouth Theme — Dark Grey + Blue
 // ============================================
 
 screen_w = Window.GetWidth();
 screen_h = Window.GetHeight();
 
-// --- Background ---
-Window.SetBackgroundTopColor(0.03, 0.03, 0.07);
-Window.SetBackgroundBottomColor(0.01, 0.01, 0.04);
+// --- Background: dark grey gradient ---
+Window.SetBackgroundTopColor(0.10, 0.10, 0.10);
+Window.SetBackgroundBottomColor(0.07, 0.07, 0.07);
 
 // --- Logo ---
 logo_img  = Image("logo.png");
@@ -33,20 +33,20 @@ if (logo_ok) {
     bar_y  = Math.Int(screen_h * 0.58);
 }
 
-// --- Progress bar track ---
+// --- Progress bar track (dark grey) ---
 bar_w  = Math.Int(screen_w * 0.32);
 bar_h  = 3;
 bar_x  = Math.Int((screen_w - bar_w) / 2);
 
-track_img = Image.NewWithColor(bar_w, bar_h, 0.15, 0.15, 0.25, 1.0);
+track_img = Image.NewWithColor(bar_w, bar_h, 0.20, 0.20, 0.20, 1.0);
 track     = Sprite(track_img);
 track.SetX(bar_x);
 track.SetY(bar_y);
 track.SetZ(2);
 track.SetOpacity(0);
 
-// --- Progress bar fill ---
-fill_img  = Image.NewWithColor(1, bar_h, 0.40, 0.40, 0.80, 1.0);
+// --- Progress bar fill (blue accent #4a9eff) ---
+fill_img  = Image.NewWithColor(1, bar_h, 0.29, 0.62, 1.0, 1.0);
 fill      = Sprite(fill_img);
 fill.SetX(bar_x);
 fill.SetY(bar_y);
@@ -62,7 +62,7 @@ dot_start_x = Math.Int((screen_w - dot_total_w) / 2);
 dot_y       = bar_y + bar_h + 22;
 
 for (i = 0; i < dot_count; i++) {
-    dot_img   = Image.NewWithColor(dot_size, dot_size, 0.50, 0.50, 0.85, 1.0);
+    dot_img   = Image.NewWithColor(dot_size, dot_size, 0.29, 0.62, 1.0, 1.0);
     dots[i]   = Sprite(dot_img);
     dots[i].SetX(dot_start_x + i * dot_spacing);
     dots[i].SetY(dot_y);
@@ -106,7 +106,7 @@ fun refresh_callback() {
         idle = (Math.Sin(tick * 0.03) + 1.0) / 2.0 * 0.35 + 0.05;
         fill_w = Math.Int(bar_w * idle);
         if (fill_w < 1) { fill_w = 1; }
-        fill_img2 = Image.NewWithColor(fill_w, bar_h, 0.40, 0.40, 0.80, 1.0);
+        fill_img2 = Image.NewWithColor(fill_w, bar_h, 0.29, 0.62, 1.0, 1.0);
         fill.SetImage(fill_img2);
     }
 }
@@ -117,7 +117,7 @@ fun progress_callback(percent) {
     progress = percent / 100.0;
     fill_w = Math.Int(bar_w * progress);
     if (fill_w < 1) { fill_w = 1; }
-    fill_img2 = Image.NewWithColor(fill_w, bar_h, 0.45, 0.45, 0.90, 1.0);
+    fill_img2 = Image.NewWithColor(fill_w, bar_h, 0.29, 0.62, 1.0, 1.0);
     fill.SetImage(fill_img2);
     fill.SetOpacity(1.0);
 }

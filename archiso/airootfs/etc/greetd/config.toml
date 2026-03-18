@@ -1,0 +1,11 @@
+[terminal]
+vt = 1
+
+[default_session]
+command = "gtkgreet --layer-shell --css /etc/greetd/gtkgreet.css"
+user = "greeter"
+
+[initial_session]
+# Auto-login for the live ISO session (blazzcore user, no password)
+command = "labwc"
+user = "blazzcore"

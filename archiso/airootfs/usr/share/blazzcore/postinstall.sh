@@ -120,15 +120,29 @@ if [[ -f "$MOUNT/etc/mkinitcpio.conf" ]]; then
 fi
 ok "mkinitcpio configured."
 
-# ---- Autologin ----
-info "Setting up autologin for $INSTALL_USER..."
-mkdir -p "$MOUNT/etc/systemd/system/getty@tty1.service.d"
-cat > "$MOUNT/etc/systemd/system/getty@tty1.service.d/autologin.conf" <<EOF
-[Service]
-ExecStart=
-ExecStart=-/sbin/agetty -o '-p -f -- \\u' --noclear --autologin ${INSTALL_USER} %I \$TERM
+# ---- Login manager (greetd) ----
+info "Configuring login manager..."
+mkdir -p "$MOUNT/etc/greetd"
+cat > "$MOUNT/etc/greetd/config.toml" <<EOF
+[terminal]
+vt = 1
+
+[default_session]
+command = "gtkgreet --layer-shell --css /etc/greetd/gtkgreet.css"
+user = "greeter"
 EOF
-ok "Autologin configured."
+# Copy gtkgreet CSS from live system
+[[ -f /etc/greetd/gtkgreet.css ]] && cp /etc/greetd/gtkgreet.css "$MOUNT/etc/greetd/gtkgreet.css"
+# Create sessions file so labwc appears as an option
+mkdir -p "$MOUNT/usr/share/wayland-sessions"
+cat > "$MOUNT/usr/share/wayland-sessions/labwc.desktop" <<EOF
+[Desktop Entry]
+Name=BlazzCore (labwc)
+Comment=BlazzCore Wayland Desktop
+Exec=labwc
+Type=Application
+EOF
+ok "Login manager configured."
 
 # ---- profile.d autostart ----
 info "Copying labwc autostart profile..."
@@ -148,6 +162,7 @@ set -e
 systemctl enable NetworkManager    2>/dev/null || true
 systemctl enable seatd             2>/dev/null || true
 systemctl enable bluetooth         2>/dev/null || true
+systemctl enable greetd            2>/dev/null || true
 
 # Plymouth default theme
 plymouth-set-default-theme blazzcore 2>/dev/null || true
