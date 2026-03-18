@@ -30,8 +30,8 @@
             "headphone": "󰋋",
             "headset": "󰋎"
         },
-        "on-click": "pavucontrol",
-        "on-click-right": "/usr/local/bin/blazzcore-volume mute",
+        "on-click": "/usr/local/bin/blazzcore-volume mute",
+        "on-click-right": "pavucontrol",
         "on-scroll-up": "/usr/local/bin/blazzcore-volume up",
         "on-scroll-down": "/usr/local/bin/blazzcore-volume down",
         "tooltip-format": "{desc}: {volume}%"

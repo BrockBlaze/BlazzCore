@@ -48,8 +48,8 @@ for _OUT in $(wlr-randr 2>/dev/null | awk '/^[^ ]/{print $1}'); do
 done
 unset _OUT
 
-# Status bar (slight delay lets PipeWire register before waybar's pulseaudio module)
-(sleep 1 && waybar) &
+# Status bar (delay lets PipeWire register before waybar's pulseaudio module)
+(sleep 2 && waybar) &
 
 # Dock (app launcher bar — position managed by blazzcore-dock / Settings)
 _DOCK_POS=bottom
