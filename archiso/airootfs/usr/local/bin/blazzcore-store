@@ -1,109 +1,183 @@
-#!/usr/bin/env bash
-# BlazzCore Software Center — simple pacman GUI wrapper
+#!/usr/bin/env python3
+"""BlazzCore Software Center — GTK3 pacman GUI"""
 
-ACTION=$(zenity --list \
-    --title="BlazzCore Software Center" \
-    --text="What would you like to do?" \
-    --column="Action" --column="Description" \
-    "Search & Install"   "Find and install a package by name" \
-    "Remove Package"     "Uninstall an installed package" \
-    "Installed Packages" "Browse all installed packages" \
-    "System Update"      "Update all installed packages" \
-    --width=500 --height=300 \
-    --print-column=1 2>/dev/null) || exit 0
+import gi
+gi.require_version('Gtk', '3.0')
+from gi.repository import Gtk, Gdk, GLib
+import subprocess, threading, os, re
 
-case "$ACTION" in
-    "Search & Install")
-        QUERY=$(zenity --entry \
-            --title="Search Packages" \
-            --text="Enter a package name or keyword to search:" \
-            --width=400 2>/dev/null) || exit 0
-        [[ -z "$QUERY" ]] && exit 0
+ACCENT = '#4a9eff'
+try:
+    c = open(os.path.expanduser('~/.config/blazzcore/accent')).read().strip()
+    if re.match(r'^#[0-9a-fA-F]{6}$', c):
+        ACCENT = c
+except Exception:
+    pass
 
-        # Search and build list
-        RESULTS=$(pacman -Ss "$QUERY" 2>/dev/null | awk '
-            /^[a-z]/ {
-                split($1, a, "/"); pkg=a[2]; ver=$2
-                getline desc
-                gsub(/^[[:space:]]+/, "", desc)
-                installed=""
-                cmd="pacman -Q " pkg " 2>/dev/null"
-                if ((cmd | getline) > 0) installed=" [installed]"
-                close(cmd)
-                print pkg "\t" ver installed "\t" desc
-            }
-        ')
+CSS = f"""
+window {{ background-color: #1e1e1e; color: #e0e0e0; }}
+.header {{ font-size: 18px; font-weight: 700; color: #f0f0f0; padding: 8px 0; }}
+.card {{ background: #252525; border: 1px solid #333333; padding: 14px 18px; margin-bottom: 10px; }}
+.pkg-name {{ font-size: 14px; font-weight: 600; color: #e0e0e0; }}
+.pkg-ver {{ font-size: 12px; color: {ACCENT}; }}
+.pkg-desc {{ font-size: 12px; color: #808080; }}
+.installed-badge {{ font-size: 11px; color: #27ae60; font-weight: 600; }}
+button {{ background: #2a2a2a; color: #d0d0d0; border: 1px solid #3a3a3a; border-radius: 0; padding: 5px 14px; }}
+button:hover {{ background: #353535; }}
+button.action {{ background: {ACCENT}; color: #fff; border-color: {ACCENT}; }}
+button.action:hover {{ background: #5aabff; }}
+button.destructive {{ background: #6a2020; color: #fff; border-color: #8a3030; }}
+button.destructive:hover {{ background: #7a2828; }}
+entry {{ background: #2a2a2a; color: #e0e0e0; border: 1px solid #3a3a3a; border-radius: 0; padding: 6px 10px; }}
+entry:focus {{ border-color: {ACCENT}; }}
+separator {{ background: #333333; min-height: 1px; }}
+scrolledwindow {{ background: transparent; }}
+label {{ color: #e0e0e0; }}
+.dim {{ color: #707070; font-size: 12px; }}
+""".encode()
 
-        if [[ -z "$RESULTS" ]]; then
-            zenity --info --title="No Results" \
-                --text="No packages found matching <b>$QUERY</b>." \
-                --width=360 2>/dev/null
-            exit 0
-        fi
 
-        SELECTED=$(echo "$RESULTS" | zenity --list \
-            --title="Search Results: $QUERY" \
-            --text="Select a package to install:" \
-            --column="Package" --column="Version" --column="Description" \
-            --width=700 --height=500 \
-            --print-column=1 2>/dev/null) || exit 0
+def _cmd(cmd):
+    try:
+        return subprocess.check_output(cmd, shell=True, text=True,
+                                       stderr=subprocess.DEVNULL, timeout=30).strip()
+    except Exception:
+        return ''
 
-        [[ -z "$SELECTED" ]] && exit 0
 
-        zenity --question \
-            --title="Install Package" \
-            --text="Install <b>$SELECTED</b>?\n\nThis requires your password." \
-            --width=360 2>/dev/null || exit 0
+class StoreApp(Gtk.Window):
+    def __init__(self):
+        super().__init__(title='BlazzCore Software Center')
+        self.set_default_size(700, 520)
 
-        foot --title="Installing $SELECTED" -e bash -c \
-            'sudo pacman -S --noconfirm "$1"; echo; echo "Press Enter to close..."; read' \
-            -- "$SELECTED"
-        ;;
+        p = Gtk.CssProvider()
+        p.load_from_data(CSS)
+        Gtk.StyleContext.add_provider_for_screen(
+            Gdk.Screen.get_default(), p, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
 
-    "Remove Package")
-        QUERY=$(zenity --entry \
-            --title="Remove Package" \
-            --text="Enter the package name to remove:" \
-            --width=400 2>/dev/null) || exit 0
-        [[ -z "$QUERY" ]] && exit 0
+        root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        root.set_border_width(20)
+        self.add(root)
 
-        if ! pacman -Q "$QUERY" &>/dev/null; then
-            zenity --error --title="Not Found" \
-                --text="Package <b>$QUERY</b> is not installed." \
-                --width=360 2>/dev/null
-            exit 1
-        fi
+        title = Gtk.Label(label='Software Center')
+        title.get_style_context().add_class('header')
+        title.set_halign(Gtk.Align.START)
+        root.pack_start(title, False, False, 0)
 
-        zenity --question \
-            --title="Remove Package" \
-            --text="Remove <b>$QUERY</b>?\n\nThis requires your password." \
-            --width=360 2>/dev/null || exit 0
+        # Search bar
+        search_box = Gtk.Box(spacing=8)
+        search_box.set_margin_top(8); search_box.set_margin_bottom(12)
+        self.search = Gtk.Entry()
+        self.search.set_placeholder_text('Search packages...')
+        self.search.connect('activate', lambda _: self._do_search())
+        search_box.pack_start(self.search, True, True, 0)
+        search_btn = Gtk.Button(label='Search')
+        search_btn.get_style_context().add_class('action')
+        search_btn.connect('clicked', lambda _: self._do_search())
+        search_box.pack_start(search_btn, False, False, 0)
+        update_btn = Gtk.Button(label='System Update')
+        update_btn.connect('clicked', lambda _: self._do_update())
+        search_box.pack_start(update_btn, False, False, 0)
+        root.pack_start(search_box, False, False, 0)
 
-        foot --title="Removing $QUERY" -e bash -c \
-            'sudo pacman -Rs "$1"; echo; echo "Press Enter to close..."; read' \
-            -- "$QUERY"
-        ;;
+        # Status
+        self.status = Gtk.Label(label='Search for a package to install or remove.', xalign=0)
+        self.status.get_style_context().add_class('dim')
+        root.pack_start(self.status, False, False, 4)
 
-    "Installed Packages")
-        LIST=$(pacman -Q 2>/dev/null | awk '{print $1 "\t" $2}')
-        SELECTED=$(echo "$LIST" | zenity --list \
-            --title="Installed Packages" \
-            --text="All installed packages:" \
-            --column="Package" --column="Version" \
-            --width=500 --height=600 \
-            --print-column=1 2>/dev/null) || exit 0
+        # Results
+        self.scroll = Gtk.ScrolledWindow()
+        self.scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        self.results_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        self.scroll.add(self.results_box)
+        root.pack_start(self.scroll, True, True, 0)
 
-        if [[ -n "$SELECTED" ]]; then
-            INFO=$(pacman -Qi "$SELECTED" 2>/dev/null | head -20)
-            zenity --info \
-                --title="Package: $SELECTED" \
-                --text="<tt>$INFO</tt>" \
-                --width=500 2>/dev/null
-        fi
-        ;;
+    def _do_search(self):
+        q = self.search.get_text().strip()
+        if not q:
+            return
+        self.status.set_text(f'Searching for "{q}"...')
+        for child in self.results_box.get_children():
+            self.results_box.remove(child)
 
-    "System Update")
-        foot --title="System Update" -e bash -c \
-            'sudo pacman -Syu; echo; echo "Press Enter to close..."; read'
-        ;;
-esac
+        def _search():
+            raw = _cmd(f'pacman -Ss {q} 2>/dev/null')
+            pkgs = []
+            lines = raw.splitlines()
+            i = 0
+            while i < len(lines):
+                m = re.match(r'^(\S+)/(\S+)\s+(\S+)(.*)', lines[i])
+                if m:
+                    repo, name, ver, flags = m.group(1), m.group(2), m.group(3), m.group(4)
+                    installed = '[installed]' in flags
+                    desc = lines[i+1].strip() if i+1 < len(lines) else ''
+                    pkgs.append((name, ver, desc, installed, repo))
+                    i += 2
+                else:
+                    i += 1
+
+            def _update():
+                for child in self.results_box.get_children():
+                    self.results_box.remove(child)
+                if not pkgs:
+                    self.status.set_text(f'No packages found for "{q}".')
+                    return
+                self.status.set_text(f'{len(pkgs)} results for "{q}"')
+                for name, ver, desc, installed, repo in pkgs[:50]:
+                    row = Gtk.Box(spacing=8)
+                    row.get_style_context().add_class('card')
+                    info = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+                    hdr = Gtk.Box(spacing=8)
+                    n = Gtk.Label(label=name, xalign=0)
+                    n.get_style_context().add_class('pkg-name')
+                    v = Gtk.Label(label=ver, xalign=0)
+                    v.get_style_context().add_class('pkg-ver')
+                    hdr.pack_start(n, False, False, 0)
+                    hdr.pack_start(v, False, False, 0)
+                    if installed:
+                        badge = Gtk.Label(label='installed')
+                        badge.get_style_context().add_class('installed-badge')
+                        hdr.pack_start(badge, False, False, 0)
+                    info.pack_start(hdr, False, False, 0)
+                    d = Gtk.Label(label=desc, xalign=0)
+                    d.get_style_context().add_class('pkg-desc')
+                    d.set_ellipsize(3)
+                    info.pack_start(d, False, False, 0)
+                    row.pack_start(info, True, True, 0)
+
+                    if installed:
+                        btn = Gtk.Button(label='Remove')
+                        btn.get_style_context().add_class('destructive')
+                        btn.connect('clicked', lambda _, n=name: self._do_remove(n))
+                    else:
+                        btn = Gtk.Button(label='Install')
+                        btn.get_style_context().add_class('action')
+                        btn.connect('clicked', lambda _, n=name: self._do_install(n))
+                    btn.set_valign(Gtk.Align.CENTER)
+                    row.pack_end(btn, False, False, 0)
+                    self.results_box.pack_start(row, False, False, 0)
+                self.results_box.show_all()
+            GLib.idle_add(_update)
+
+        threading.Thread(target=_search, daemon=True).start()
+
+    def _do_install(self, name):
+        self.status.set_text(f'Installing {name}...')
+        subprocess.Popen(['foot', '--title', f'Installing {name}', '-e',
+                         'bash', '-c', f'sudo pacman -S --noconfirm {name}; echo; echo "Press Enter to close..."; read'])
+
+    def _do_remove(self, name):
+        self.status.set_text(f'Removing {name}...')
+        subprocess.Popen(['foot', '--title', f'Removing {name}', '-e',
+                         'bash', '-c', f'sudo pacman -Rs {name}; echo; echo "Press Enter to close..."; read'])
+
+    def _do_update(self):
+        self.status.set_text('Starting system update...')
+        subprocess.Popen(['foot', '--title', 'System Update', '-e',
+                         'bash', '-c', 'sudo pacman -Syu; echo; echo "Press Enter to close..."; read'])
+
+
+win = StoreApp()
+win.connect('destroy', Gtk.main_quit)
+win.show_all()
+Gtk.main()

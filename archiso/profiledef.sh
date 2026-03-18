@@ -45,6 +45,7 @@ file_permissions=(
   ["/usr/local/bin/blazzcore-taskmanager"]="0:0:755"
   ["/usr/local/bin/blazzcore-startmenu"]="0:0:755"
   ["/usr/local/bin/blazzcore-startmenu-toggle"]="0:0:755"
+  ["/usr/local/bin/blazzcore-welcome"]="0:0:755"
   ["/usr/share/blazzcore/postinstall.sh"]="0:0:755"
   ["/usr/local/bin/blazzcore-drivers"]="0:0:755"
   ["/usr/local/bin/blazzcore-window-menu"]="0:0:755"

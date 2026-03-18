@@ -1,0 +1,180 @@
+#!/usr/bin/env python3
+"""BlazzCore — Welcome Screen (shown on first login)"""
+
+import gi
+gi.require_version('Gtk', '3.0')
+from gi.repository import Gtk, Gdk
+import subprocess, os, re
+
+ACCENT = '#4a9eff'
+try:
+    c = open(os.path.expanduser('~/.config/blazzcore/accent')).read().strip()
+    if re.match(r'^#[0-9a-fA-F]{6}$', c):
+        ACCENT = c
+except Exception:
+    pass
+
+CSS = f"""
+window {{ background-color: #1e1e1e; }}
+.welcome-title {{ font-size: 26px; font-weight: 800; color: #ffffff; }}
+.welcome-sub {{ font-size: 14px; color: #808080; }}
+.welcome-ver {{ font-size: 12px; color: {ACCENT}; font-weight: 600; }}
+.section-title {{ font-size: 12px; font-weight: 700; color: {ACCENT}; letter-spacing: 0.8px; padding-top: 8px; }}
+.card {{ background: #252525; border: 1px solid #333333; padding: 14px 18px; }}
+.tip-key {{ font-size: 13px; font-weight: 700; color: #e0e0e0; }}
+.tip-desc {{ font-size: 13px; color: #909090; }}
+.action-btn {{
+    background: #252525; border: 1px solid #333333; padding: 12px 16px;
+    min-width: 180px;
+}}
+.action-btn:hover {{ background: #2e2e2e; border-color: {ACCENT}; }}
+.action-btn label {{ color: #d0d0d0; font-size: 13px; }}
+.action-btn:hover label {{ color: #ffffff; }}
+.noshow {{ color: #505050; font-size: 11px; }}
+button.close-btn {{
+    background: {ACCENT}; color: #ffffff; border-color: {ACCENT};
+    padding: 10px 30px; font-size: 14px; font-weight: 600;
+}}
+button.close-btn:hover {{ background: #5aabff; }}
+separator {{ background: #333333; min-height: 1px; }}
+""".encode()
+
+TIPS = [
+    ('Super + Space', 'Open Start Menu'),
+    ('Super + Return', 'Open Terminal'),
+    ('Super + E', 'Open File Manager'),
+    ('Super + L', 'Lock Screen'),
+    ('Super + Left/Right', 'Snap windows'),
+    ('Super + 1–5', 'Switch workspace'),
+    ('Print', 'Take screenshot'),
+    ('Alt + F4', 'Close window'),
+]
+
+ACTIONS = [
+    ('Settings',    'preferences-system',   '/usr/local/bin/blazzcore-settings'),
+    ('Browser',     'web-browser',          '/usr/local/bin/blazzcore-browser'),
+    ('Terminal',    'utilities-terminal',    'foot'),
+    ('Software',    'system-software-install', '/usr/local/bin/blazzcore-store'),
+]
+
+
+class WelcomeWindow(Gtk.Window):
+    def __init__(self):
+        super().__init__(title='Welcome to BlazzCore')
+        self.set_default_size(560, -1)
+        self.set_resizable(False)
+        self.set_position(Gtk.WindowPosition.CENTER)
+
+        p = Gtk.CssProvider()
+        p.load_from_data(CSS)
+        Gtk.StyleContext.add_provider_for_screen(
+            Gdk.Screen.get_default(), p, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+
+        root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        root.set_margin_start(30); root.set_margin_end(30)
+        root.set_margin_top(28); root.set_margin_bottom(20)
+        self.add(root)
+
+        # Title
+        t = Gtk.Label(label='Welcome to BlazzCore')
+        t.get_style_context().add_class('welcome-title')
+        t.set_halign(Gtk.Align.CENTER)
+        root.pack_start(t, False, False, 0)
+
+        sub = Gtk.Label(label='A minimal, fast Wayland desktop — built on Arch Linux')
+        sub.get_style_context().add_class('welcome-sub')
+        sub.set_halign(Gtk.Align.CENTER)
+        root.pack_start(sub, False, False, 2)
+
+        try:
+            ver = open('/etc/blazzcore-version').read().strip()
+        except Exception:
+            ver = ''
+        if ver:
+            v = Gtk.Label(label=f'v{ver}')
+            v.get_style_context().add_class('welcome-ver')
+            v.set_halign(Gtk.Align.CENTER)
+            root.pack_start(v, False, False, 4)
+
+        root.pack_start(Gtk.Box(), False, False, 6)
+
+        # Keyboard shortcuts
+        sec = Gtk.Label(label='KEYBOARD SHORTCUTS')
+        sec.get_style_context().add_class('section-title')
+        sec.set_halign(Gtk.Align.START)
+        root.pack_start(sec, False, False, 0)
+        root.pack_start(Gtk.Box(), False, False, 4)
+
+        card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+        card.get_style_context().add_class('card')
+        for i, (key, desc) in enumerate(TIPS):
+            hb = Gtk.Box(spacing=12)
+            k = Gtk.Label(label=key, xalign=0)
+            k.get_style_context().add_class('tip-key')
+            k.set_size_request(180, -1)
+            d = Gtk.Label(label=desc, xalign=0)
+            d.get_style_context().add_class('tip-desc')
+            hb.pack_start(k, False, False, 0)
+            hb.pack_start(d, True, True, 0)
+            card.pack_start(hb, False, False, 0)
+            if i < len(TIPS) - 1:
+                card.pack_start(Gtk.Separator(), False, False, 0)
+        root.pack_start(card, False, False, 0)
+
+        root.pack_start(Gtk.Box(), False, False, 8)
+
+        # Quick actions
+        sec2 = Gtk.Label(label='GET STARTED')
+        sec2.get_style_context().add_class('section-title')
+        sec2.set_halign(Gtk.Align.START)
+        root.pack_start(sec2, False, False, 0)
+        root.pack_start(Gtk.Box(), False, False, 4)
+
+        grid = Gtk.Grid()
+        grid.set_column_spacing(10)
+        grid.set_row_spacing(10)
+        for i, (label, icon, cmd) in enumerate(ACTIONS):
+            btn = Gtk.Button()
+            btn.get_style_context().add_class('action-btn')
+            btn.set_relief(Gtk.ReliefStyle.NONE)
+            box = Gtk.Box(spacing=10)
+            img = Gtk.Image.new_from_icon_name(icon, Gtk.IconSize.LARGE_TOOLBAR)
+            lbl = Gtk.Label(label=label)
+            box.pack_start(img, False, False, 0)
+            box.pack_start(lbl, False, False, 0)
+            btn.add(box)
+            btn.connect('clicked', lambda _, c=cmd: (subprocess.Popen(c, shell=isinstance(c, str)), None))
+            grid.attach(btn, i % 2, i // 2, 1, 1)
+        root.pack_start(grid, False, False, 0)
+
+        root.pack_start(Gtk.Box(), False, False, 10)
+
+        # Don't show again + close
+        bot = Gtk.Box(spacing=12)
+        self.noshow = Gtk.CheckButton(label="Don't show this again")
+        self.noshow.get_style_context().add_class('noshow')
+        bot.pack_start(self.noshow, True, True, 0)
+        close = Gtk.Button(label='Get Started')
+        close.get_style_context().add_class('close-btn')
+        close.connect('clicked', self._on_close)
+        bot.pack_end(close, False, False, 0)
+        root.pack_start(bot, False, False, 0)
+
+        self.connect('key-press-event', lambda w, e:
+            self._on_close() if e.keyval == Gdk.KEY_Escape else None)
+
+    def _on_close(self, *_):
+        if self.noshow.get_active():
+            flag = os.path.expanduser('~/.config/blazzcore/welcome_done')
+            os.makedirs(os.path.dirname(flag), exist_ok=True)
+            open(flag, 'w').close()
+        self.destroy()
+
+
+# Only show if flag file doesn't exist
+flag = os.path.expanduser('~/.config/blazzcore/welcome_done')
+if os.environ.get('BLAZZCORE_FORCE_WELCOME') or not os.path.exists(flag):
+    win = WelcomeWindow()
+    win.connect('destroy', Gtk.main_quit)
+    win.show_all()
+    Gtk.main()

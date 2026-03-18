@@ -98,60 +98,72 @@ os.makedirs(OUT, exist_ok=True)
 
 # Cache check — skip generation if all wallpapers exist at the right resolution
 CACHE_STAMP = f'{OUT}/.res_{W}x{H}'
-WALLPAPERS = ['deep-space.png', 'aurora.png', 'charcoal.png']
+WALLPAPERS = ['midnight-blue.png', 'mesh.png', 'charcoal.png']
 if os.path.exists(CACHE_STAMP) and all(os.path.exists(f'{OUT}/{w}') for w in WALLPAPERS):
     print(f'Wallpapers already generated at {W}x{H}, skipping.')
     sys.exit(0)
 
-# --- 1. Deep space gradient (default) ---
-# Dark navy top → rich midnight blue bottom with a subtle purple tint
-print('Generating: deep-space.png')
+# --- 1. Midnight Blue (default) ---
+# Dark grey top → subtle blue glow at bottom-center, vignette edges
+print('Generating: midnight-blue.png')
 pixels = []
 for y in range(H):
     for x in range(W):
-        t  = y / H
-        r  = int(10  + t * 30)
-        g  = int(10  + t * 20)
-        b  = int(40  + t * 80)
-        # subtle vignette
-        dx = (x / W - 0.5) * 2
-        dy = (y / H - 0.5) * 2
-        v  = max(0.0, 1.0 - (dx*dx + dy*dy) * 0.3)
-        pixels.append((int(r*v), int(g*v), int(b*v)))
-write_png(f'{OUT}/deep-space.png', pixels)
+        nx, ny = x / W, y / H
+        # Base: dark grey gradient
+        base_r, base_g, base_b = 20, 20, 22
+        # Blue glow from bottom-center
+        gx = (nx - 0.5) * 2
+        gy = (ny - 0.7) * 3
+        glow = max(0.0, 1.0 - (gx*gx + gy*gy))
+        glow = glow ** 2.5  # sharpen falloff
+        r = int(base_r + glow * 20)
+        g = int(base_g + glow * 55)
+        b = int(base_b + glow * 120)
+        # Vignette
+        vx = (nx - 0.5) * 2
+        vy = (ny - 0.5) * 2
+        v = max(0.0, 1.0 - (vx*vx + vy*vy) * 0.4)
+        pixels.append((min(255, int(r*v)), min(255, int(g*v)), min(255, int(b*v))))
+write_png(f'{OUT}/midnight-blue.png', pixels)
 
-# --- 2. Dark aurora (teal-purple gradient) ---
-print('Generating: aurora.png')
+# --- 2. Mesh gradient (blue + teal flowing waves) ---
+print('Generating: mesh.png')
 pixels = []
 for y in range(H):
     for x in range(W):
-        nx = x / W
-        ny = y / H
-        wave = math.sin(nx * 5 + ny * 3) * 0.5 + 0.5
-        r = int((0.05 + wave * 0.18) * 255)
-        g = int((0.10 + wave * 0.22) * 255)
-        b = int((0.20 + wave * 0.35) * 255)
-        dx = (nx - 0.5) * 2
-        dy = (ny - 0.5) * 2
-        v  = max(0.0, 1.0 - (dx*dx + dy*dy) * 0.35)
-        pixels.append((int(r*v), int(g*v), int(b*v)))
-write_png(f'{OUT}/aurora.png', pixels)
+        nx, ny = x / W, y / H
+        # Multiple overlapping sine waves
+        w1 = math.sin(nx * 4.0 + ny * 2.5) * 0.5 + 0.5
+        w2 = math.sin(nx * 2.0 - ny * 3.5 + 1.5) * 0.5 + 0.5
+        w3 = math.sin((nx + ny) * 3.0 + 0.8) * 0.5 + 0.5
+        blend = (w1 * 0.4 + w2 * 0.35 + w3 * 0.25)
+        # Dark grey base with blue-teal accent
+        r = int(22 + blend * 18)
+        g = int(22 + blend * 45)
+        b = int(25 + blend * 80)
+        # Vignette
+        vx = (nx - 0.5) * 2
+        vy = (ny - 0.5) * 2
+        v = max(0.0, 1.0 - (vx*vx + vy*vy) * 0.3)
+        pixels.append((min(255, int(r*v)), min(255, int(g*v)), min(255, int(b*v))))
+write_png(f'{OUT}/mesh.png', pixels)
 
-# --- 3. Charcoal (dark diagonal gradient) ---
+# --- 3. Charcoal (dark grey diagonal, neutral) ---
 print('Generating: charcoal.png')
 pixels = []
 for y in range(H):
     for x in range(W):
         t = (x / W + y / H) / 2
-        v = int(18 + t * 30)
-        pixels.append((v, v, v + 5))
+        v = int(22 + t * 20)
+        pixels.append((v, v, v))
 write_png(f'{OUT}/charcoal.png', pixels)
 
 # Symlink default
 default = f'{OUT}/default.png'
 if os.path.lexists(default):
     os.remove(default)
-os.symlink(f'{OUT}/deep-space.png', default)
+os.symlink(f'{OUT}/midnight-blue.png', default)
 
 # Write cache stamp so we skip regeneration next run at same resolution
 open(CACHE_STAMP, 'w').close()

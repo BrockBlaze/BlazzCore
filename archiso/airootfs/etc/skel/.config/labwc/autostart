@@ -84,7 +84,7 @@ wl-paste --watch cliphist store &
 WOB_PIPE=/tmp/wob.pipe
 [ -p "$WOB_PIPE" ] || mkfifo "$WOB_PIPE" || { echo "autostart: failed to create wob pipe" >&2; }
 wob \
-    --background-color "#0e0e1add" \
+    --background-color "#1e1e1edd" \
     --border-color "#4a9effff" \
     --bar-color "#4a9effff" \
     --overflow-background-color "#1a0a0add" \
@@ -120,6 +120,9 @@ if [[ ! -f "$_GTK_FLAG" ]]; then
     gsettings set org.gnome.desktop.interface enable-animations true 2>/dev/null || true
 fi
 unset _GTK_FLAG
+
+# Welcome screen (first login only — dismissed by "Don't show again" checkbox)
+(sleep 3 && /usr/local/bin/blazzcore-welcome) &
 
 # User startup programs (managed by Settings → Startup Apps)
 for _script in "$HOME/.config/blazzcore/autostart.d"/*.sh; do
