@@ -1,54 +1,235 @@
-#!/usr/bin/env bash
-# BlazzCore — About This System
+#!/usr/bin/env python3
+"""BlazzCore — About This System"""
 
-# Gather system info
-KERNEL=$(uname -r)
-ARCH=$(uname -m)
-HOSTNAME=$(hostname)
-UPTIME=$(uptime -p 2>/dev/null | sed 's/^up //')
+import gi
+gi.require_version('Gtk', '3.0')
+from gi.repository import Gtk, Gdk, Pango
+import os, re, subprocess
 
-# CPU
-CPU=$(grep -m1 'model name' /proc/cpuinfo 2>/dev/null | cut -d: -f2 | sed 's/^ *//' || echo "Unknown")
+# ── Gather system info ────────────────────────────────────────────────────────
+def _cmd(cmd):
+    try:
+        return subprocess.check_output(cmd, shell=True, stderr=subprocess.DEVNULL, text=True).strip()
+    except Exception:
+        return ''
 
-# RAM
-RAM_KB=$(grep MemTotal /proc/meminfo 2>/dev/null | awk '{print $2}')
-RAM_GB=$(awk "BEGIN {printf \"%.1f\", $RAM_KB/1048576}")
-RAM_USED_KB=$(( RAM_KB - $(grep MemAvailable /proc/meminfo | awk '{print $2}') ))
-RAM_USED_GB=$(awk "BEGIN {printf \"%.1f\", $RAM_USED_KB/1048576}")
+def _read(path):
+    try:
+        return open(path).read().strip()
+    except Exception:
+        return ''
 
-# Disk
-DISK_INFO=$(df -h / 2>/dev/null | awk 'NR==2 {print $3 " used / " $2 " total (" $5 " full)"}')
+KERNEL  = _cmd('uname -r')
+ARCH    = _cmd('uname -m')
+HOST    = _cmd('hostname')
+UPTIME  = _cmd("uptime -p").replace('up ', '')
 
-# GPU
-GPU=$(lspci 2>/dev/null | grep -i 'vga\|3d\|display' | head -1 | sed 's/.*: //' | sed 's/ (.*)//' || echo "Unknown")
+CPU = ''
+for line in _read('/proc/cpuinfo').splitlines():
+    if 'model name' in line:
+        CPU = line.split(':', 1)[1].strip()
+        break
 
-# BlazzCore version (date of build)
-if [[ -f /etc/blazzcore-version ]]; then
-    VERSION=$(</etc/blazzcore-version)
-else
-    VERSION=$(date -r /usr/local/bin/blazzcore-install '+%Y.%m.%d' 2>/dev/null || echo "1.0")
-fi
+ram_kb = 0
+avail_kb = 0
+for line in _read('/proc/meminfo').splitlines():
+    if line.startswith('MemTotal:'):
+        ram_kb = int(line.split()[1])
+    elif line.startswith('MemAvailable:'):
+        avail_kb = int(line.split()[1])
+RAM_TOTAL = f'{ram_kb / 1048576:.1f} GB'
+RAM_USED  = f'{(ram_kb - avail_kb) / 1048576:.1f} GB'
 
-zenity --info \
-    --title="About BlazzCore" \
-    --width=500 \
-    --text="<big><b>BlazzCore</b></big>
-<i>A minimal, fast Wayland desktop — built on Arch Linux</i>
+DISK = _cmd("df -h / | awk 'NR==2 {print $3 \" / \" $2 \" (\" $5 \" used)\"}'")
+GPU  = _cmd("lspci | grep -i 'vga\\|3d\\|display' | head -1 | sed 's/.*: //' | sed 's/ (.*//'")
 
-<b>Version:</b>     $VERSION
-<b>Kernel:</b>      $KERNEL ($ARCH)
-<b>Hostname:</b>    $HOSTNAME
-<b>Uptime:</b>      $UPTIME
+VERSION = _read('/etc/blazzcore-version')
+if not VERSION:
+    VERSION = _cmd("date -r /usr/local/bin/blazzcore-about '+%Y.%m.%d'") or '1.0'
 
-<b>CPU:</b>
-$CPU
+# ── Accent color ──────────────────────────────────────────────────────────────
+ACCENT = '#4a9eff'
+try:
+    c = open(os.path.expanduser('~/.config/blazzcore/accent')).read().strip()
+    if re.match(r'^#[0-9a-fA-F]{6}$', c):
+        ACCENT = c
+except Exception:
+    pass
 
-<b>Memory:</b>      $RAM_USED_GB GB used / $RAM_GB GB total
-<b>Disk:</b>        $DISK_INFO
-<b>GPU:</b>
-$GPU
+# ── CSS ───────────────────────────────────────────────────────────────────────
+CSS = f"""
+window {{
+    background-color: #1e1e1e;
+}}
+.about-header {{
+    font-size: 28px;
+    font-weight: 800;
+    color: #ffffff;
+    padding: 0;
+}}
+.about-tagline {{
+    font-size: 13px;
+    color: #808080;
+    font-style: italic;
+    padding: 0;
+    margin-top: 2px;
+}}
+.about-version {{
+    font-size: 12px;
+    color: {ACCENT};
+    font-weight: 600;
+    padding: 4px 14px;
+    border: 1px solid {ACCENT};
+    border-radius: 0;
+    margin-top: 8px;
+}}
+.info-card {{
+    background-color: #252525;
+    border: 1px solid #333333;
+    border-radius: 0;
+    padding: 16px 20px;
+}}
+.info-label {{
+    color: #707070;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}}
+.info-value {{
+    color: #d0d0d0;
+    font-size: 13px;
+}}
+.info-value-accent {{
+    color: {ACCENT};
+    font-size: 13px;
+    font-weight: 600;
+}}
+.section-title {{
+    color: {ACCENT};
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding-top: 6px;
+}}
+separator {{
+    background-color: #333333;
+    min-height: 1px;
+}}
+button {{
+    background: #252525;
+    color: #d0d0d0;
+    border: 1px solid #3a3a3a;
+    border-radius: 0;
+    padding: 8px 20px;
+    font-size: 13px;
+}}
+button:hover {{
+    background: {ACCENT};
+    color: #ffffff;
+    border-color: {ACCENT};
+}}
+"""
 
-<b>Compositor:</b>  labwc
-<b>Shell:</b>       bash + starship
-<b>Display:</b>     Wayland" \
-    2>/dev/null
+# ── UI ────────────────────────────────────────────────────────────────────────
+class AboutWindow(Gtk.Window):
+    def __init__(self):
+        super().__init__(title='About BlazzCore')
+        self.set_default_size(420, -1)
+        self.set_resizable(False)
+        self.set_position(Gtk.WindowPosition.CENTER)
+
+        p = Gtk.CssProvider()
+        p.load_from_data(CSS.encode())
+        Gtk.StyleContext.add_provider_for_screen(
+            Gdk.Screen.get_default(), p,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+
+        root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        root.set_margin_start(28)
+        root.set_margin_end(28)
+        root.set_margin_top(24)
+        root.set_margin_bottom(20)
+        self.add(root)
+
+        # Header
+        title = Gtk.Label(label='BlazzCore')
+        title.get_style_context().add_class('about-header')
+        title.set_halign(Gtk.Align.CENTER)
+        root.pack_start(title, False, False, 0)
+
+        tag = Gtk.Label(label='A minimal, fast Wayland desktop — built on Arch Linux')
+        tag.get_style_context().add_class('about-tagline')
+        tag.set_halign(Gtk.Align.CENTER)
+        root.pack_start(tag, False, False, 0)
+
+        # Version badge
+        ver_box = Gtk.Box()
+        ver_box.set_halign(Gtk.Align.CENTER)
+        ver = Gtk.Label(label=f'v{VERSION}')
+        ver.get_style_context().add_class('about-version')
+        ver_box.pack_start(ver, False, False, 0)
+        root.pack_start(ver_box, False, False, 8)
+
+        root.pack_start(Gtk.Box(), False, False, 6)
+
+        # Info card
+        card = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        card.get_style_context().add_class('info-card')
+
+        def info_row(label, value, accent=False):
+            row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+            l = Gtk.Label(label=label)
+            l.get_style_context().add_class('info-label')
+            l.set_halign(Gtk.Align.START)
+            l.set_size_request(90, -1)
+            v = Gtk.Label(label=value)
+            v.get_style_context().add_class('info-value-accent' if accent else 'info-value')
+            v.set_halign(Gtk.Align.START)
+            v.set_ellipsize(Pango.EllipsizeMode.END)
+            v.set_max_width_chars(35)
+            row.pack_start(l, False, False, 0)
+            row.pack_start(v, True, True, 0)
+            return row
+
+        def section(text):
+            l = Gtk.Label(label=text)
+            l.get_style_context().add_class('section-title')
+            l.set_halign(Gtk.Align.START)
+            return l
+
+        card.pack_start(section('SYSTEM'), False, False, 0)
+        card.pack_start(info_row('Kernel', f'{KERNEL} ({ARCH})'), False, False, 0)
+        card.pack_start(info_row('Hostname', HOST or '—'), False, False, 0)
+        card.pack_start(info_row('Uptime', UPTIME or '—'), False, False, 0)
+
+        card.pack_start(Gtk.Separator(), False, False, 4)
+        card.pack_start(section('HARDWARE'), False, False, 0)
+        card.pack_start(info_row('CPU', CPU or 'Unknown'), False, False, 0)
+        card.pack_start(info_row('Memory', f'{RAM_USED} / {RAM_TOTAL}'), False, False, 0)
+        card.pack_start(info_row('Disk', DISK or '—'), False, False, 0)
+        card.pack_start(info_row('GPU', GPU or 'Unknown'), False, False, 0)
+
+        card.pack_start(Gtk.Separator(), False, False, 4)
+        card.pack_start(section('DESKTOP'), False, False, 0)
+        card.pack_start(info_row('Compositor', 'labwc', accent=True), False, False, 0)
+        card.pack_start(info_row('Shell', 'bash + starship'), False, False, 0)
+        card.pack_start(info_row('Display', 'Wayland'), False, False, 0)
+
+        root.pack_start(card, False, False, 0)
+
+        # Close button
+        btn_box = Gtk.Box()
+        btn_box.set_halign(Gtk.Align.CENTER)
+        btn = Gtk.Button(label='Close')
+        btn.set_size_request(120, -1)
+        btn.connect('clicked', lambda *_: self.destroy())
+        btn_box.pack_start(btn, False, False, 0)
+        root.pack_start(btn_box, False, False, 14)
+
+        self.connect('key-press-event', lambda w, e: self.destroy() if e.keyval == Gdk.KEY_Escape else None)
+
+
+win = AboutWindow()
+win.connect('destroy', Gtk.main_quit)
+win.show_all()
+Gtk.main()
