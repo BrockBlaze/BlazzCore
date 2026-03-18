@@ -61,7 +61,7 @@ _nodisplay() {
 for _app in vim avahi-discover bssh bvnc foot-server nm-connection-editor \
             qv4l2 qvidcap mpv org.pwmt.zathura btop htop nvtop \
             python python3 xterm uxterm cmake-gui ipython ipython3 \
-            lstopo hwloc-ls pacman wofi-launcher; do
+            lstopo hwloc-ls pacman wofi-launcher chromium; do
     _nodisplay "$_app"
 done
 unset -f _nodisplay
