@@ -13,7 +13,7 @@ Usage:
   blazzcore-gen-wallpapers [WxH]          — generate default wallpapers
   blazzcore-gen-wallpapers --color #hex   — generate a custom gradient from a color
 """
-import struct, zlib, math, os, re, subprocess, sys
+import struct, zlib, math, os, re, subprocess, sys, random
 
 def detect_resolution():
     """Try to detect the primary display resolution from the running compositor."""
@@ -42,17 +42,20 @@ if '--color' in sys.argv:
     USER_OUT = os.path.expanduser('~/.local/share/backgrounds/blazzcore')
     os.makedirs(USER_OUT, exist_ok=True)
     print(f'Generating custom gradient from {hex_color} at {W}x{H}')
+    def _d(val):
+        return max(0, min(255, int(val + random.random() - 0.5)))
+    random.seed(45)
     pixels = []
     for y in range(H):
         for x in range(W):
             t = y / H
-            r = int(br * 0.04 + t * br * 0.35)
-            g = int(bg * 0.04 + t * bg * 0.35)
-            b = int(bb * 0.04 + t * bb * 0.55)
+            r = br * 0.04 + t * br * 0.35
+            g = bg * 0.04 + t * bg * 0.35
+            b = bb * 0.04 + t * bb * 0.55
             dx = (x / W - 0.5) * 2
             dy = (y / H - 0.5) * 2
             v = max(0.0, 1.0 - (dx*dx + dy*dy) * 0.3)
-            pixels.append((min(255, int(r*v)), min(255, int(g*v)), min(255, int(b*v))))
+            pixels.append((_d(r * v), _d(g * v), _d(b * v)))
     write_png(f'{USER_OUT}/custom.png', pixels)
     print(f'Custom wallpaper saved to {USER_OUT}/custom.png')
     sys.exit(0)
@@ -103,60 +106,64 @@ if os.path.exists(CACHE_STAMP) and all(os.path.exists(f'{OUT}/{w}') for w in WAL
     print(f'Wallpapers already generated at {W}x{H}, skipping.')
     sys.exit(0)
 
+def dither(val):
+    """Add ±1 noise to break up 8-bit color banding in dark gradients."""
+    return max(0, min(255, int(val + random.random() - 0.5)))
+
 # --- 1. Midnight Blue (default) ---
 # Dark grey top → subtle blue glow at bottom-center, vignette edges
 print('Generating: midnight-blue.png')
+random.seed(42)  # deterministic for reproducible builds
 pixels = []
 for y in range(H):
     for x in range(W):
         nx, ny = x / W, y / H
-        # Base: dark grey gradient
-        base_r, base_g, base_b = 20, 20, 22
+        # Base: dark grey
+        base_r, base_g, base_b = 20.0, 20.0, 22.0
         # Blue glow from bottom-center
         gx = (nx - 0.5) * 2
         gy = (ny - 0.7) * 3
         glow = max(0.0, 1.0 - (gx*gx + gy*gy))
-        glow = glow ** 2.5  # sharpen falloff
-        r = int(base_r + glow * 20)
-        g = int(base_g + glow * 55)
-        b = int(base_b + glow * 120)
+        glow = glow ** 2.5
+        r = base_r + glow * 20
+        g = base_g + glow * 55
+        b = base_b + glow * 120
         # Vignette
         vx = (nx - 0.5) * 2
         vy = (ny - 0.5) * 2
         v = max(0.0, 1.0 - (vx*vx + vy*vy) * 0.4)
-        pixels.append((min(255, int(r*v)), min(255, int(g*v)), min(255, int(b*v))))
+        pixels.append((dither(r * v), dither(g * v), dither(b * v)))
 write_png(f'{OUT}/midnight-blue.png', pixels)
 
 # --- 2. Mesh gradient (blue + teal flowing waves) ---
 print('Generating: mesh.png')
+random.seed(43)
 pixels = []
 for y in range(H):
     for x in range(W):
         nx, ny = x / W, y / H
-        # Multiple overlapping sine waves
         w1 = math.sin(nx * 4.0 + ny * 2.5) * 0.5 + 0.5
         w2 = math.sin(nx * 2.0 - ny * 3.5 + 1.5) * 0.5 + 0.5
         w3 = math.sin((nx + ny) * 3.0 + 0.8) * 0.5 + 0.5
         blend = (w1 * 0.4 + w2 * 0.35 + w3 * 0.25)
-        # Dark grey base with blue-teal accent
-        r = int(22 + blend * 18)
-        g = int(22 + blend * 45)
-        b = int(25 + blend * 80)
-        # Vignette
+        r = 22 + blend * 18
+        g = 22 + blend * 45
+        b = 25 + blend * 80
         vx = (nx - 0.5) * 2
         vy = (ny - 0.5) * 2
         v = max(0.0, 1.0 - (vx*vx + vy*vy) * 0.3)
-        pixels.append((min(255, int(r*v)), min(255, int(g*v)), min(255, int(b*v))))
+        pixels.append((dither(r * v), dither(g * v), dither(b * v)))
 write_png(f'{OUT}/mesh.png', pixels)
 
 # --- 3. Charcoal (dark grey diagonal, neutral) ---
 print('Generating: charcoal.png')
+random.seed(44)
 pixels = []
 for y in range(H):
     for x in range(W):
         t = (x / W + y / H) / 2
-        v = int(22 + t * 20)
-        pixels.append((v, v, v))
+        v = 22 + t * 20
+        pixels.append((dither(v), dither(v), dither(v)))
 write_png(f'{OUT}/charcoal.png', pixels)
 
 # Symlink default
