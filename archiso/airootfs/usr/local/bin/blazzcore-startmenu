@@ -612,6 +612,25 @@ class StartMenu(Gtk.Window):
             mi3.connect("activate", lambda *_: _dock_add(row._fname))
         menu.append(mi3)
 
+        # Pin to Desktop
+        desktop_dir = os.path.expanduser("~/Desktop")
+        desktop_path = os.path.join(desktop_dir, row._fname) if row._fname else None
+        if desktop_path and os.path.exists(desktop_path):
+            mi4 = Gtk.MenuItem(label="Remove from Desktop")
+            mi4.connect("activate", lambda *_, p=desktop_path: os.remove(p))
+        elif desktop_path:
+            src = f"/usr/share/applications/{row._fname}"
+            mi4 = Gtk.MenuItem(label="Pin to Desktop")
+            mi4.connect("activate", lambda *_, s=src, d=desktop_path: (
+                os.makedirs(os.path.dirname(d), exist_ok=True),
+                __import__('shutil').copy2(s, d) if os.path.exists(s) else None,
+                os.chmod(d, 0o755) if os.path.exists(d) else None,
+            ))
+        else:
+            mi4 = None
+        if mi4:
+            menu.append(mi4)
+
         self._menu_active = True
         menu.connect("hide", self._on_menu_hide)
         menu.show_all()
